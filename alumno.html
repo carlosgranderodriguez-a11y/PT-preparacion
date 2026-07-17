@@ -4,44 +4,62 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Academia PT — Alumno</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root{
-    --paper:#F7F4EC; --paper-dark:#EFEADC; --ink:#1B2A4A; --ink-soft:#3E4C6B;
-    --red:#B23A2E; --red-soft:#E8C9C4; --green:#5C7A5E; --green-soft:#DCE6DC;
-    --amber:#9C7A2E; --amber-soft:#EFE1BE; --line:#D8D0BE; --gray:#8B8478;
+    --bg:#F3F4FB; --card:#FFFFFF; --card-alt:#FAFAFF;
+    --ink:#232759; --ink-soft:#5A5F94;
+    --accent:#FF6B4A; --accent-dark:#E85A3B; --accent-soft:#FFE4DA;
+    --green:#1E9E6C; --green-soft:#DCF5E9;
+    --amber:#C98A1F; --amber-soft:#FBEED0;
+    --red:#E5484D; --red-soft:#FBDCDD;
+    --blue:#3E6BF2; --blue-soft:#E3E9FE;
+    --line:#E6E7F3; --gray:#8B8FB3;
+    --radius:14px; --radius-sm:9px;
+    --shadow:0 1px 2px rgba(35,39,89,.05), 0 8px 24px rgba(35,39,89,.06);
   }
   *{box-sizing:border-box;}
-  body{margin:0;background:var(--paper);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;font-size:15px;line-height:1.5;}
-  .wrap{max-width:760px;margin:0 auto;padding:24px 18px 60px;}
-  header{border-bottom:3px solid var(--ink);padding-bottom:14px;margin-bottom:18px;}
-  header h1{font-family:Georgia,serif;font-weight:700;font-size:22px;margin:0;}
-  header .sub{font-size:12.5px;color:var(--gray);font-style:italic;}
-  .tabs{display:flex;gap:2px;margin-bottom:18px;border-bottom:1px solid var(--line);flex-wrap:wrap;}
-  .tab{padding:9px 14px;cursor:pointer;font-size:13px;font-weight:600;color:var(--gray);border-bottom:3px solid transparent;}
-  .tab.active{color:var(--ink);border-bottom-color:var(--red);}
-  .panel{display:none;} .panel.active{display:block;}
-  .card{background:#fff;border:1px solid var(--line);border-radius:3px;padding:18px 20px;margin-bottom:16px;}
-  .card h3{font-family:Georgia,serif;font-size:16px;margin:0 0 12px;}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:'Inter',-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;font-size:15px;line-height:1.55;}
+  .wrap{max-width:780px;margin:0 auto;padding:26px 18px 60px;}
+  header{padding-bottom:16px;margin-bottom:20px;position:relative;}
+  header::after{content:'';position:absolute;left:0;right:0;bottom:0;height:4px;border-radius:4px;background:linear-gradient(90deg,var(--accent),var(--blue) 60%,var(--green));}
+  header h1{font-family:'Poppins',sans-serif;font-weight:800;font-size:23px;margin:0;letter-spacing:-0.01em;}
+  header .sub{font-size:13px;color:var(--gray);font-weight:600;}
+  .tabs{display:flex;gap:6px;margin-bottom:20px;flex-wrap:wrap;background:var(--card);padding:6px;border-radius:999px;box-shadow:var(--shadow);width:fit-content;max-width:100%;}
+  .tab{padding:9px 15px;cursor:pointer;font-size:13px;font-weight:700;color:var(--ink-soft);border-radius:999px;white-space:nowrap;transition:background .15s,color .15s;}
+  .tab:hover{background:var(--card-alt);}
+  .tab.active{color:#fff;background:var(--ink);}
+  .panel{display:none;} .panel.active{display:block;animation:fadein .25s ease;}
+  @keyframes fadein{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:translateY(0);}}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:20px 22px;margin-bottom:16px;box-shadow:var(--shadow);}
+  .card h3{font-family:'Poppins',sans-serif;font-weight:700;font-size:16.5px;margin:0 0 12px;}
   .field{display:flex;flex-direction:column;gap:5px;margin-bottom:12px;}
-  label{font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-soft);}
-  textarea,input[type=file],select{font-family:inherit;font-size:14px;padding:9px 10px;border:1px solid var(--line);border-radius:3px;background:var(--paper);color:var(--ink);width:100%;}
-  textarea{min-height:180px;font-family:Georgia,serif;resize:vertical;}
-  .btn{font-family:inherit;font-size:13px;font-weight:700;padding:9px 16px;border-radius:3px;border:none;cursor:pointer;background:var(--ink);color:var(--paper);}
-  .status{font-size:12.5px;color:var(--gray);margin-top:8px;display:block;}
+  label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-soft);}
+  textarea,input[type=file],select{font-family:inherit;font-size:14px;padding:10px 12px;border:1.5px solid var(--line);border-radius:var(--radius-sm);background:var(--card-alt);color:var(--ink);width:100%;}
+  textarea{min-height:180px;font-family:'Inter',sans-serif;resize:vertical;}
+  textarea:focus,select:focus,input:focus{outline:none;border-color:var(--accent);}
+  .btn{font-family:'Inter',sans-serif;font-size:13px;font-weight:700;padding:10px 18px;border-radius:999px;border:none;cursor:pointer;background:var(--accent);color:#fff;box-shadow:0 4px 12px rgba(255,107,74,.35);transition:transform .1s;}
+  .btn:hover{background:var(--accent-dark);}
+  .btn:active{transform:scale(.97);}
+  .status{font-size:12.5px;color:var(--gray);margin-top:8px;display:block;font-weight:600;}
   .status.ok{color:var(--green);} .status.err{color:var(--red);}
-  .pill{display:inline-block;font-size:11px;font-weight:700;padding:2px 9px;border-radius:20px;}
+  .pill{display:inline-block;font-size:11px;font-weight:700;padding:3px 11px;border-radius:999px;}
   .pill.pendiente{background:var(--amber-soft);color:var(--amber);}
   .pill.corregido{background:var(--green-soft);color:var(--green);}
-  .practico-photo{max-width:100%;border:1px solid var(--line);border-radius:4px;margin:8px 0;display:block;}
-  .empty{color:var(--gray);font-style:italic;padding:20px 0;text-align:center;}
-  .evento{border-left:3px solid var(--ink-soft);padding:8px 10px;margin-bottom:8px;background:var(--paper);border-radius:0 3px 3px 0;font-size:13px;}
+  .practico-photo{max-width:100%;border:1.5px solid var(--line);border-radius:var(--radius-sm);margin:8px 0;display:block;}
+  .empty{color:var(--gray);font-style:italic;padding:24px 0;text-align:center;}
+  .evento{border-left:4px solid var(--blue);padding:10px 12px;margin-bottom:8px;background:var(--card-alt);border-radius:0 var(--radius-sm) var(--radius-sm) 0;font-size:13px;}
   .evento .meta{color:var(--gray);font-size:12px;margin-top:2px;}
   table{width:100%;border-collapse:collapse;font-size:13.5px;}
-  th{text-align:left;font-size:11px;text-transform:uppercase;color:var(--gray);border-bottom:2px solid var(--ink);padding:6px 8px;}
-  td{padding:8px;border-bottom:1px solid var(--line);}
-  .progreso-select{font-size:12px;padding:4px 6px;}
-  .spinner{display:inline-block;width:13px;height:13px;border:2px solid var(--paper-dark);border-top-color:var(--ink);border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px;}
+  th{text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--gray);border-bottom:2px solid var(--line);padding:8px;}
+  td{padding:10px 8px;border-bottom:1px solid var(--line);}
+  tr:last-child td{border-bottom:none;}
+  .progreso-select{font-size:12px;padding:5px 8px;border-radius:999px;}
+  .spinner{display:inline-block;width:13px;height:13px;border:2px solid var(--line);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px;}
   @keyframes spin{to{transform:rotate(360deg);}}
+  @media (max-width:640px){ header h1{font-size:20px;} .tabs{width:100%;} }
 </style>
 </head>
 <body>
@@ -57,10 +75,10 @@
 
   <div id="contenido" style="display:none;">
     <div class="tabs">
-      <div class="tab active" data-tab="calendario">Mi calendario</div>
-      <div class="tab" data-tab="practicos">Mis prácticos</div>
-      <div class="tab" data-tab="temas">Temas</div>
-      <div class="tab" data-tab="cultura">Cultura General</div>
+      <div class="tab active" data-tab="calendario">📅 Mi calendario</div>
+      <div class="tab" data-tab="practicos">📝 Mis prácticos</div>
+      <div class="tab" data-tab="temas">📚 Temas</div>
+      <div class="tab" data-tab="cultura">🌍 Cultura General</div>
     </div>
 
     <div class="panel active" id="panel-calendario">
@@ -160,7 +178,7 @@ function formatFecha(iso){
 }
 function renderEventos(){
   const hoy = todayISO();
-  const eventos = data.calendario.filter(ev=>ev.alumnoId===alumnoId && ev.fecha>=hoy).sort((a,b)=>String(a.fecha).localeCompare(String(b.fecha)));
+  const eventos = data.calendario.filter(ev=>(ev.alumnoId===alumnoId || ev.alumnoId==='ALL') && ev.fecha>=hoy).sort((a,b)=>String(a.fecha).localeCompare(String(b.fecha)));
   const cont = document.getElementById('listaEventos');
   document.getElementById('eventosEmpty').style.display = eventos.length?'none':'block';
   cont.innerHTML = eventos.map(ev=>`<div class="evento">
