@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Academia PT — Profesor</title>
+<style>
+  :root{
+    --paper:#F7F4EC; --paper-dark:#EFEADC; --ink:#1B2A4A; --ink-soft:#3E4C6B;
+    --red:#B23A2E; --red-soft:#E8C9C4; --green:#5C7A5E; --green-soft:#DCE6DC;
+    --amber:#9C7A2E; --amber-soft:#EFE1BE; --blue-soft:#D9E2EC; --line:#D8D0BE; --gray:#8B8478;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;font-size:15px;line-height:1.5;}
+  .wrap{max-width:1000px;margin:0 auto;padding:24px 18px 60px;}
+  header{display:flex;align-items:baseline;justify-content:space-between;border-bottom:3px solid var(--ink);padding-bottom:14px;margin-bottom:18px;flex-wrap:wrap;gap:8px;}
+  header h1{font-family:Georgia,serif;font-weight:700;font-size:24px;margin:0;}
+  header .sub{font-size:12.5px;color:var(--gray);font-style:italic;}
+
+  .tabs{display:flex;gap:2px;margin-bottom:18px;border-bottom:1px solid var(--line);flex-wrap:wrap;}
+  .tab{padding:9px 15px;cursor:pointer;font-size:13px;font-weight:600;color:var(--gray);border-bottom:3px solid transparent;}
+  .tab.active{color:var(--ink);border-bottom-color:var(--red);}
+  .panel{display:none;} .panel.active{display:block;}
+
+  .card{background:#fff;border:1px solid var(--line);border-radius:3px;padding:18px 20px;margin-bottom:16px;}
+  .card h3{font-family:Georgia,serif;font-size:16px;margin:0 0 12px;}
+  .row{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;margin-bottom:14px;}
+  .field{flex:1;min-width:170px;display:flex;flex-direction:column;gap:5px;}
+  label{font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-soft);}
+  input[type=text],input[type=date],input[type=time],input[type=password],select,textarea{
+    font-family:inherit;font-size:14px;padding:9px 10px;border:1px solid var(--line);border-radius:3px;background:var(--paper);color:var(--ink);width:100%;
+  }
+  textarea{resize:vertical;min-height:90px;}
+  .hint{font-size:12px;color:var(--gray);margin-top:-8px;margin-bottom:12px;}
+  .btn{font-family:inherit;font-size:13px;font-weight:700;padding:9px 16px;border-radius:3px;border:none;cursor:pointer;}
+  .btn-primary{background:var(--ink);color:var(--paper);}
+  .btn-secondary{background:transparent;color:var(--ink);border:1px solid var(--ink);}
+  .btn-danger{background:transparent;color:var(--red);border:1px solid var(--red-soft);}
+  .btn-sm{padding:5px 10px;font-size:12px;}
+  .status{font-size:12.5px;color:var(--gray);margin-top:8px;display:block;}
+  .status.ok{color:var(--green);} .status.err{color:var(--red);}
+  table{width:100%;border-collapse:collapse;font-size:13.5px;}
+  th{text-align:left;font-size:11px;text-transform:uppercase;color:var(--gray);border-bottom:2px solid var(--ink);padding:6px 8px;}
+  td{padding:8px;border-bottom:1px solid var(--line);vertical-align:top;}
+  .pill{display:inline-block;font-size:11px;font-weight:700;padding:2px 9px;border-radius:20px;}
+  .pill.pendiente{background:var(--amber-soft);color:var(--amber);}
+  .pill.corregido{background:var(--green-soft);color:var(--green);}
+  .icon-btn{background:none;border:none;cursor:pointer;color:var(--gray);font-size:13px;}
+  .icon-btn:hover{color:var(--red);}
+  .empty{color:var(--gray);font-style:italic;padding:20px 0;text-align:center;}
+  .cal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+  .cal-nav button{background:none;border:1px solid var(--line);border-radius:3px;padding:4px 12px;cursor:pointer;}
+  .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;}
+  .cal-dow{text-align:center;font-size:10.5px;font-weight:700;color:var(--gray);padding:4px 0;}
+  .cal-day{min-height:56px;border:1px solid var(--line);border-radius:3px;padding:5px 6px;font-size:12px;cursor:pointer;position:relative;}
+  .cal-day.empty{background:transparent;border:none;cursor:default;}
+  .cal-day.selected{border-color:var(--red);border-width:2px;}
+  .cal-day.today .num{color:var(--red);}
+  .cal-day .dot{width:6px;height:6px;border-radius:50%;background:var(--red);display:inline-block;margin-right:2px;}
+  .day-panel{margin-top:16px;border-top:1px dashed var(--line);padding-top:14px;}
+  .evento{border-left:3px solid var(--ink-soft);padding:8px 10px;margin-bottom:8px;background:var(--paper);border-radius:0 3px 3px 0;font-size:13px;}
+  .link-box{display:flex;gap:8px;align-items:center;background:var(--paper);border:1px solid var(--line);border-radius:3px;padding:6px 8px;font-size:12px;font-family:monospace;word-break:break-all;}
+  .practico-photo{max-width:280px;border:1px solid var(--line);border-radius:4px;margin:8px 0;display:block;}
+  .lock-screen{max-width:340px;margin:80px auto;text-align:center;}
+  .lock-screen input{margin-bottom:10px;}
+  .spinner{display:inline-block;width:13px;height:13px;border:2px solid var(--paper-dark);border-top-color:var(--ink);border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+</style>
+</head>
+<body>
+
+<div class="lock-screen" id="lockScreen">
+  <h2 style="font-family:Georgia,serif;">Academia PT — Profesor</h2>
+  <p class="hint" style="margin-top:0;">Introduce tu clave de acceso.</p>
+  <input type="password" id="lockInput" placeholder="Clave">
+  <button class="btn btn-primary" id="lockBtn">Entrar</button>
+  <div class="status err" id="lockStatus"></div>
+</div>
+
+<div class="wrap" id="app" style="display:none;">
+  <div id="errorBanner" style="display:none;background:#fdf6f5;border:1px solid var(--red-soft);color:var(--red);padding:12px 16px;border-radius:4px;margin-bottom:14px;font-size:13px;white-space:pre-wrap;"></div>
+  <header>
+    <h1 id="academiaNombre">Academia PT</h1>
+    <div class="sub">Panel del profesor</div>
+  </header>
+
+  <div class="tabs">
+    <div class="tab active" data-tab="alumnos">Alumnos</div>
+    <div class="tab" data-tab="calendario">Calendario</div>
+    <div class="tab" data-tab="practicos">Prácticos</div>
+    <div class="tab" data-tab="temas">Temas</div>
+    <div class="tab" data-tab="cultura">Cultura General</div>
+    <div class="tab" data-tab="ajustes">Ajustes</div>
+  </div>
+
+  <!-- ALUMNOS -->
+  <div class="panel active" id="panel-alumnos">
+    <div class="card">
+      <h3 id="alFormTitulo">Añadir alumno</h3>
+      <div class="row">
+        <div class="field"><label>Nombre y apellidos</label><input type="text" id="alNombre"></div>
+        <div class="field"><label>Etapa</label>
+          <select id="alEtapa"><option>Educación Infantil</option><option>Educación Primaria</option><option>ESO</option>
+            <option>Educación Especial</option><option>Educación Combinada</option><option>Unidad de Educación Especial</option><option>Otra / mixta</option></select>
+        </div>
+        <div class="field"><label>Discapacidad / NEE</label>
+          <select id="alDiscapacidad"><option>General / no específica</option><option>Discapacidad Intelectual</option>
+            <option>Trastorno del Espectro Autista (TEA)</option><option>Discapacidad Auditiva</option><option>Discapacidad Visual</option>
+            <option>Discapacidad Motora</option><option>Trastornos Graves de Conducta (TGC)</option><option>Pluridiscapacidad</option>
+            <option>Otras NEE (TEL, TDAH, altas capacidades...)</option></select>
+        </div>
+      </div>
+      <div class="field" style="margin-bottom:12px;"><label>Notas</label><input type="text" id="alNotas"></div>
+      <button class="btn btn-primary" id="btnAddAlumno">Añadir alumno</button>
+      <button class="btn btn-secondary" id="btnCancelarEdicion" style="display:none;">Cancelar</button>
+      <span class="status" id="alumnosStatus"></span>
+    </div>
+    <div class="card">
+      <h3>Alumnos</h3>
+      <div class="hint" style="margin-top:0;">Haz clic en un nombre para ver su ficha: resumen de prácticos y temas estudiados.</div>
+      <table><thead><tr><th>Nombre y apellidos</th><th></th></tr></thead><tbody id="tablaAlumnos"></tbody></table>
+      <div class="empty" id="alumnosEmpty" style="display:none;">Todavía no has añadido ningún alumno.</div>
+    </div>
+    <div class="card" id="fichaAlumno" style="display:none;"></div>
+  </div>
+
+  <!-- CALENDARIO -->
+  <div class="panel" id="panel-calendario">
+    <div class="card">
+      <div class="cal-header">
+        <div class="cal-nav"><button id="calPrev">‹</button></div>
+        <h3 id="calTitulo" style="margin:0;"></h3>
+        <div class="cal-nav"><button id="calNext">›</button></div>
+      </div>
+      <div class="cal-grid" id="calDow"></div>
+      <div class="cal-grid" id="calGrid" style="margin-top:4px;"></div>
+      <div class="day-panel" id="dayPanel"></div>
+    </div>
+  </div>
+
+  <!-- PRACTICOS -->
+  <div class="panel" id="panel-practicos">
+    <div class="card">
+      <h3>Prácticos enviados por los alumnos</h3>
+      <div class="row">
+        <div class="field"><label>Filtrar por alumno</label><select id="filtroAlumnoPracticos"></select></div>
+        <div class="field"><label>Filtrar por estado</label>
+          <select id="filtroEstadoPracticos"><option value="">Todos</option><option value="pendiente">Pendientes</option><option value="corregido">Corregidos</option></select>
+        </div>
+      </div>
+      <div id="listaPracticosPrep"></div>
+      <div class="empty" id="practicosEmpty" style="display:none;">No hay prácticos que coincidan con el filtro.</div>
+    </div>
+  </div>
+
+  <!-- TEMAS -->
+  <div class="panel" id="panel-temas"></div>
+  <!-- CULTURA GENERAL -->
+  <div class="panel" id="panel-cultura"></div>
+
+  <!-- AJUSTES -->
+  <div class="panel" id="panel-ajustes">
+    <div class="card">
+      <h3>General</h3>
+      <div class="field" style="margin-bottom:12px;"><label>Nombre de la academia</label><input type="text" id="ajNombreAcademia"></div>
+      <button class="btn btn-primary" id="btnGuardarAjustes">Guardar</button>
+      <span class="status" id="ajustesStatus"></span>
+    </div>
+    <div class="card">
+      <h3>Enlace base del alumno</h3>
+      <div class="hint" style="margin-top:0;">URL donde está publicada tu página alumno.html (para generar los enlaces de la pestaña Alumnos).</div>
+      <div class="field" style="margin-bottom:12px;"><input type="text" id="ajUrlAlumno" placeholder="https://tuusuario.github.io/tu-repo/alumno.html"></div>
+      <button class="btn btn-primary" id="btnGuardarUrlAlumno">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const API_URL = 'https://script.google.com/macros/s/AKfycbzrEozXfHf41s3QPZTZelrfIuxQ48xs4LAABID3Tmk4JqV0Ys0e_UCGOHlsV5aAAm-w/exec';
+const COACH_KEY = 'cgr-pt-2026'; // cámbiala si quieres
+
+let data = { alumnos:[], calendario:[], practicos:[], temas:[], temasProgreso:[], cg:[], cgProgreso:[], ajustes:[] };
+let calYear, calMonth, selectedDate=null;
+const MESES=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+const DOW=['L','M','X','J','V','S','D'];
+const TIPOS_SESION=['Teoría','Práctico','Simulacro','Tutoría','Repaso'];
+
+function uid(pre){ return (pre||'id')+'_'+Date.now()+'_'+Math.random().toString(36).slice(2,7); }
+function escapeHtml(s){ return (s||'').toString().replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function todayISO(){ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+
+function mostrarError(msg){
+  const b = document.getElementById('errorBanner');
+  b.textContent = msg;
+  b.style.display = 'block';
+}
+function ocultarError(){
+  document.getElementById('errorBanner').style.display = 'none';
+}
+
+async function apiGet(action){
+  const res = await fetch(API_URL+'?action='+action);
+  const text = await res.text();
+  try{
+    return JSON.parse(text);
+  }catch(e){
+    throw new Error('El backend no devolvió JSON (revisa que el Apps Script esté bien desplegado y autorizado). Respuesta recibida: ' + text.slice(0,300));
+  }
+}
+async function apiPost(action,payload){
+  const res = await fetch(API_URL, {
+    method:'POST',
+    headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body: JSON.stringify({action,payload})
+  });
+  const text = await res.text();
+  let json;
+  try{ json = JSON.parse(text); }
+  catch(e){ throw new Error('El backend no devolvió JSON al ejecutar "'+action+'". Respuesta recibida: ' + text.slice(0,300)); }
+  if(json.error) throw new Error('Error del backend en "'+action+'": ' + json.error);
+  return json;
+}
+function ajusteVal(clave, fallback){
+  const a = data.ajustes.find(x=>x.clave===clave);
+  return a ? a.valor : fallback;
+}
+
+async function loadAll(){
+  ocultarError();
+  const now=new Date(); calYear=now.getFullYear(); calMonth=now.getMonth();
+  renderCalendar();
+  try{
+    data = await apiGet('getAll');
+  }catch(e){
+    mostrarError('No se ha podido cargar los datos del backend.\n\n' + e.message);
+    return;
+  }
+  document.getElementById('academiaNombre').textContent = ajusteVal('academia','Academia PT');
+  document.getElementById('ajNombreAcademia').value = ajusteVal('academia','Academia PT');
+  document.getElementById('ajUrlAlumno').value = ajusteVal('urlAlumno','');
+  renderAlumnos(); populateFiltros();
+  renderCalendar();
+  renderPracticos();
+  renderCatalogTab('temas','Temas',data.temas,data.temasProgreso,'temas');
+  renderCatalogTab('cultura','Cultura General',data.cg,data.cgProgreso,'cg');
+}
+
+/* LOCK */
+document.getElementById('lockBtn').addEventListener('click', tryUnlock);
+document.getElementById('lockInput').addEventListener('keydown', e=>{ if(e.key==='Enter') tryUnlock(); });
+function tryUnlock(){
+  const val = document.getElementById('lockInput').value;
+  if(val === COACH_KEY){
+    document.getElementById('lockScreen').style.display='none';
+    document.getElementById('app').style.display='block';
+    loadAll();
+  } else {
+    document.getElementById('lockStatus').textContent = 'Clave incorrecta.';
+  }
+}
+(function checkUrlKey(){
+  const params = new URLSearchParams(location.search);
+  if(params.get('key') === COACH_KEY){
+    document.getElementById('lockScreen').style.display='none';
+    document.getElementById('app').style.display='block';
+    loadAll();
+  }
+})();
+
+/* TABS */
+document.querySelectorAll('.tab').forEach(t=>{
+  t.addEventListener('click', ()=>{
+    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));
+    t.classList.add('active');
+    document.getElementById('panel-'+t.dataset.tab).classList.add('active');
+  });
+});
+
+/* ALUMNOS */
+let editandoAlumnoId = null;
+
+function renderAlumnos(){
+  const tbody = document.getElementById('tablaAlumnos'); tbody.innerHTML='';
+  document.getElementById('alumnosEmpty').style.display = data.alumnos.length?'none':'block';
+  data.alumnos.forEach(a=>{
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td><a href="#" data-ver="${a.id}" style="color:var(--ink);font-weight:600;text-decoration:underline;cursor:pointer;">${escapeHtml(a.nombre)}</a></td>
+      <td style="white-space:nowrap;">
+        <button class="icon-btn" data-mod="${a.id}">Modificar</button> ·
+        <button class="icon-btn" data-del="${a.id}">Eliminar</button>
+      </td>`;
+    tr.querySelector('[data-ver]').addEventListener('click', e=>{ e.preventDefault(); renderFichaAlumno(a.id); });
+    tr.querySelector('[data-mod]').addEventListener('click', ()=>startEditAlumno(a.id));
+    tr.querySelector('[data-del]').addEventListener('click', async ()=>{
+      if(!confirm('¿Eliminar a '+a.nombre+'?')) return;
+      await apiPost('deleteAlumno',{id:a.id});
+      if(editandoAlumnoId===a.id) cancelarEdicionAlumno();
+      await loadAll();
+      document.getElementById('fichaAlumno').style.display='none';
+    });
+    tbody.appendChild(tr);
+  });
+}
+
+function startEditAlumno(id){
+  const a = data.alumnos.find(x=>x.id===id); if(!a) return;
+  editandoAlumnoId = id;
+  document.getElementById('alFormTitulo').textContent = 'Modificar alumno';
+  document.getElementById('alNombre').value = a.nombre;
+  document.getElementById('alEtapa').value = a.etapa;
+  document.getElementById('alDiscapacidad').value = a.discapacidad;
+  document.getElementById('alNotas').value = a.notas || '';
+  document.getElementById('btnAddAlumno').textContent = 'Guardar cambios';
+  document.getElementById('btnCancelarEdicion').style.display = 'inline-block';
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+function cancelarEdicionAlumno(){
+  editandoAlumnoId = null;
+  document.getElementById('alFormTitulo').textContent = 'Añadir alumno';
+  document.getElementById('alNombre').value=''; document.getElementById('alNotas').value='';
+  document.getElementById('alEtapa').value='Educación Infantil'; document.getElementById('alDiscapacidad').value='General / no específica';
+  document.getElementById('btnAddAlumno').textContent = 'Añadir alumno';
+  document.getElementById('btnCancelarEdicion').style.display = 'none';
+}
+document.getElementById('btnCancelarEdicion').addEventListener('click', cancelarEdicionAlumno);
+
+function renderFichaAlumno(id){
+  const a = data.alumnos.find(x=>x.id===id); if(!a) return;
+  const ficha = document.getElementById('fichaAlumno');
+  const base = ajusteVal('urlAlumno','') || 'alumno.html';
+  const link = base.replace(/\/$/,'') + (base.includes('?')?'&':'?') + 'id='+a.id;
+
+  const misPracticos = data.practicos.filter(p=>p.alumnoId===id).sort((x,y)=>String(y.fecha).localeCompare(String(x.fecha)));
+  const pendientes = misPracticos.filter(p=>p.estado==='pendiente').length;
+  const corregidos = misPracticos.filter(p=>p.estado==='corregido').length;
+  const recientes = misPracticos.slice(0,5);
+
+  function resumenTemas(catalogo, progreso){
+    const conteo = {'Pendiente':0,'En estudio':0,'Repasado':0,'Dominado':0};
+    const estudiados = [];
+    catalogo.forEach(t=>{
+      const reg = progreso.find(x=>x.alumnoId===id && x.temaId===t.id);
+      const estado = reg?reg.estado:'Pendiente';
+      conteo[estado] = (conteo[estado]||0)+1;
+      if(estado!=='Pendiente') estudiados.push(t.titulo+' ('+estado+')');
+    });
+    return {conteo, estudiados, total: catalogo.length};
+  }
+  const rTemas = resumenTemas(data.temas, data.temasProgreso);
+  const rCg = resumenTemas(data.cg, data.cgProgreso);
+
+  ficha.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:baseline;">
+      <h3 style="margin:0;">Ficha de ${escapeHtml(a.nombre)}</h3>
+      <button class="icon-btn" id="btnCerrarFicha">Cerrar ✕</button>
+    </div>
+    <div class="hint" style="margin-top:6px;">${escapeHtml(a.etapa)} · ${escapeHtml(a.discapacidad)}${a.notas?(' · '+escapeHtml(a.notas)):''}</div>
+    <div class="link-box" style="margin-bottom:16px;">${escapeHtml(link)} <button class="btn btn-sm btn-secondary" id="btnCopiarLinkFicha">Copiar enlace</button></div>
+
+    <h3 style="font-size:14.5px;">Resumen de prácticos</h3>
+    <p style="font-size:13.5px;">Total: <strong>${misPracticos.length}</strong> · Pendientes: <strong style="color:var(--amber);">${pendientes}</strong> · Corregidos: <strong style="color:var(--green);">${corregidos}</strong></p>
+    ${recientes.length? '<table><thead><tr><th>Fecha</th><th>Estado</th></tr></thead><tbody>'+recientes.map(p=>`<tr><td>${escapeHtml(p.fecha)}</td><td><span class="pill ${p.estado}">${p.estado==='pendiente'?'Pendiente':'Corregido'}</span></td></tr>`).join('')+'</tbody></table>' : '<div class="empty">Todavía no ha enviado ningún práctico.</div>'}
+
+    <h3 style="font-size:14.5px;margin-top:18px;">Temas — progreso</h3>
+    <p style="font-size:13.5px;">De ${rTemas.total} temas: Dominado ${rTemas.conteo['Dominado']} · Repasado ${rTemas.conteo['Repasado']} · En estudio ${rTemas.conteo['En estudio']} · Pendiente ${rTemas.conteo['Pendiente']}</p>
+    ${rTemas.estudiados.length? '<div class="hint" style="margin:0 0 8px;">Estudiados: '+rTemas.estudiados.map(escapeHtml).join(', ')+'</div>' : ''}
+
+    <h3 style="font-size:14.5px;margin-top:18px;">Cultura General — progreso</h3>
+    <p style="font-size:13.5px;">De ${rCg.total} temas: Dominado ${rCg.conteo['Dominado']} · Repasado ${rCg.conteo['Repasado']} · En estudio ${rCg.conteo['En estudio']} · Pendiente ${rCg.conteo['Pendiente']}</p>
+    ${rCg.estudiados.length? '<div class="hint" style="margin:0;">Estudiados: '+rCg.estudiados.map(escapeHtml).join(', ')+'</div>' : ''}
+  `;
+  ficha.style.display = 'block';
+  document.getElementById('btnCerrarFicha').addEventListener('click', ()=> ficha.style.display='none');
+  document.getElementById('btnCopiarLinkFicha').addEventListener('click', e=>{
+    navigator.clipboard.writeText(link); e.target.textContent='¡Copiado!'; setTimeout(()=>e.target.textContent='Copiar enlace',1500);
+  });
+  ficha.scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+document.getElementById('btnAddAlumno').addEventListener('click', async ()=>{
+  const nombre = document.getElementById('alNombre').value.trim();
+  const st = document.getElementById('alumnosStatus');
+  if(!nombre){ st.textContent='Escribe el nombre.'; st.className='status err'; return; }
+  const payload = { nombre, etapa: document.getElementById('alEtapa').value,
+    discapacidad: document.getElementById('alDiscapacidad').value, notas: document.getElementById('alNotas').value.trim() };
+  try{
+    if(editandoAlumnoId){
+      payload.id = editandoAlumnoId;
+      await apiPost('updateAlumno', payload);
+      st.textContent='Alumno actualizado.'; st.className='status ok';
+      cancelarEdicionAlumno();
+    } else {
+      payload.id = uid('al');
+      await apiPost('addAlumno', payload);
+      document.getElementById('alNombre').value=''; document.getElementById('alNotas').value='';
+      st.textContent='Alumno añadido.'; st.className='status ok';
+    }
+    await loadAll();
+  }catch(e){
+    st.textContent = 'Error: ' + e.message; st.className='status err';
+  }
+});
+
+function populateFiltros(){
+  const filtro = document.getElementById('filtroAlumnoPracticos');
+  const prev = filtro.value;
+  filtro.innerHTML = '<option value="">Todos los alumnos</option>';
+  data.alumnos.forEach(a=>{ const o=document.createElement('option'); o.value=a.id; o.textContent=a.nombre; filtro.appendChild(o); });
+  filtro.value = prev;
+}
+document.getElementById('filtroAlumnoPracticos').addEventListener('change', renderPracticos);
+document.getElementById('filtroEstadoPracticos').addEventListener('change', renderPracticos);
+
+/* CALENDARIO */
+function renderCalendar(){
+  document.getElementById('calTitulo').textContent = MESES[calMonth]+' '+calYear;
+  const dow = document.getElementById('calDow'); dow.innerHTML='';
+  DOW.forEach(d=>{ const el=document.createElement('div'); el.className='cal-dow'; el.textContent=d; dow.appendChild(el); });
+  const grid = document.getElementById('calGrid'); grid.innerHTML='';
+  const firstDay = new Date(calYear,calMonth,1);
+  let startOffset = firstDay.getDay(); startOffset = startOffset===0?6:startOffset-1;
+  const daysInMonth = new Date(calYear,calMonth+1,0).getDate();
+  const hoy = todayISO();
+  for(let i=0;i<startOffset;i++){ const el=document.createElement('div'); el.className='cal-day empty'; grid.appendChild(el); }
+  for(let d=1; d<=daysInMonth; d++){
+    const iso = calYear+'-'+String(calMonth+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+    const el = document.createElement('div');
+    el.className = 'cal-day'+(iso===hoy?' today':'')+(iso===selectedDate?' selected':'');
+    const evs = data.calendario.filter(ev=>ev.fecha===iso);
+    el.innerHTML = `<div class="num">${d}</div>` + (evs.length? '<div>'+'<span class="dot"></span>'.repeat(Math.min(evs.length,4))+'</div>':'');
+    el.addEventListener('click', ()=>{ selectedDate=iso; renderCalendar(); renderDayPanel(); });
+    grid.appendChild(el);
+  }
+}
+function formatFechaLarga(iso){
+  const [y,m,d]=iso.split('-').map(Number); const dt=new Date(y,m-1,d);
+  const dias=['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
+  return dias[dt.getDay()]+', '+d+' de '+MESES[m-1]+' de '+y;
+}
+function renderDayPanel(){
+  const panel = document.getElementById('dayPanel');
+  if(!selectedDate){ panel.innerHTML=''; return; }
+  const evs = data.calendario.filter(ev=>ev.fecha===selectedDate).sort((a,b)=>(a.hora||'').localeCompare(b.hora||''));
+  let html = '<h3 style="font-size:14.5px;">'+formatFechaLarga(selectedDate)+'</h3>';
+  if(evs.length===0) html += '<div class="empty" style="padding:8px 0;">Sin clases programadas.</div>';
+  evs.forEach(ev=>{
+    const alumno = data.alumnos.find(a=>a.id===ev.alumnoId);
+    html += `<div class="evento"><div style="display:flex;justify-content:space-between;">
+      <div>${ev.hora?('<strong>'+escapeHtml(ev.hora)+'</strong> · '):''}${escapeHtml(ev.tipo)} — ${escapeHtml(alumno?alumno.nombre:'(alumno eliminado)')}</div>
+      <button class="icon-btn" data-del="${ev.id}">Eliminar</button></div>
+      <div style="color:var(--gray);font-size:12px;margin-top:2px;">${escapeHtml(ev.tema||'')}${ev.notas?(' — '+escapeHtml(ev.notas)):''}</div></div>`;
+  });
+  html += `<div style="margin-top:14px;">
+    <div class="row">
+      <div class="field"><label>Alumno</label><select id="evAlumno"></select></div>
+      <div class="field"><label>Tipo</label><select id="evTipo">${TIPOS_SESION.map(t=>'<option>'+t+'</option>').join('')}</select></div>
+      <div class="field" style="max-width:110px;"><label>Hora</label><input type="time" id="evHora"></div>
+    </div>
+    <div class="row">
+      <div class="field"><label>Tema</label><input type="text" id="evTema"></div>
+      <div class="field"><label>Notas para el alumno</label><input type="text" id="evNotas"></div>
+    </div>
+    <button class="btn btn-primary btn-sm" id="btnAddEvento">Programar clase</button>
+  </div>`;
+  panel.innerHTML = html;
+  const selA = document.getElementById('evAlumno');
+  data.alumnos.forEach(a=>{ const o=document.createElement('option'); o.value=a.id; o.textContent=a.nombre; selA.appendChild(o); });
+  document.getElementById('btnAddEvento').addEventListener('click', async ()=>{
+    if(!selA.value){ alert('Añade primero un alumno.'); return; }
+    await apiPost('addEvento', { id: uid('ev'), fecha:selectedDate, alumnoId:selA.value, tipo:document.getElementById('evTipo').value,
+      hora:document.getElementById('evHora').value, tema:document.getElementById('evTema').value.trim(), notas:document.getElementById('evNotas').value.trim() });
+    await loadAll(); renderDayPanel();
+  });
+  panel.querySelectorAll('.evento [data-del]').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{ await apiPost('deleteEvento',{id:btn.dataset.del}); await loadAll(); renderDayPanel(); });
+  });
+}
+document.getElementById('calPrev').addEventListener('click', ()=>{ calMonth--; if(calMonth<0){calMonth=11;calYear--;} renderCalendar(); });
+document.getElementById('calNext').addEventListener('click', ()=>{ calMonth++; if(calMonth>11){calMonth=0;calYear++;} renderCalendar(); });
+
+/* PRACTICOS */
+function renderPracticos(){
+  const filtroAlumno = document.getElementById('filtroAlumnoPracticos').value;
+  const filtroEstado = document.getElementById('filtroEstadoPracticos').value;
+  let lista = data.practicos.slice().sort((a,b)=>String(b.fecha).localeCompare(String(a.fecha)));
+  if(filtroAlumno) lista = lista.filter(p=>p.alumnoId===filtroAlumno);
+  if(filtroEstado) lista = lista.filter(p=>p.estado===filtroEstado);
+  document.getElementById('practicosEmpty').style.display = lista.length?'none':'block';
+  const cont = document.getElementById('listaPracticosPrep'); cont.innerHTML='';
+  lista.forEach(p=>{
+    const alumno = data.alumnos.find(a=>a.id===p.alumnoId);
+    const box = document.createElement('div'); box.className='card'; box.style.marginBottom='10px';
+    let html = `<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;">
+      <div><strong>${escapeHtml(alumno?alumno.nombre:'(alumno eliminado)')}</strong> — ${escapeHtml(p.fecha)} <span class="pill ${p.estado}">${p.estado==='pendiente'?'Pendiente':'Corregido'}</span></div>
+      <button class="btn btn-secondary btn-sm" data-toggle>Ver</button>
+    </div>
+    <div data-body style="display:none;margin-top:10px;">`;
+    if(p.texto) html += `<textarea readonly style="min-height:120px;">${escapeHtml(p.texto)}</textarea>`;
+    if(p.fotoUrl) html += `<img class="practico-photo" src="${escapeHtml(p.fotoUrl)}">`;
+    if(p.estado==='corregido'){
+      html += `<div class="hint" style="margin-top:8px;">Tu feedback:</div><div style="white-space:pre-wrap;font-size:13.5px;background:var(--paper);padding:10px;border-radius:3px;">${escapeHtml(p.feedback)}</div>`;
+    } else {
+      html += `<div class="field" style="margin-top:10px;"><label>Tu feedback / corrección</label><textarea data-feedback placeholder="Escribe aquí la corrección, valoración por criterios, sugerencias..."></textarea></div>
+      <button class="btn btn-primary btn-sm" data-enviar>Guardar feedback</button><span class="status" data-status></span>`;
+    }
+    html += '</div>';
+    box.innerHTML = html;
+    cont.appendChild(box);
+    box.querySelector('[data-toggle]').addEventListener('click', ()=>{
+      const b = box.querySelector('[data-body]');
+      b.style.display = b.style.display==='none'?'block':'none';
+    });
+    const btnEnviar = box.querySelector('[data-enviar]');
+    if(btnEnviar){
+      btnEnviar.addEventListener('click', async ()=>{
+        const feedback = box.querySelector('[data-feedback]').value.trim();
+        const st = box.querySelector('[data-status]');
+        if(!feedback){ st.textContent='Escribe el feedback antes de guardar.'; st.className='status err'; return; }
+        st.innerHTML = '<span class="spinner"></span> Guardando...'; st.className='status';
+        await apiPost('darFeedback', { id:p.id, feedback, fechaFeedback: todayISO() });
+        await loadAll();
+      });
+    }
+  });
+}
+
+/* TEMAS / CULTURA GENERAL */
+function renderCatalogTab(prefix, titulo, catalogo, progreso, tipo){
+  const panel = document.getElementById('panel-'+prefix);
+  panel.innerHTML = `<div class="card">
+    <h3>Añadir tema</h3>
+    <div class="row">
+      <div class="field" style="max-width:90px;"><label>Nº</label><input type="text" id="${prefix}Num"></div>
+      <div class="field"><label>Título</label><input type="text" id="${prefix}Titulo"></div>
+    </div>
+    <button class="btn btn-primary btn-sm" id="${prefix}BtnAdd">Añadir</button>
+    <span class="status" id="${prefix}Status"></span>
+  </div>
+  <div class="card">
+    <h3>${titulo} — progreso por alumno</h3>
+    <table><thead><tr><th>Nº</th><th>Título</th><th>Progreso</th><th></th></tr></thead><tbody id="${prefix}Tbody"></tbody></table>
+    <div class="empty" id="${prefix}Empty" style="display:none;">Todavía no hay temas cargados.</div>
+  </div>`;
+  const tbody = document.getElementById(prefix+'Tbody');
+  document.getElementById(prefix+'Empty').style.display = catalogo.length?'none':'block';
+  catalogo.slice().sort((a,b)=>String(a.numero||'').localeCompare(String(b.numero||''), undefined,{numeric:true})).forEach(t=>{
+    const progresoTexto = data.alumnos.map(al=>{
+      const reg = progreso.find(x=>x.alumnoId===al.id && x.temaId===t.id);
+      return escapeHtml(al.nombre)+': <em>'+escapeHtml(reg?reg.estado:'Pendiente')+'</em>';
+    }).join(' · ') || '<span class="hint" style="margin:0;">Sin alumnos</span>';
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${escapeHtml(t.numero||'')}</td><td>${escapeHtml(t.titulo)}</td><td style="font-size:12.5px;">${progresoTexto}</td><td><button class="icon-btn" data-del="${t.id}">Eliminar</button></td>`;
+    tr.querySelector('[data-del]').addEventListener('click', async ()=>{
+      if(!confirm('¿Eliminar este tema?')) return;
+      await apiPost('deleteTema', { id:t.id, tipo });
+      await loadAll();
+    });
+    tbody.appendChild(tr);
+  });
+  document.getElementById(prefix+'BtnAdd').addEventListener('click', async ()=>{
+    const numero = document.getElementById(prefix+'Num').value.trim();
+    const titulo2 = document.getElementById(prefix+'Titulo').value.trim();
+    const st = document.getElementById(prefix+'Status');
+    if(!titulo2){ st.textContent='Escribe un título.'; st.className='status err'; return; }
+    await apiPost('addTema', { id: uid('t'), numero, titulo: titulo2, tipo });
+    await loadAll();
+  });
+}
+
+/* AJUSTES */
+document.getElementById('btnGuardarAjustes').addEventListener('click', async ()=>{
+  await apiPost('saveAjuste', { clave:'academia', valor: document.getElementById('ajNombreAcademia').value.trim() || 'Academia PT' });
+  const st = document.getElementById('ajustesStatus'); st.textContent='Guardado.'; st.className='status ok';
+  await loadAll();
+});
+document.getElementById('btnGuardarUrlAlumno').addEventListener('click', async ()=>{
+  await apiPost('saveAjuste', { clave:'urlAlumno', valor: document.getElementById('ajUrlAlumno').value.trim() });
+  await loadAll();
+});
+</script>
+</body>
+</html>
