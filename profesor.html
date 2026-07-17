@@ -556,6 +556,7 @@ function renderDayPanel(){
       <div class="field"><label>Notas para el alumno</label><input type="text" id="evNotas"></div>
     </div>
     <button class="btn btn-primary btn-sm" id="btnAddEvento">Programar clase</button>
+    <span class="status" id="evStatus"></span>
   </div>`;
   panel.innerHTML = html;
   const selA = document.getElementById('evAlumno');
@@ -563,10 +564,17 @@ function renderDayPanel(){
   selA.appendChild(optTodos);
   data.alumnos.forEach(a=>{ const o=document.createElement('option'); o.value=a.id; o.textContent=a.nombre; selA.appendChild(o); });
   document.getElementById('btnAddEvento').addEventListener('click', async ()=>{
+    const st = document.getElementById('evStatus');
     if(!selA.value){ alert('Añade primero un alumno.'); return; }
-    await apiPost('addEvento', { id: uid('ev'), fecha:selectedDate, alumnoId:selA.value, tipo:document.getElementById('evTipo').value,
-      hora:document.getElementById('evHora').value, tema:document.getElementById('evTema').value.trim(), notas:document.getElementById('evNotas').value.trim() });
-    await loadAll(); renderDayPanel();
+    st.innerHTML = '<span class="spinner"></span> Guardando...'; st.className='status';
+    try{
+      await apiPost('addEvento', { id: uid('ev'), fecha:selectedDate, alumnoId:selA.value, tipo:document.getElementById('evTipo').value,
+        hora:document.getElementById('evHora').value, tema:document.getElementById('evTema').value.trim(), notas:document.getElementById('evNotas').value.trim() });
+      await loadAll();
+      renderDayPanel();
+    }catch(e){
+      st.textContent = 'Error al guardar: ' + e.message; st.className='status err';
+    }
   });
   panel.querySelectorAll('.evento [data-del]').forEach(btn=>{
     btn.addEventListener('click', async ()=>{ await apiPost('deleteEvento',{id:btn.dataset.del}); await loadAll(); renderDayPanel(); });
