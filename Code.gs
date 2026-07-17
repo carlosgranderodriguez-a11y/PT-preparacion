@@ -42,6 +42,20 @@ function ensureHeaders_() {
   });
 }
 
+const DATE_FIELDS = { Calendario: ['fecha'], Practicos: ['fecha', 'fechaFeedback'] };
+const TIME_FIELDS = { Calendario: ['hora'] };
+
+function normalizeRow_(sheetName, obj) {
+  const tz = Session.getScriptTimeZone();
+  (DATE_FIELDS[sheetName] || []).forEach(f => {
+    if (obj[f] instanceof Date) obj[f] = Utilities.formatDate(obj[f], tz, 'yyyy-MM-dd');
+  });
+  (TIME_FIELDS[sheetName] || []).forEach(f => {
+    if (obj[f] instanceof Date) obj[f] = Utilities.formatDate(obj[f], tz, 'HH:mm');
+  });
+  return obj;
+}
+
 function sheetToObjects_(name) {
   const sh = getSheet_(name);
   const values = sh.getDataRange().getValues();
@@ -52,7 +66,7 @@ function sheetToObjects_(name) {
     .map(r => {
       const obj = {};
       headers.forEach((h, i) => obj[h] = r[i]);
-      return obj;
+      return normalizeRow_(name, obj);
     });
 }
 
