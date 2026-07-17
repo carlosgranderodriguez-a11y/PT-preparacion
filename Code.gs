@@ -24,6 +24,7 @@ const HEADERS = {
   TemasProgreso: ['alumnoId', 'temaId', 'estado'],
   CG: ['id', 'numero', 'titulo'],
   CGProgreso: ['alumnoId', 'temaId', 'estado'],
+  Dafo: ['alumnoId', 'fortalezas', 'debilidades', 'oportunidades', 'amenazas'],
   Ajustes: ['clave', 'valor']
 };
 
@@ -106,6 +107,21 @@ function setKeyValue_(sheetName, keyCols, keyVals, valueCol, value) {
   sh.appendRow(row);
 }
 
+function upsertByKey_(sheetName, keyField, keyValue, updates) {
+  const sh = getSheet_(sheetName);
+  const values = sh.getDataRange().getValues();
+  const headers = values[0];
+  const keyCol = headers.indexOf(keyField);
+  for (let r = 1; r < values.length; r++) {
+    if (String(values[r][keyCol]) === String(keyValue)) {
+      headers.forEach((h, i) => { if (updates[h] !== undefined) sh.getRange(r + 1, i + 1).setValue(updates[h]); });
+      return;
+    }
+  }
+  const row = headers.map(h => h === keyField ? keyValue : (updates[h] !== undefined ? updates[h] : ''));
+  sh.appendRow(row);
+}
+
 function guardarFoto_(base64Data, nombre) {
   const folders = DriveApp.getFoldersByName(DRIVE_FOLDER_NAME);
   const folder = folders.hasNext() ? folders.next() : DriveApp.createFolder(DRIVE_FOLDER_NAME);
@@ -131,6 +147,7 @@ function doGet(e) {
       temasProgreso: sheetToObjects_('TemasProgreso'),
       cg: sheetToObjects_('CG'),
       cgProgreso: sheetToObjects_('CGProgreso'),
+      dafo: sheetToObjects_('Dafo'),
       ajustes: sheetToObjects_('Ajustes')
     };
   } else {
@@ -186,6 +203,9 @@ function doPost(e) {
         break;
       case 'setProgreso':
         setKeyValue_(p.tipo === 'cg' ? 'CGProgreso' : 'TemasProgreso', [0, 1], [p.alumnoId, p.temaId], 2, p.estado);
+        break;
+      case 'saveDafo':
+        upsertByKey_('Dafo', 'alumnoId', p.alumnoId, p);
         break;
       case 'saveAjuste':
         setKeyValue_('Ajustes', [0], [p.clave], 1, p.valor);
