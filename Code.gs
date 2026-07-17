@@ -1,0 +1,200 @@
+/**
+ * BACKEND — Academia PT (Pedagogía Terapéutica, oposición Comunidad de Madrid)
+ * Conecta profesor.html y alumno.html con un Google Sheet.
+ *
+ * INSTALACIÓN:
+ * 1. Crea un Google Sheet nuevo (vacío, las pestañas se crean solas).
+ * 2. Copia su ID (la parte de la URL entre /d/ y /edit) y pégalo abajo en SHEET_ID.
+ * 3. Extensiones > Apps Script, borra el contenido de Code.gs y pega todo este archivo.
+ * 4. Implementar > Nueva implementación > Tipo: Aplicación web.
+ *    - Ejecutar como: Yo (tu cuenta)
+ *    - Quién tiene acceso: Cualquier usuario
+ * 5. Copia la URL que termina en /exec. Esa es tu API_URL para profesor.html y alumno.html.
+ * 6. Autoriza los permisos la primera vez que se ejecute (Drive + Sheets).
+ */
+
+const SHEET_ID = '1Z5-EHnE2ZALflhpWRUXH3srSgUvlJU-YL1M-ZuhkkZg';
+const DRIVE_FOLDER_NAME = 'PT_Practicos_Fotos';
+
+const HEADERS = {
+  Alumnos: ['id', 'nombre', 'etapa', 'discapacidad', 'notas'],
+  Calendario: ['id', 'fecha', 'hora', 'alumnoId', 'tipo', 'tema', 'notas'],
+  Practicos: ['id', 'alumnoId', 'fecha', 'texto', 'fotoUrl', 'estado', 'feedback', 'fechaFeedback'],
+  Temas: ['id', 'numero', 'titulo'],
+  TemasProgreso: ['alumnoId', 'temaId', 'estado'],
+  CG: ['id', 'numero', 'titulo'],
+  CGProgreso: ['alumnoId', 'temaId', 'estado'],
+  Ajustes: ['clave', 'valor']
+};
+
+function getSheet_(name) {
+  const ss = SpreadsheetApp.openById(SHEET_ID);
+  let sh = ss.getSheetByName(name);
+  if (!sh) sh = ss.insertSheet(name);
+  return sh;
+}
+
+function ensureHeaders_() {
+  Object.keys(HEADERS).forEach(name => {
+    const sh = getSheet_(name);
+    if (sh.getLastRow() === 0) sh.appendRow(HEADERS[name]);
+  });
+}
+
+function sheetToObjects_(name) {
+  const sh = getSheet_(name);
+  const values = sh.getDataRange().getValues();
+  if (values.length < 2) return [];
+  const headers = values[0];
+  return values.slice(1)
+    .filter(r => r.some(c => c !== ''))
+    .map(r => {
+      const obj = {};
+      headers.forEach((h, i) => obj[h] = r[i]);
+      return obj;
+    });
+}
+
+function appendObject_(name, obj) {
+  const sh = getSheet_(name);
+  const headers = sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0];
+  const row = headers.map(h => obj[h] !== undefined ? obj[h] : '');
+  sh.appendRow(row);
+}
+
+function updateObjectById_(name, idField, id, updates) {
+  const sh = getSheet_(name);
+  const values = sh.getDataRange().getValues();
+  const headers = values[0];
+  const idCol = headers.indexOf(idField);
+  for (let r = 1; r < values.length; r++) {
+    if (String(values[r][idCol]) === String(id)) {
+      headers.forEach((h, i) => {
+        if (updates[h] !== undefined) sh.getRange(r + 1, i + 1).setValue(updates[h]);
+      });
+      return true;
+    }
+  }
+  return false;
+}
+
+function deleteObjectById_(name, idField, id) {
+  const sh = getSheet_(name);
+  const values = sh.getDataRange().getValues();
+  const headers = values[0];
+  const idCol = headers.indexOf(idField);
+  for (let r = values.length - 1; r >= 1; r--) {
+    if (String(values[r][idCol]) === String(id)) {
+      sh.deleteRow(r + 1);
+      return true;
+    }
+  }
+  return false;
+}
+
+function setKeyValue_(sheetName, keyCols, keyVals, valueCol, value) {
+  const sh = getSheet_(sheetName);
+  const values = sh.getDataRange().getValues();
+  for (let r = 1; r < values.length; r++) {
+    let match = true;
+    keyCols.forEach((col, i) => { if (String(values[r][col]) !== String(keyVals[i])) match = false; });
+    if (match) { sh.getRange(r + 1, valueCol + 1).setValue(value); return; }
+  }
+  const row = [];
+  keyCols.forEach((col, i) => row[col] = keyVals[i]);
+  row[valueCol] = value;
+  sh.appendRow(row);
+}
+
+function guardarFoto_(base64Data, nombre) {
+  const folders = DriveApp.getFoldersByName(DRIVE_FOLDER_NAME);
+  const folder = folders.hasNext() ? folders.next() : DriveApp.createFolder(DRIVE_FOLDER_NAME);
+  const matches = base64Data.match(/^data:(.+);base64,(.*)$/);
+  const contentType = matches ? matches[1] : 'image/jpeg';
+  const data = matches ? matches[2] : base64Data;
+  const blob = Utilities.newBlob(Utilities.base64Decode(data), contentType, nombre);
+  const file = folder.createFile(blob);
+  file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+  return 'https://drive.google.com/uc?id=' + file.getId();
+}
+
+function doGet(e) {
+  ensureHeaders_();
+  const action = e.parameter.action;
+  let result;
+  if (action === 'getAll') {
+    result = {
+      alumnos: sheetToObjects_('Alumnos'),
+      calendario: sheetToObjects_('Calendario'),
+      practicos: sheetToObjects_('Practicos'),
+      temas: sheetToObjects_('Temas'),
+      temasProgreso: sheetToObjects_('TemasProgreso'),
+      cg: sheetToObjects_('CG'),
+      cgProgreso: sheetToObjects_('CGProgreso'),
+      ajustes: sheetToObjects_('Ajustes')
+    };
+  } else {
+    result = { error: 'acción desconocida' };
+  }
+  return ContentService.createTextOutput(JSON.stringify(result)).setMimeType(ContentService.MimeType.JSON);
+}
+
+function doPost(e) {
+  ensureHeaders_();
+  let result = { ok: true };
+  try {
+    const body = JSON.parse(e.postData.contents);
+    const action = body.action;
+    const p = body.payload || {};
+
+    switch (action) {
+      case 'addAlumno':
+        appendObject_('Alumnos', p);
+        break;
+      case 'updateAlumno':
+        updateObjectById_('Alumnos', 'id', p.id, p);
+        break;
+      case 'deleteAlumno':
+        deleteObjectById_('Alumnos', 'id', p.id);
+        break;
+      case 'addEvento':
+        appendObject_('Calendario', p);
+        break;
+      case 'deleteEvento':
+        deleteObjectById_('Calendario', 'id', p.id);
+        break;
+      case 'addPractico':
+        if (p.fotoBase64) {
+          p.fotoUrl = guardarFoto_(p.fotoBase64, p.fotoNombre || ('practico_' + p.id + '.jpg'));
+          delete p.fotoBase64;
+        }
+        p.estado = 'pendiente';
+        appendObject_('Practicos', p);
+        break;
+      case 'darFeedback':
+        updateObjectById_('Practicos', 'id', p.id, {
+          estado: 'corregido',
+          feedback: p.feedback,
+          fechaFeedback: p.fechaFeedback
+        });
+        break;
+      case 'addTema':
+        appendObject_(p.tipo === 'cg' ? 'CG' : 'Temas', { id: p.id, numero: p.numero, titulo: p.titulo });
+        break;
+      case 'deleteTema':
+        deleteObjectById_(p.tipo === 'cg' ? 'CG' : 'Temas', 'id', p.id);
+        break;
+      case 'setProgreso':
+        setKeyValue_(p.tipo === 'cg' ? 'CGProgreso' : 'TemasProgreso', [0, 1], [p.alumnoId, p.temaId], 2, p.estado);
+        break;
+      case 'saveAjuste':
+        setKeyValue_('Ajustes', [0], [p.clave], 1, p.valor);
+        break;
+      default:
+        result = { error: 'acción desconocida: ' + action };
+    }
+  } catch (err) {
+    result = { error: err.message };
+  }
+  return ContentService.createTextOutput(JSON.stringify(result)).setMimeType(ContentService.MimeType.JSON);
+}
