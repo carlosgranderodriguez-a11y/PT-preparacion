@@ -85,7 +85,8 @@
   </header>
 
   <div class="tabs">
-    <div class="tab active" data-tab="alumnos">Alumnos</div>
+    <div class="tab active" data-tab="panel">Panel</div>
+    <div class="tab" data-tab="alumnos">Alumnos</div>
     <div class="tab" data-tab="calendario">Calendario</div>
     <div class="tab" data-tab="practicos">Prácticos</div>
     <div class="tab" data-tab="temas">Temas</div>
@@ -93,22 +94,31 @@
     <div class="tab" data-tab="ajustes">Ajustes</div>
   </div>
 
+  <!-- PANEL -->
+  <div class="panel active" id="panel-panel">
+    <div class="card">
+      <h3>Esta semana</h3>
+      <div class="row">
+        <div class="field"><label>Tema de la semana</label><input type="text" id="panelTema" placeholder="Ej: Tema 14 - Adaptaciones curriculares"></div>
+      </div>
+      <div class="field" style="margin-bottom:12px;"><label>Supuesto práctico de la semana</label><textarea id="panelSupuesto" placeholder="Pega o describe aquí el supuesto que toca esta semana..."></textarea></div>
+      <button class="btn btn-primary" id="btnGuardarPanel">Guardar</button>
+      <span class="status" id="panelStatus"></span>
+    </div>
+    <div class="card">
+      <h3>Análisis DAFO por alumno</h3>
+      <div class="hint" style="margin-top:0;">Fortalezas y debilidades de cada alumno, para ajustar el enfoque de cada clase.</div>
+      <div id="listaDafo"></div>
+      <div class="empty" id="dafoEmpty" style="display:none;">Añade alumnos en la pestaña Alumnos para poder rellenar su DAFO.</div>
+    </div>
+  </div>
+
   <!-- ALUMNOS -->
-  <div class="panel active" id="panel-alumnos">
+  <div class="panel" id="panel-alumnos">
     <div class="card">
       <h3 id="alFormTitulo">Añadir alumno</h3>
       <div class="row">
         <div class="field"><label>Nombre y apellidos</label><input type="text" id="alNombre"></div>
-        <div class="field"><label>Etapa</label>
-          <select id="alEtapa"><option>Educación Infantil</option><option>Educación Primaria</option><option>ESO</option>
-            <option>Educación Especial</option><option>Educación Combinada</option><option>Unidad de Educación Especial</option><option>Otra / mixta</option></select>
-        </div>
-        <div class="field"><label>Discapacidad / NEE</label>
-          <select id="alDiscapacidad"><option>General / no específica</option><option>Discapacidad Intelectual</option>
-            <option>Trastorno del Espectro Autista (TEA)</option><option>Discapacidad Auditiva</option><option>Discapacidad Visual</option>
-            <option>Discapacidad Motora</option><option>Trastornos Graves de Conducta (TGC)</option><option>Pluridiscapacidad</option>
-            <option>Otras NEE (TEL, TDAH, altas capacidades...)</option></select>
-        </div>
       </div>
       <div class="field" style="margin-bottom:12px;"><label>Notas</label><input type="text" id="alNotas"></div>
       <button class="btn btn-primary" id="btnAddAlumno">Añadir alumno</button>
@@ -179,7 +189,7 @@
 const API_URL = 'https://script.google.com/macros/s/AKfycbzrEozXfHf41s3QPZTZelrfIuxQ48xs4LAABID3Tmk4JqV0Ys0e_UCGOHlsV5aAAm-w/exec';
 const COACH_KEY = 'cgr-pt-2026'; // cámbiala si quieres
 
-let data = { alumnos:[], calendario:[], practicos:[], temas:[], temasProgreso:[], cg:[], cgProgreso:[], ajustes:[] };
+let data = { alumnos:[], calendario:[], practicos:[], temas:[], temasProgreso:[], cg:[], cgProgreso:[], ajustes:[], dafo:[] };
 let calYear, calMonth, selectedDate=null;
 const MESES=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
 const DOW=['L','M','X','J','V','S','D'];
@@ -239,6 +249,7 @@ async function loadAll(){
   document.getElementById('ajNombreAcademia').value = ajusteVal('academia','Academia PT');
   document.getElementById('ajUrlAlumno').value = ajusteVal('urlAlumno','');
   renderAlumnos(); populateFiltros();
+  renderPanel();
   renderCalendar();
   renderPracticos();
   renderCatalogTab('temas','Temas',data.temas,data.temasProgreso,'temas');
@@ -277,6 +288,55 @@ document.querySelectorAll('.tab').forEach(t=>{
   });
 });
 
+/* PANEL */
+function renderPanel(){
+  document.getElementById('panelTema').value = ajusteVal('temaSemana','');
+  document.getElementById('panelSupuesto').value = ajusteVal('supuestoSemana','');
+  renderDafo();
+}
+document.getElementById('btnGuardarPanel').addEventListener('click', async ()=>{
+  const st = document.getElementById('panelStatus');
+  try{
+    await apiPost('saveAjuste', { clave:'temaSemana', valor: document.getElementById('panelTema').value.trim() });
+    await apiPost('saveAjuste', { clave:'supuestoSemana', valor: document.getElementById('panelSupuesto').value.trim() });
+    st.textContent='Guardado.'; st.className='status ok';
+  }catch(e){ st.textContent='Error: '+e.message; st.className='status err'; }
+});
+
+function renderDafo(){
+  const cont = document.getElementById('listaDafo');
+  document.getElementById('dafoEmpty').style.display = data.alumnos.length ? 'none':'block';
+  cont.innerHTML = '';
+  data.alumnos.forEach(a=>{
+    const reg = data.dafo.find(d=>d.alumnoId===a.id) || {};
+    const box = document.createElement('div');
+    box.className = 'card';
+    box.style.marginBottom = '10px';
+    box.innerHTML = `<h3 style="font-size:14.5px;">${escapeHtml(a.nombre)}</h3>
+      <div class="row">
+        <div class="field"><label>Fortalezas</label><textarea data-campo="fortalezas" style="min-height:70px;">${escapeHtml(reg.fortalezas||'')}</textarea></div>
+        <div class="field"><label>Debilidades</label><textarea data-campo="debilidades" style="min-height:70px;">${escapeHtml(reg.debilidades||'')}</textarea></div>
+      </div>
+      <div class="row">
+        <div class="field"><label>Oportunidades</label><textarea data-campo="oportunidades" style="min-height:70px;">${escapeHtml(reg.oportunidades||'')}</textarea></div>
+        <div class="field"><label>Amenazas</label><textarea data-campo="amenazas" style="min-height:70px;">${escapeHtml(reg.amenazas||'')}</textarea></div>
+      </div>
+      <button class="btn btn-primary btn-sm" data-guardar-dafo="${a.id}">Guardar DAFO</button>
+      <span class="status" data-status-dafo="${a.id}"></span>`;
+    cont.appendChild(box);
+    box.querySelector('[data-guardar-dafo]').addEventListener('click', async ()=>{
+      const st = box.querySelector('[data-status-dafo]');
+      const payload = { alumnoId: a.id };
+      box.querySelectorAll('[data-campo]').forEach(ta=>{ payload[ta.dataset.campo] = ta.value.trim(); });
+      try{
+        await apiPost('saveDafo', payload);
+        st.textContent='Guardado.'; st.className='status ok';
+        data = await apiGet('getAll');
+      }catch(e){ st.textContent='Error: '+e.message; st.className='status err'; }
+    });
+  });
+}
+
 /* ALUMNOS */
 let editandoAlumnoId = null;
 
@@ -308,8 +368,6 @@ function startEditAlumno(id){
   editandoAlumnoId = id;
   document.getElementById('alFormTitulo').textContent = 'Modificar alumno';
   document.getElementById('alNombre').value = a.nombre;
-  document.getElementById('alEtapa').value = a.etapa;
-  document.getElementById('alDiscapacidad').value = a.discapacidad;
   document.getElementById('alNotas').value = a.notas || '';
   document.getElementById('btnAddAlumno').textContent = 'Guardar cambios';
   document.getElementById('btnCancelarEdicion').style.display = 'inline-block';
@@ -319,7 +377,6 @@ function cancelarEdicionAlumno(){
   editandoAlumnoId = null;
   document.getElementById('alFormTitulo').textContent = 'Añadir alumno';
   document.getElementById('alNombre').value=''; document.getElementById('alNotas').value='';
-  document.getElementById('alEtapa').value='Educación Infantil'; document.getElementById('alDiscapacidad').value='General / no específica';
   document.getElementById('btnAddAlumno').textContent = 'Añadir alumno';
   document.getElementById('btnCancelarEdicion').style.display = 'none';
 }
@@ -355,7 +412,7 @@ function renderFichaAlumno(id){
       <h3 style="margin:0;">Ficha de ${escapeHtml(a.nombre)}</h3>
       <button class="icon-btn" id="btnCerrarFicha">Cerrar ✕</button>
     </div>
-    <div class="hint" style="margin-top:6px;">${escapeHtml(a.etapa)} · ${escapeHtml(a.discapacidad)}${a.notas?(' · '+escapeHtml(a.notas)):''}</div>
+    <div class="hint" style="margin-top:6px;">${a.notas?escapeHtml(a.notas):''}</div>
     <div class="link-box" style="margin-bottom:16px;">${escapeHtml(link)} <button class="btn btn-sm btn-secondary" id="btnCopiarLinkFicha">Copiar enlace</button></div>
 
     <h3 style="font-size:14.5px;">Resumen de prácticos</h3>
@@ -382,8 +439,7 @@ document.getElementById('btnAddAlumno').addEventListener('click', async ()=>{
   const nombre = document.getElementById('alNombre').value.trim();
   const st = document.getElementById('alumnosStatus');
   if(!nombre){ st.textContent='Escribe el nombre.'; st.className='status err'; return; }
-  const payload = { nombre, etapa: document.getElementById('alEtapa').value,
-    discapacidad: document.getElementById('alDiscapacidad').value, notas: document.getElementById('alNotas').value.trim() };
+  const payload = { nombre, notas: document.getElementById('alNotas').value.trim() };
   try{
     if(editandoAlumnoId){
       payload.id = editandoAlumnoId;
