@@ -137,11 +137,32 @@ async function apiPost(action,payload){
 }
 function ajusteVal(clave, fallback){ const a = data.ajustes.find(x=>x.clave===clave); return a?a.valor:fallback; }
 
+function normFecha(v){
+  if(!v) return '';
+  const s = String(v);
+  if(/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+  const d = new Date(s);
+  if(isNaN(d)) return s;
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+function normHora(v){
+  if(!v) return '';
+  const s = String(v);
+  if(/^\d{2}:\d{2}$/.test(s)) return s;
+  const d = new Date(s);
+  if(isNaN(d)) return s;
+  return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+}
+function normalizarDatos(){
+  (data.calendario||[]).forEach(ev=>{ ev.fecha = normFecha(ev.fecha); ev.hora = normHora(ev.hora); });
+  (data.practicos||[]).forEach(p=>{ p.fecha = normFecha(p.fecha); p.fechaFeedback = normFecha(p.fechaFeedback); });
+}
+
 async function init(){
   const params = new URLSearchParams(location.search);
   alumnoId = params.get('id');
   try{
-    data = await apiGet('getAll');
+    data = await apiGet('getAll'); normalizarDatos();
   }catch(e){
     document.getElementById('alumnoNombre').textContent = '';
     document.getElementById('sinAlumno').style.display='block';
@@ -211,7 +232,7 @@ document.getElementById('btnEnviarPractico').addEventListener('click', async ()=
   await apiPost('addPractico', payload);
   document.getElementById('practicoTexto').value=''; fotoInput.value='';
   st.textContent='Práctico enviado. Tu preparador lo revisará pronto.'; st.className='status ok';
-  data = await apiGet('getAll');
+  data = await apiGet('getAll'); normalizarDatos();
   renderPracticos();
 });
 
@@ -249,7 +270,7 @@ function renderCatalogTab(prefix, titulo, catalogo, progreso, tipo){
       <td><select class="progreso-select" data-tema="${t.id}">${ESTADOS_PROGRESO.map(e=>'<option'+(e===estado?' selected':'')+'>'+e+'</option>').join('')}</select></td>`;
     tr.querySelector('select').addEventListener('change', async e=>{
       await apiPost('setProgreso', { alumnoId, temaId:t.id, estado:e.target.value, tipo });
-      data = await apiGet('getAll');
+      data = await apiGet('getAll'); normalizarDatos();
     });
     tbody.appendChild(tr);
   });
