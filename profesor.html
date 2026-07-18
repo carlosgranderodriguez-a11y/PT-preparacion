@@ -307,6 +307,11 @@ async function loadAll(){
     mostrarError('No se ha podido cargar los datos del backend.\n\n' + e.message);
     return;
   }
+  refreshUI();
+}
+
+/* Repinta toda la interfaz usando los datos locales, sin llamar al backend. */
+function refreshUI(){
   document.getElementById('academiaNombre').textContent = ajusteVal('academia','Academia PT');
   document.getElementById('ajNombreAcademia').value = ajusteVal('academia','Academia PT');
   document.getElementById('ajUrlAlumno').value = ajusteVal('urlAlumno','');
@@ -316,6 +321,13 @@ async function loadAll(){
   renderPracticos();
   renderCatalogTab('temas','Temas',data.temas,data.temasProgreso,'temas');
   renderCatalogTab('cultura','Cultura General',data.cg,data.cgProgreso,'cg');
+}
+
+/* Guarda en el backend en segundo plano; si falla, avisa arriba sin bloquear la interfaz. */
+function syncBg(action, payload){
+  apiPost(action, payload).catch(e=>{
+    mostrarError('Un cambio no se ha podido guardar en Google Sheets ("'+action+'").\nRecarga la página y vuelve a intentarlo.\n\n' + e.message);
+  });
 }
 
 /* LOCK */
@@ -363,13 +375,18 @@ function renderPanel(){
   document.getElementById('panelSupuesto').value = ajusteVal('supuestoSemana','');
   renderDafo();
 }
-document.getElementById('btnGuardarPanel').addEventListener('click', async ()=>{
+function setAjusteLocal(clave, valor){
+  const a = data.ajustes.find(x=>x.clave===clave);
+  if(a) a.valor = valor; else data.ajustes.push({clave, valor});
+}
+document.getElementById('btnGuardarPanel').addEventListener('click', ()=>{
   const st = document.getElementById('panelStatus');
-  try{
-    await apiPost('saveAjuste', { clave:'temaSemana', valor: document.getElementById('panelTema').value.trim() });
-    await apiPost('saveAjuste', { clave:'supuestoSemana', valor: document.getElementById('panelSupuesto').value.trim() });
-    st.textContent='Guardado.'; st.className='status ok';
-  }catch(e){ st.textContent='Error: '+e.message; st.className='status err'; }
+  const tema = document.getElementById('panelTema').value.trim();
+  const supuesto = document.getElementById('panelSupuesto').value.trim();
+  setAjusteLocal('temaSemana', tema); setAjusteLocal('supuestoSemana', supuesto);
+  st.textContent='Guardado.'; st.className='status ok';
+  syncBg('saveAjuste', { clave:'temaSemana', valor: tema });
+  syncBg('saveAjuste', { clave:'supuestoSemana', valor: supuesto });
 });
 
 function renderDafo(){
@@ -395,11 +412,10 @@ function renderDafo(){
       const st = box.querySelector('[data-status-dafo]');
       const payload = { alumnoId: a.id };
       box.querySelectorAll('[data-campo]').forEach(ta=>{ payload[ta.dataset.campo] = ta.value.trim(); });
-      try{
-        await apiPost('saveDafo', payload);
-        st.textContent='Guardado.'; st.className='status ok';
-        data = await apiGet('getAll'); normalizarDatos();
-      }catch(e){ st.textContent='Error: '+e.message; st.className='status err'; }
+      const idx = data.dafo.findIndex(d=>d.alumnoId===a.id);
+      if(idx>=0) data.dafo[idx] = Object.assign({}, data.dafo[idx], payload); else data.dafo.push(payload);
+      st.textContent='Guardado.'; st.className='status ok';
+      syncBg('saveDafo', payload);
     });
   });
 }
@@ -419,12 +435,13 @@ function renderAlumnos(){
       </td>`;
     tr.querySelector('[data-ver]').addEventListener('click', e=>{ e.preventDefault(); renderFichaAlumno(a.id); });
     tr.querySelector('[data-mod]').addEventListener('click', ()=>startEditAlumno(a.id));
-    tr.querySelector('[data-del]').addEventListener('click', async ()=>{
+    tr.querySelector('[data-del]').addEventListener('click', ()=>{
       if(!confirm('¿Eliminar a '+a.nombre+'?')) return;
-      await apiPost('deleteAlumno',{id:a.id});
+      data.alumnos = data.alumnos.filter(x=>x.id!==a.id);
       if(editandoAlumnoId===a.id) cancelarEdicionAlumno();
-      await loadAll();
       document.getElementById('fichaAlumno').style.display='none';
+      refreshUI();
+      syncBg('deleteAlumno',{id:a.id});
     });
     tbody.appendChild(tr);
   });
@@ -507,22 +524,21 @@ document.getElementById('btnAddAlumno').addEventListener('click', async ()=>{
   const st = document.getElementById('alumnosStatus');
   if(!nombre){ st.textContent='Escribe el nombre.'; st.className='status err'; return; }
   const payload = { nombre, notas: document.getElementById('alNotas').value.trim() };
-  try{
-    if(editandoAlumnoId){
-      payload.id = editandoAlumnoId;
-      await apiPost('updateAlumno', payload);
-      st.textContent='Alumno actualizado.'; st.className='status ok';
-      cancelarEdicionAlumno();
-    } else {
-      payload.id = uid('al');
-      await apiPost('addAlumno', payload);
-      document.getElementById('alNombre').value=''; document.getElementById('alNotas').value='';
-      st.textContent='Alumno añadido.'; st.className='status ok';
-    }
-    await loadAll();
-  }catch(e){
-    st.textContent = 'Error: ' + e.message; st.className='status err';
+  if(editandoAlumnoId){
+    payload.id = editandoAlumnoId;
+    const idx = data.alumnos.findIndex(x=>x.id===editandoAlumnoId);
+    if(idx>=0) data.alumnos[idx] = Object.assign({}, data.alumnos[idx], payload);
+    st.textContent='Alumno actualizado.'; st.className='status ok';
+    cancelarEdicionAlumno();
+    syncBg('updateAlumno', payload);
+  } else {
+    payload.id = uid('al');
+    data.alumnos.push(payload);
+    document.getElementById('alNombre').value=''; document.getElementById('alNotas').value='';
+    st.textContent='Alumno añadido.'; st.className='status ok';
+    syncBg('addAlumno', payload);
   }
+  refreshUI();
 });
 
 function populateFiltros(){
@@ -596,18 +612,19 @@ function renderDayPanel(){
   document.getElementById('btnAddEvento').addEventListener('click', async ()=>{
     const st = document.getElementById('evStatus');
     if(!selA.value){ alert('Añade primero un alumno.'); return; }
-    st.innerHTML = '<span class="spinner"></span> Guardando...'; st.className='status';
-    try{
-      await apiPost('addEvento', { id: uid('ev'), fecha:selectedDate, alumnoId:selA.value, tipo:document.getElementById('evTipo').value,
-        hora:document.getElementById('evHora').value, tema:document.getElementById('evTema').value.trim(), notas:document.getElementById('evNotas').value.trim() });
-      await loadAll();
-      renderDayPanel();
-    }catch(e){
-      st.textContent = 'Error al guardar: ' + e.message; st.className='status err';
-    }
+    const ev = { id: uid('ev'), fecha:selectedDate, alumnoId:selA.value, tipo:document.getElementById('evTipo').value,
+      hora:document.getElementById('evHora').value, tema:document.getElementById('evTema').value.trim(), notas:document.getElementById('evNotas').value.trim() };
+    data.calendario.push(ev);
+    renderCalendar();
+    renderDayPanel();
+    syncBg('addEvento', ev);
   });
   panel.querySelectorAll('.evento [data-del]').forEach(btn=>{
-    btn.addEventListener('click', async ()=>{ await apiPost('deleteEvento',{id:btn.dataset.del}); await loadAll(); renderDayPanel(); });
+    btn.addEventListener('click', ()=>{
+      data.calendario = data.calendario.filter(ev=>ev.id!==btn.dataset.del);
+      renderCalendar(); renderDayPanel();
+      syncBg('deleteEvento',{id:btn.dataset.del});
+    });
   });
 }
 document.getElementById('calPrev').addEventListener('click', ()=>{ calMonth--; if(calMonth<0){calMonth=11;calYear--;} renderCalendar(); });
@@ -647,13 +664,13 @@ function renderPracticos(){
     });
     const btnEnviar = box.querySelector('[data-enviar]');
     if(btnEnviar){
-      btnEnviar.addEventListener('click', async ()=>{
+      btnEnviar.addEventListener('click', ()=>{
         const feedback = box.querySelector('[data-feedback]').value.trim();
         const st = box.querySelector('[data-status]');
         if(!feedback){ st.textContent='Escribe el feedback antes de guardar.'; st.className='status err'; return; }
-        st.innerHTML = '<span class="spinner"></span> Guardando...'; st.className='status';
-        await apiPost('darFeedback', { id:p.id, feedback, fechaFeedback: todayISO() });
-        await loadAll();
+        p.estado = 'corregido'; p.feedback = feedback; p.fechaFeedback = todayISO();
+        renderPracticos();
+        syncBg('darFeedback', { id:p.id, feedback, fechaFeedback: p.fechaFeedback });
       });
     }
   });
@@ -685,32 +702,40 @@ function renderCatalogTab(prefix, titulo, catalogo, progreso, tipo){
     }).join(' · ') || '<span class="hint" style="margin:0;">Sin alumnos</span>';
     const tr = document.createElement('tr');
     tr.innerHTML = `<td>${escapeHtml(t.numero||'')}</td><td>${escapeHtml(t.titulo)}</td><td style="font-size:12.5px;">${progresoTexto}</td><td><button class="icon-btn" data-del="${t.id}">Eliminar</button></td>`;
-    tr.querySelector('[data-del]').addEventListener('click', async ()=>{
+    tr.querySelector('[data-del]').addEventListener('click', ()=>{
       if(!confirm('¿Eliminar este tema?')) return;
-      await apiPost('deleteTema', { id:t.id, tipo });
-      await loadAll();
+      const idx = catalogo.findIndex(x=>x.id===t.id);
+      if(idx>=0) catalogo.splice(idx,1);
+      renderCatalogTab(prefix, titulo, catalogo, progreso, tipo);
+      syncBg('deleteTema', { id:t.id, tipo });
     });
     tbody.appendChild(tr);
   });
-  document.getElementById(prefix+'BtnAdd').addEventListener('click', async ()=>{
+  document.getElementById(prefix+'BtnAdd').addEventListener('click', ()=>{
     const numero = document.getElementById(prefix+'Num').value.trim();
     const titulo2 = document.getElementById(prefix+'Titulo').value.trim();
     const st = document.getElementById(prefix+'Status');
     if(!titulo2){ st.textContent='Escribe un título.'; st.className='status err'; return; }
-    await apiPost('addTema', { id: uid('t'), numero, titulo: titulo2, tipo });
-    await loadAll();
+    const t = { id: uid('t'), numero, titulo: titulo2 };
+    catalogo.push(t);
+    renderCatalogTab(prefix, titulo, catalogo, progreso, tipo);
+    syncBg('addTema', Object.assign({tipo}, t));
   });
 }
 
 /* AJUSTES */
-document.getElementById('btnGuardarAjustes').addEventListener('click', async ()=>{
-  await apiPost('saveAjuste', { clave:'academia', valor: document.getElementById('ajNombreAcademia').value.trim() || 'Academia PT' });
+document.getElementById('btnGuardarAjustes').addEventListener('click', ()=>{
+  const valor = document.getElementById('ajNombreAcademia').value.trim() || 'Academia PT';
+  setAjusteLocal('academia', valor);
+  document.getElementById('academiaNombre').textContent = valor;
   const st = document.getElementById('ajustesStatus'); st.textContent='Guardado.'; st.className='status ok';
-  await loadAll();
+  syncBg('saveAjuste', { clave:'academia', valor });
 });
-document.getElementById('btnGuardarUrlAlumno').addEventListener('click', async ()=>{
-  await apiPost('saveAjuste', { clave:'urlAlumno', valor: document.getElementById('ajUrlAlumno').value.trim() });
-  await loadAll();
+document.getElementById('btnGuardarUrlAlumno').addEventListener('click', ()=>{
+  const valor = document.getElementById('ajUrlAlumno').value.trim();
+  setAjusteLocal('urlAlumno', valor);
+  renderAlumnos();
+  syncBg('saveAjuste', { clave:'urlAlumno', valor });
 });
 </script>
 </body>
