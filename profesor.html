@@ -274,12 +274,35 @@ function ajusteVal(clave, fallback){
   return a ? a.valor : fallback;
 }
 
+/* Normalización de fechas/horas: Sheets a veces devuelve '2026-07-17T22:00:00.000Z' en vez de '2026-07-18'. */
+function normFecha(v){
+  if(!v) return '';
+  const s = String(v);
+  if(/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+  const d = new Date(s);
+  if(isNaN(d)) return s;
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+function normHora(v){
+  if(!v) return '';
+  const s = String(v);
+  if(/^\d{2}:\d{2}$/.test(s)) return s;
+  const d = new Date(s);
+  if(isNaN(d)) return s;
+  return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+}
+function normalizarDatos(){
+  (data.calendario||[]).forEach(ev=>{ ev.fecha = normFecha(ev.fecha); ev.hora = normHora(ev.hora); });
+  (data.practicos||[]).forEach(p=>{ p.fecha = normFecha(p.fecha); p.fechaFeedback = normFecha(p.fechaFeedback); });
+}
+
 async function loadAll(){
   ocultarError();
   const now=new Date(); calYear=now.getFullYear(); calMonth=now.getMonth();
   renderCalendar();
   try{
     data = await apiGet('getAll');
+    normalizarDatos();
   }catch(e){
     mostrarError('No se ha podido cargar los datos del backend.\n\n' + e.message);
     return;
@@ -368,7 +391,7 @@ function renderDafo(){
       try{
         await apiPost('saveDafo', payload);
         st.textContent='Guardado.'; st.className='status ok';
-        data = await apiGet('getAll');
+        data = await apiGet('getAll'); normalizarDatos();
       }catch(e){ st.textContent='Error: '+e.message; st.className='status err'; }
     });
   });
