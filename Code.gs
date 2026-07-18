@@ -25,6 +25,7 @@ const HEADERS = {
   CG: ['id', 'numero', 'titulo'],
   CGProgreso: ['alumnoId', 'temaId', 'estado'],
   Dafo: ['alumnoId', 'fortalezas', 'debilidades', 'oportunidades', 'amenazas'],
+  Archivos: ['id', 'categoria', 'nombre', 'url', 'fecha'],
   Ajustes: ['clave', 'valor']
 };
 
@@ -42,7 +43,7 @@ function ensureHeaders_() {
   });
 }
 
-const DATE_FIELDS = { Calendario: ['fecha'], Practicos: ['fecha', 'fechaFeedback'] };
+const DATE_FIELDS = { Calendario: ['fecha'], Practicos: ['fecha', 'fechaFeedback'], Archivos: ['fecha'] };
 const TIME_FIELDS = { Calendario: ['hora'] };
 
 function normalizeRow_(sheetName, obj) {
@@ -136,6 +137,18 @@ function upsertByKey_(sheetName, keyField, keyValue, updates) {
   sh.appendRow(row);
 }
 
+function guardarEnDrive_(base64Data, nombre, folderName) {
+  const folders = DriveApp.getFoldersByName(folderName);
+  const folder = folders.hasNext() ? folders.next() : DriveApp.createFolder(folderName);
+  const matches = base64Data.match(/^data:(.+);base64,(.*)$/);
+  const contentType = matches ? matches[1] : 'application/octet-stream';
+  const data = matches ? matches[2] : base64Data;
+  const blob = Utilities.newBlob(Utilities.base64Decode(data), contentType, nombre);
+  const file = folder.createFile(blob);
+  file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+  return 'https://drive.google.com/file/d/' + file.getId() + '/view';
+}
+
 function guardarFoto_(base64Data, nombre) {
   const folders = DriveApp.getFoldersByName(DRIVE_FOLDER_NAME);
   const folder = folders.hasNext() ? folders.next() : DriveApp.createFolder(DRIVE_FOLDER_NAME);
@@ -162,6 +175,7 @@ function doGet(e) {
       cg: sheetToObjects_('CG'),
       cgProgreso: sheetToObjects_('CGProgreso'),
       dafo: sheetToObjects_('Dafo'),
+      archivos: sheetToObjects_('Archivos'),
       ajustes: sheetToObjects_('Ajustes')
     };
   } else {
@@ -217,6 +231,14 @@ function doPost(e) {
         break;
       case 'setProgreso':
         setKeyValue_(p.tipo === 'cg' ? 'CGProgreso' : 'TemasProgreso', [0, 1], [p.alumnoId, p.temaId], 2, p.estado);
+        break;
+      case 'subirArchivo':
+        var urlArchivo = guardarEnDrive_(p.base64, p.nombre, 'PT_Materiales');
+        appendObject_('Archivos', { id: p.id, categoria: p.categoria, nombre: p.nombre, url: urlArchivo, fecha: p.fecha });
+        result = { ok: true, url: urlArchivo };
+        break;
+      case 'deleteArchivo':
+        deleteObjectById_('Archivos', 'id', p.id);
         break;
       case 'saveDafo':
         upsertByKey_('Dafo', 'alumnoId', p.alumnoId, p);
