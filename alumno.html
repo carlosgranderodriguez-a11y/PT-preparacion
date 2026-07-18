@@ -193,6 +193,12 @@ document.querySelectorAll('.tab').forEach(t=>{
   });
 });
 
+function tipoEmoji(nombre){
+  if(nombre==='Teoría') nombre='Tema';
+  const m = {'Tema':'📚','Práctico':'📝','Simulacro':'⏱️','Repaso':'🔁'};
+  return m[nombre] || '📌';
+}
+function tipoNombre(nombre){ return nombre==='Teoría' ? 'Tema' : nombre; }
 function formatFecha(iso){
   const [y,m,d]=iso.split('-').map(Number);
   return d+' de '+MESES[m-1]+' de '+y;
@@ -203,7 +209,7 @@ function renderEventos(){
   const cont = document.getElementById('listaEventos');
   document.getElementById('eventosEmpty').style.display = eventos.length?'none':'block';
   cont.innerHTML = eventos.map(ev=>`<div class="evento">
-    <div><strong>${formatFecha(ev.fecha)}</strong>${ev.hora?(' · '+escapeHtml(ev.hora)):''} — ${escapeHtml(ev.tipo)}</div>
+    <div>${tipoEmoji(ev.tipo)} <strong>${formatFecha(ev.fecha)}</strong>${ev.hora?(' · '+escapeHtml(ev.hora)):''} — ${escapeHtml(tipoNombre(ev.tipo))}</div>
     <div class="meta">${escapeHtml(ev.tema||'')}${ev.notas?(' — '+escapeHtml(ev.notas)):''}</div>
   </div>`).join('');
 }
