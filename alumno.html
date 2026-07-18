@@ -229,11 +229,17 @@ document.getElementById('btnEnviarPractico').addEventListener('click', async ()=
     payload.fotoBase64 = await fileToBase64(file);
     payload.fotoNombre = file.name;
   }
-  await apiPost('addPractico', payload);
-  document.getElementById('practicoTexto').value=''; fotoInput.value='';
-  st.textContent='Práctico enviado. Tu preparador lo revisará pronto.'; st.className='status ok';
-  data = await apiGet('getAll'); normalizarDatos();
+  data.practicos.push({ id: payload.id, alumnoId, fecha: payload.fecha, texto, estado:'pendiente' });
   renderPracticos();
+  document.getElementById('practicoTexto').value=''; fotoInput.value='';
+  try{
+    await apiPost('addPractico', payload);
+    st.textContent='Práctico enviado. Tu preparador lo revisará pronto.'; st.className='status ok';
+  }catch(e){
+    st.textContent='Error al enviar: '+e.message+'. Vuelve a intentarlo.'; st.className='status err';
+    data.practicos = data.practicos.filter(x=>x.id!==payload.id);
+    renderPracticos();
+  }
 });
 
 function renderPracticos(){
@@ -268,9 +274,10 @@ function renderCatalogTab(prefix, titulo, catalogo, progreso, tipo){
     const tr = document.createElement('tr');
     tr.innerHTML = `<td>${escapeHtml(t.numero||'')}</td><td>${escapeHtml(t.titulo)}</td>
       <td><select class="progreso-select" data-tema="${t.id}">${ESTADOS_PROGRESO.map(e=>'<option'+(e===estado?' selected':'')+'>'+e+'</option>').join('')}</select></td>`;
-    tr.querySelector('select').addEventListener('change', async e=>{
-      await apiPost('setProgreso', { alumnoId, temaId:t.id, estado:e.target.value, tipo });
-      data = await apiGet('getAll'); normalizarDatos();
+    tr.querySelector('select').addEventListener('change', e=>{
+      const idx = progreso.findIndex(x=>x.alumnoId===alumnoId && x.temaId===t.id);
+      if(idx>=0) progreso[idx].estado = e.target.value; else progreso.push({alumnoId, temaId:t.id, estado:e.target.value});
+      apiPost('setProgreso', { alumnoId, temaId:t.id, estado:e.target.value, tipo }).catch(()=>{});
     });
     tbody.appendChild(tr);
   });
