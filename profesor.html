@@ -80,6 +80,7 @@
   .cal-day.today{border-color:var(--blue);}
   .cal-day.today .num{color:var(--blue);}
   .cal-day .dot{width:6px;height:6px;border-radius:50%;background:var(--accent);display:inline-block;margin-right:2px;}
+  .cal-emojis{font-size:13px;line-height:1.2;margin-top:2px;letter-spacing:1px;}
   .day-panel{margin-top:18px;border-top:2px dashed var(--line);padding-top:16px;}
   .evento{border-left:4px solid var(--blue);padding:10px 12px;margin-bottom:8px;background:var(--card-alt);border-radius:0 var(--radius-sm) var(--radius-sm) 0;font-size:13px;}
   .link-box{display:flex;gap:8px;align-items:center;background:var(--card-alt);border:1.5px solid var(--line);border-radius:var(--radius-sm);padding:8px 10px;font-size:12px;font-family:monospace;word-break:break-all;}
@@ -99,6 +100,15 @@
   .dafo-oportunidades{background:var(--blue-soft);} .dafo-oportunidades label{color:var(--blue);}
   .dafo-amenazas{background:var(--amber-soft);} .dafo-amenazas label{color:var(--amber);}
 
+  .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;}
+  .stat-card{border-radius:var(--radius-sm);padding:16px 14px;text-align:center;}
+  .stat-card .emoji{font-size:26px;}
+  .stat-card .num{font-family:'Poppins',sans-serif;font-weight:800;font-size:30px;line-height:1.1;}
+  .stat-card .lbl{font-size:12px;font-weight:700;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.04em;}
+  .stat-tema{background:var(--blue-soft);} .stat-tema .num{color:var(--blue);}
+  .stat-practico{background:var(--accent-soft);} .stat-practico .num{color:var(--accent-dark);}
+  .stat-simulacro{background:var(--red-soft);} .stat-simulacro .num{color:var(--red);}
+  .stat-repaso{background:var(--green-soft);} .stat-repaso .num{color:var(--green);}
   @media (max-width:640px){
     .dafo-grid{grid-template-columns:1fr;}
     .tabs{border-radius:var(--radius);width:100%;}
@@ -130,6 +140,7 @@
     <div class="tab" data-tab="practicos">📝 Prácticos</div>
     <div class="tab" data-tab="temas">📚 Temas</div>
     <div class="tab" data-tab="cultura">🌍 Cultura General</div>
+    <div class="tab" data-tab="estadisticas">📊 Estadísticas</div>
     <div class="tab" data-tab="ajustes">⚙️ Ajustes</div>
   </div>
 
@@ -207,6 +218,29 @@
   <!-- CULTURA GENERAL -->
   <div class="panel" id="panel-cultura"></div>
 
+  <!-- ESTADISTICAS -->
+  <div class="panel" id="panel-estadisticas">
+    <div class="card">
+      <h3>Sesiones realizadas</h3>
+      <div class="row">
+        <div class="field"><label>Alumno</label><select id="statsAlumno"></select></div>
+        <div class="field"><label>Periodo</label>
+          <select id="statsPeriodo">
+            <option value="todo">Todo</option>
+            <option value="mes">Este mes</option>
+            <option value="pasado">Solo pasadas (hasta hoy)</option>
+          </select>
+        </div>
+      </div>
+      <div class="stats-grid" id="statsGrid"></div>
+    </div>
+    <div class="card">
+      <h3>Detalle por alumno</h3>
+      <table><thead><tr><th>Alumno</th><th>📚 Tema</th><th>📝 Práctico</th><th>⏱️ Simulacro</th><th>🔁 Repaso</th><th>Total</th></tr></thead><tbody id="statsTbody"></tbody></table>
+      <div class="empty" id="statsEmpty" style="display:none;">Todavía no hay clases programadas.</div>
+    </div>
+  </div>
+
   <!-- AJUSTES -->
   <div class="panel" id="panel-ajustes">
     <div class="card">
@@ -232,7 +266,18 @@ let data = { alumnos:[], calendario:[], practicos:[], temas:[], temasProgreso:[]
 let calYear, calMonth, selectedDate=null;
 const MESES=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
 const DOW=['L','M','X','J','V','S','D'];
-const TIPOS_SESION=['Teoría','Práctico','Simulacro','Tutoría','Repaso'];
+const TIPOS_SESION=[
+  {nombre:'Tema', emoji:'📚'},
+  {nombre:'Práctico', emoji:'📝'},
+  {nombre:'Simulacro', emoji:'⏱️'},
+  {nombre:'Repaso', emoji:'🔁'}
+];
+function tipoEmoji(nombre){
+  if(nombre==='Teoría') nombre='Tema'; // compatibilidad con eventos antiguos
+  const t = TIPOS_SESION.find(x=>x.nombre===nombre);
+  return t ? t.emoji : '📌';
+}
+function tipoNombre(nombre){ return nombre==='Teoría' ? 'Tema' : nombre; }
 
 function uid(pre){ return (pre||'id')+'_'+Date.now()+'_'+Math.random().toString(36).slice(2,7); }
 function escapeHtml(s){ return (s||'').toString().replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
@@ -321,6 +366,7 @@ function refreshUI(){
   renderPracticos();
   renderCatalogTab('temas','Temas',data.temas,data.temasProgreso,'temas');
   renderCatalogTab('cultura','Cultura General',data.cg,data.cgProgreso,'cg');
+  renderStats();
 }
 
 /* Guarda en el backend en segundo plano; si falla, avisa arriba sin bloquear la interfaz. */
@@ -567,7 +613,9 @@ function renderCalendar(){
     const el = document.createElement('div');
     el.className = 'cal-day'+(iso===hoy?' today':'')+(iso===selectedDate?' selected':'');
     const evs = data.calendario.filter(ev=>ev.fecha===iso);
-    el.innerHTML = `<div class="num">${d}</div>` + (evs.length? '<div>'+'<span class="dot"></span>'.repeat(Math.min(evs.length,4))+'</div>':'');
+    const emojis = evs.slice(0,4).map(ev=>tipoEmoji(ev.tipo)).join('');
+    const extra = evs.length>4 ? '<span style="font-size:10px;color:var(--gray);">+'+(evs.length-4)+'</span>' : '';
+    el.innerHTML = `<div class="num">${d}</div>` + (evs.length? '<div class="cal-emojis">'+emojis+extra+'</div>':'');
     el.addEventListener('click', ()=>{ selectedDate=iso; renderCalendar(); renderDayPanel(); });
     grid.appendChild(el);
   }
@@ -587,14 +635,14 @@ function renderDayPanel(){
     const alumno = data.alumnos.find(a=>a.id===ev.alumnoId);
     const nombreMostrado = ev.alumnoId==='ALL' ? 'Todos los alumnos' : (alumno?alumno.nombre:'(alumno eliminado)');
     html += `<div class="evento"><div style="display:flex;justify-content:space-between;">
-      <div>${ev.hora?('<strong>'+escapeHtml(ev.hora)+'</strong> · '):''}${escapeHtml(ev.tipo)} — ${escapeHtml(nombreMostrado)}</div>
+      <div>${tipoEmoji(ev.tipo)} ${ev.hora?('<strong>'+escapeHtml(ev.hora)+'</strong> · '):''}${escapeHtml(tipoNombre(ev.tipo))} — ${escapeHtml(nombreMostrado)}</div>
       <button class="icon-btn" data-del="${ev.id}">Eliminar</button></div>
       <div style="color:var(--gray);font-size:12px;margin-top:2px;">${escapeHtml(ev.tema||'')}${ev.notas?(' — '+escapeHtml(ev.notas)):''}</div></div>`;
   });
   html += `<div style="margin-top:14px;">
     <div class="row">
       <div class="field"><label>Alumno</label><select id="evAlumno"></select></div>
-      <div class="field"><label>Tipo</label><select id="evTipo">${TIPOS_SESION.map(t=>'<option>'+t+'</option>').join('')}</select></div>
+      <div class="field"><label>Tipo</label><select id="evTipo">${TIPOS_SESION.map(t=>'<option value="'+t.nombre+'">'+t.emoji+' '+t.nombre+'</option>').join('')}</select></div>
       <div class="field" style="max-width:110px;"><label>Hora</label><input type="time" id="evHora"></div>
     </div>
     <div class="row">
@@ -617,6 +665,7 @@ function renderDayPanel(){
     data.calendario.push(ev);
     renderCalendar();
     renderDayPanel();
+    renderStats();
     syncBg('addEvento', ev);
   });
   panel.querySelectorAll('.evento [data-del]').forEach(btn=>{
@@ -722,6 +771,51 @@ function renderCatalogTab(prefix, titulo, catalogo, progreso, tipo){
     syncBg('addTema', Object.assign({tipo}, t));
   });
 }
+
+/* ESTADISTICAS */
+function eventosFiltradosStats(){
+  const alumnoSel = document.getElementById('statsAlumno').value;
+  const periodo = document.getElementById('statsPeriodo').value;
+  const hoy = todayISO();
+  const mesActual = hoy.slice(0,7);
+  return (data.calendario||[]).filter(ev=>{
+    if(alumnoSel && !(ev.alumnoId===alumnoSel || ev.alumnoId==='ALL')) return false;
+    if(periodo==='mes' && String(ev.fecha).slice(0,7)!==mesActual) return false;
+    if(periodo==='pasado' && String(ev.fecha) > hoy) return false;
+    return true;
+  });
+}
+function renderStats(){
+  const selA = document.getElementById('statsAlumno');
+  const prev = selA.value;
+  selA.innerHTML = '<option value="">Todos</option>';
+  data.alumnos.forEach(a=>{ const o=document.createElement('option'); o.value=a.id; o.textContent=a.nombre; selA.appendChild(o); });
+  if([...selA.options].some(o=>o.value===prev)) selA.value = prev;
+
+  const evs = eventosFiltradosStats();
+  const conteo = {Tema:0, 'Práctico':0, Simulacro:0, Repaso:0};
+  evs.forEach(ev=>{ const t = tipoNombre(ev.tipo); if(conteo[t]!==undefined) conteo[t]++; });
+
+  document.getElementById('statsGrid').innerHTML = `
+    <div class="stat-card stat-tema"><div class="emoji">📚</div><div class="num">${conteo.Tema}</div><div class="lbl">Tema</div></div>
+    <div class="stat-card stat-practico"><div class="emoji">📝</div><div class="num">${conteo['Práctico']}</div><div class="lbl">Práctico</div></div>
+    <div class="stat-card stat-simulacro"><div class="emoji">⏱️</div><div class="num">${conteo.Simulacro}</div><div class="lbl">Simulacro</div></div>
+    <div class="stat-card stat-repaso"><div class="emoji">🔁</div><div class="num">${conteo.Repaso}</div><div class="lbl">Repaso</div></div>`;
+
+  const tbody = document.getElementById('statsTbody'); tbody.innerHTML='';
+  document.getElementById('statsEmpty').style.display = data.calendario.length?'none':'block';
+  data.alumnos.forEach(a=>{
+    const mios = (data.calendario||[]).filter(ev=>ev.alumnoId===a.id || ev.alumnoId==='ALL');
+    const c = {Tema:0,'Práctico':0,Simulacro:0,Repaso:0};
+    mios.forEach(ev=>{ const t=tipoNombre(ev.tipo); if(c[t]!==undefined) c[t]++; });
+    const total = c.Tema + c['Práctico'] + c.Simulacro + c.Repaso;
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${escapeHtml(a.nombre)}</td><td>${c.Tema}</td><td>${c['Práctico']}</td><td>${c.Simulacro}</td><td>${c.Repaso}</td><td><strong>${total}</strong></td>`;
+    tbody.appendChild(tr);
+  });
+}
+document.getElementById('statsAlumno').addEventListener('change', renderStats);
+document.getElementById('statsPeriodo').addEventListener('change', renderStats);
 
 /* AJUSTES */
 document.getElementById('btnGuardarAjustes').addEventListener('click', ()=>{
