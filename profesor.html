@@ -321,23 +321,30 @@ async function loadAll(){
 /* LOCK */
 document.getElementById('lockBtn').addEventListener('click', tryUnlock);
 document.getElementById('lockInput').addEventListener('keydown', e=>{ if(e.key==='Enter') tryUnlock(); });
+function unlock(){
+  document.getElementById('lockScreen').style.display='none';
+  document.getElementById('app').style.display='block';
+  loadAll();
+}
 function tryUnlock(){
   const val = document.getElementById('lockInput').value;
   if(val === COACH_KEY){
-    document.getElementById('lockScreen').style.display='none';
-    document.getElementById('app').style.display='block';
-    loadAll();
+    try{ localStorage.setItem('pt_coach_key', val); }catch(e){}
+    unlock();
   } else {
     document.getElementById('lockStatus').textContent = 'Clave incorrecta.';
   }
 }
-(function checkUrlKey(){
+(function checkStoredOrUrlKey(){
   const params = new URLSearchParams(location.search);
   if(params.get('key') === COACH_KEY){
-    document.getElementById('lockScreen').style.display='none';
-    document.getElementById('app').style.display='block';
-    loadAll();
+    try{ localStorage.setItem('pt_coach_key', COACH_KEY); }catch(e){}
+    unlock();
+    return;
   }
+  try{
+    if(localStorage.getItem('pt_coach_key') === COACH_KEY){ unlock(); }
+  }catch(e){}
 })();
 
 /* TABS */
