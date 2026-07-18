@@ -17,7 +17,7 @@ const SHEET_ID = '1Z5-EHnE2ZALflhpWRUXH3srSgUvlJU-YL1M-ZuhkkZg';
 const DRIVE_FOLDER_NAME = 'PT_Practicos_Fotos';
 
 const HEADERS = {
-  Alumnos: ['id', 'nombre', 'etapa', 'discapacidad', 'notas'],
+  Alumnos: ['id', 'nombre', 'email', 'clave', 'etapa', 'discapacidad', 'notas'],
   Calendario: ['id', 'fecha', 'hora', 'alumnoId', 'tipo', 'tema', 'notas'],
   Practicos: ['id', 'alumnoId', 'fecha', 'texto', 'fotoUrl', 'estado', 'feedback', 'fechaFeedback'],
   Temas: ['id', 'numero', 'titulo'],
@@ -167,7 +167,12 @@ function doGet(e) {
   let result;
   if (action === 'getAll') {
     result = {
-      alumnos: sheetToObjects_('Alumnos'),
+      alumnos: sheetToObjects_('Alumnos').map(function(a){
+        var tiene = !!a.clave;
+        delete a.clave;
+        a.tieneClave = tiene;
+        return a;
+      }),
       calendario: sheetToObjects_('Calendario'),
       practicos: sheetToObjects_('Practicos'),
       temas: sheetToObjects_('Temas'),
@@ -242,6 +247,27 @@ function doPost(e) {
         break;
       case 'saveDafo':
         upsertByKey_('Dafo', 'alumnoId', p.alumnoId, p);
+        break;
+      case 'setClaveAlumno': {
+        var alumnos1 = sheetToObjects_('Alumnos');
+        var al1 = alumnos1.find(function(a){ return String(a.email).toLowerCase().trim() === String(p.email).toLowerCase().trim(); });
+        if (!al1) { result = { error: 'No hay ningún alumno registrado con ese correo. Habla con tu preparador.' }; break; }
+        if (al1.clave) { result = { error: 'Este correo ya tiene una clave creada. Si la has olvidado, pide a tu preparador que la restablezca.' }; break; }
+        updateObjectById_('Alumnos', 'id', al1.id, { clave: p.clave });
+        result = { ok: true, alumnoId: al1.id, nombre: al1.nombre };
+        break;
+      }
+      case 'loginAlumno': {
+        var alumnos2 = sheetToObjects_('Alumnos');
+        var al2 = alumnos2.find(function(a){ return String(a.email).toLowerCase().trim() === String(p.email).toLowerCase().trim(); });
+        if (!al2) { result = { error: 'Correo o clave incorrectos.' }; break; }
+        if (!al2.clave) { result = { error: 'Todavía no has creado tu clave. Usa la opción "Primera vez".' }; break; }
+        if (String(al2.clave) !== String(p.clave)) { result = { error: 'Correo o clave incorrectos.' }; break; }
+        result = { ok: true, alumnoId: al2.id, nombre: al2.nombre };
+        break;
+      }
+      case 'resetClaveAlumno':
+        updateObjectById_('Alumnos', 'id', p.id, { clave: '' });
         break;
       case 'saveAjuste':
         setKeyValue_('Ajustes', [0], [p.clave], 1, p.valor);
