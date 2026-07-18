@@ -57,6 +57,19 @@
   td{padding:10px 8px;border-bottom:1px solid var(--line);}
   tr:last-child td{border-bottom:none;}
   .progreso-select{font-size:12px;padding:5px 8px;border-radius:999px;}
+  .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;}
+  .stat-card{border-radius:var(--radius-sm);padding:16px 12px;text-align:center;}
+  .stat-card .emoji{font-size:24px;}
+  .stat-card .num{font-family:'Poppins',sans-serif;font-weight:800;font-size:28px;line-height:1.1;}
+  .stat-card .lbl{font-size:11.5px;font-weight:700;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.04em;}
+  .stat-tema{background:var(--blue-soft);} .stat-tema .num{color:var(--blue);}
+  .stat-practico{background:var(--accent-soft);} .stat-practico .num{color:var(--accent-dark);}
+  .stat-simulacro{background:var(--red-soft);} .stat-simulacro .num{color:var(--red);}
+  .stat-repaso{background:var(--green-soft);} .stat-repaso .num{color:var(--green);}
+  .prog-bar{height:12px;border-radius:999px;background:var(--line);overflow:hidden;display:flex;margin:6px 0 4px;}
+  .prog-seg{height:100%;}
+  .prog-leyenda{font-size:12px;color:var(--ink-soft);display:flex;gap:12px;flex-wrap:wrap;}
+  .prog-leyenda b{font-weight:800;}
   .archivo-item{display:flex;align-items:center;gap:10px;padding:7px 10px;border:1.5px solid var(--line);border-radius:var(--radius-sm);margin-bottom:6px;background:var(--card-alt);font-size:13px;flex-wrap:wrap;}
   .archivo-item a{color:var(--ink);font-weight:600;text-decoration:none;flex:1;min-width:150px;}
   .archivo-item a:hover{color:var(--accent);}
@@ -82,6 +95,7 @@
       <div class="tab" data-tab="practicos">📝 Mis prácticos</div>
       <div class="tab" data-tab="temas">📚 Temas</div>
       <div class="tab" data-tab="cultura">🌍 Cultura General</div>
+      <div class="tab" data-tab="estadisticas">📊 Estadísticas</div>
     </div>
 
     <div class="panel active" id="panel-calendario">
@@ -110,6 +124,7 @@
 
     <div class="panel" id="panel-temas"></div>
     <div class="panel" id="panel-cultura"></div>
+    <div class="panel" id="panel-estadisticas"></div>
   </div>
 </div>
 
@@ -192,6 +207,7 @@ async function init(){
   renderEventos();
   renderPracticos();
   document.getElementById('archivosPracticos').innerHTML = htmlArchivos('practicos','Materiales de tu preparador');
+  renderEstadisticas();
   renderCatalogTab('temas','Temas',data.temas,data.temasProgreso,'temas');
   renderCatalogTab('cultura','Cultura General',data.cg,data.cgProgreso,'cg');
 }
@@ -205,6 +221,57 @@ document.querySelectorAll('.tab').forEach(t=>{
   });
 });
 
+function renderEstadisticas(){
+  const panel = document.getElementById('panel-estadisticas');
+  const mios = (data.calendario||[]).filter(ev=>ev.alumnoId===alumnoId || ev.alumnoId==='ALL');
+  const conteo = {Tema:0,'Práctico':0,Simulacro:0,Repaso:0};
+  mios.forEach(ev=>{ const t = tipoNombre(ev.tipo); if(conteo[t]!==undefined) conteo[t]++; });
+
+  const misPracticos = (data.practicos||[]).filter(p=>p.alumnoId===alumnoId);
+  const corregidos = misPracticos.filter(p=>p.estado==='corregido').length;
+
+  function bloqueProgreso(catalogo, progreso, titulo){
+    const total = catalogo.length;
+    const c = {'Pendiente':0,'En estudio':0,'Repasado':0,'Dominado':0};
+    catalogo.forEach(t=>{
+      const reg = progreso.find(x=>x.alumnoId===alumnoId && x.temaId===t.id);
+      c[reg?reg.estado:'Pendiente']++;
+    });
+    const pct = v => total? (v/total*100) : 0;
+    return `<div class="card">
+      <h3>${titulo}</h3>
+      ${total===0 ? '<div class="empty" style="padding:6px 0;">Tu preparador todavía no ha cargado temas.</div>' : `
+      <div class="prog-bar">
+        <div class="prog-seg" style="width:${pct(c['Dominado'])}%;background:var(--green);"></div>
+        <div class="prog-seg" style="width:${pct(c['Repasado'])}%;background:var(--blue);"></div>
+        <div class="prog-seg" style="width:${pct(c['En estudio'])}%;background:var(--amber);"></div>
+      </div>
+      <div class="prog-leyenda">
+        <span>🟢 Dominado <b>${c['Dominado']}</b></span>
+        <span>🔵 Repasado <b>${c['Repasado']}</b></span>
+        <span>🟡 En estudio <b>${c['En estudio']}</b></span>
+        <span>⚪ Pendiente <b>${c['Pendiente']}</b></span>
+        <span>· Total <b>${total}</b></span>
+      </div>
+      <div class="hint" style="margin:8px 0 0;">Marca tu progreso en las pestañas 📚 Temas y 🌍 Cultura General.</div>`}
+    </div>`;
+  }
+
+  panel.innerHTML = `
+    <div class="card">
+      <h3>Mis sesiones</h3>
+      <div class="stats-grid">
+        <div class="stat-card stat-tema"><div class="emoji">📚</div><div class="num">${conteo.Tema}</div><div class="lbl">Tema</div></div>
+        <div class="stat-card stat-practico"><div class="emoji">📝</div><div class="num">${conteo['Práctico']}</div><div class="lbl">Práctico</div></div>
+        <div class="stat-card stat-simulacro"><div class="emoji">⏱️</div><div class="num">${conteo.Simulacro}</div><div class="lbl">Simulacro</div></div>
+        <div class="stat-card stat-repaso"><div class="emoji">🔁</div><div class="num">${conteo.Repaso}</div><div class="lbl">Repaso</div></div>
+      </div>
+      <div class="hint" style="margin:10px 0 0;">Prácticos enviados: <b>${misPracticos.length}</b> · Corregidos: <b>${corregidos}</b></div>
+    </div>
+    ${bloqueProgreso(data.temas||[], data.temasProgreso||[], '📚 Mi progreso en Temas')}
+    ${bloqueProgreso(data.cg||[], data.cgProgreso||[], '🌍 Mi progreso en Cultura General')}
+  `;
+}
 function tipoEmoji(nombre){
   if(nombre==='Teoría') nombre='Tema';
   const m = {'Tema':'📚','Práctico':'📝','Simulacro':'⏱️','Repaso':'🔁'};
@@ -295,6 +362,7 @@ function renderCatalogTab(prefix, titulo, catalogo, progreso, tipo){
     tr.querySelector('select').addEventListener('change', e=>{
       const idx = progreso.findIndex(x=>x.alumnoId===alumnoId && x.temaId===t.id);
       if(idx>=0) progreso[idx].estado = e.target.value; else progreso.push({alumnoId, temaId:t.id, estado:e.target.value});
+      renderEstadisticas();
       apiPost('setProgreso', { alumnoId, temaId:t.id, estado:e.target.value, tipo }).catch(()=>{});
     });
     tbody.appendChild(tr);
