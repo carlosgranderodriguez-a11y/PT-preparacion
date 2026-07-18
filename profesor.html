@@ -82,6 +82,7 @@
   .cal-day .dot{width:6px;height:6px;border-radius:50%;background:var(--accent);display:inline-block;margin-right:2px;}
   .cal-emojis{font-size:13px;line-height:1.2;margin-top:2px;letter-spacing:1px;}
   .cal-ev{font-size:10.5px;line-height:1.35;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;background:var(--blue-soft);border-radius:5px;padding:1px 5px;color:var(--ink);}
+  .cal-ev.cal-nota{background:var(--amber-soft);}
   .cal-ev-mas{font-size:10px;color:var(--gray);margin-top:2px;font-weight:700;}
   .day-panel{margin-top:18px;border-top:2px dashed var(--line);padding-top:16px;}
   .evento{border-left:4px solid var(--blue);padding:10px 12px;margin-bottom:8px;background:var(--card-alt);border-radius:0 var(--radius-sm) var(--radius-sm) 0;font-size:13px;}
@@ -632,11 +633,23 @@ function renderCalendar(){
     el.className = 'cal-day'+(iso===hoy?' today':'')+(iso===selectedDate?' selected':'');
     const evs = data.calendario.filter(ev=>ev.fecha===iso);
     let evHtml = '';
-    evs.slice(0,3).forEach(ev=>{
-      const texto = ev.tema || ev.notas || tipoNombre(ev.tipo);
-      evHtml += '<div class="cal-ev" title="'+escapeHtml((ev.hora?ev.hora+' · ':'')+tipoNombre(ev.tipo)+(ev.tema?' — '+ev.tema:'')+(ev.notas?' — '+ev.notas:''))+'">'+tipoEmoji(ev.tipo)+' '+escapeHtml(texto)+'</div>';
+    let lineas = 0;
+    const MAX_LINEAS = 4;
+    let ocultos = 0;
+    evs.forEach(ev=>{
+      const titleTxt = escapeHtml((ev.hora?ev.hora+' · ':'')+tipoNombre(ev.tipo)+(ev.tema?' — '+ev.tema:'')+(ev.notas?' — '+ev.notas:''));
+      if(lineas < MAX_LINEAS){
+        evHtml += '<div class="cal-ev" title="'+titleTxt+'">'+tipoEmoji(ev.tipo)+' '+escapeHtml(ev.tema || tipoNombre(ev.tipo))+'</div>';
+        lineas++;
+      } else { ocultos++; return; }
+      if(ev.notas){
+        if(lineas < MAX_LINEAS){
+          evHtml += '<div class="cal-ev cal-nota" title="'+titleTxt+'">🗒️ '+escapeHtml(ev.notas)+'</div>';
+          lineas++;
+        }
+      }
     });
-    if(evs.length>3) evHtml += '<div class="cal-ev-mas">+'+(evs.length-3)+' más</div>';
+    if(ocultos>0) evHtml += '<div class="cal-ev-mas">+'+ocultos+' más</div>';
     el.innerHTML = `<div class="num">${d}</div>` + evHtml;
     el.addEventListener('click', ()=>{ selectedDate=iso; renderCalendar(); renderDayPanel(); });
     grid.appendChild(el);
