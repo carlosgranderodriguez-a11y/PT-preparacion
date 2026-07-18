@@ -72,7 +72,7 @@
   .cal-nav button:hover{border-color:var(--accent);color:var(--accent);}
   .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;}
   .cal-dow{text-align:center;font-size:10.5px;font-weight:700;color:var(--gray);padding:4px 0;text-transform:uppercase;}
-  .cal-day{min-height:58px;border:1.5px solid var(--line);border-radius:var(--radius-sm);padding:6px 7px;font-size:12px;cursor:pointer;position:relative;background:var(--card-alt);transition:box-shadow .12s, border-color .12s;}
+  .cal-day{min-height:80px;border:1.5px solid var(--line);border-radius:var(--radius-sm);padding:6px 7px;font-size:12px;cursor:pointer;position:relative;background:var(--card-alt);transition:box-shadow .12s, border-color .12s;}
   .cal-day:hover:not(.empty){border-color:var(--accent);box-shadow:0 2px 8px rgba(35,39,89,.08);}
   .cal-day.empty{background:transparent;border:none;cursor:default;}
   .cal-day.selected{border-color:var(--accent);border-width:2px;background:var(--accent-soft);}
@@ -81,6 +81,8 @@
   .cal-day.today .num{color:var(--blue);}
   .cal-day .dot{width:6px;height:6px;border-radius:50%;background:var(--accent);display:inline-block;margin-right:2px;}
   .cal-emojis{font-size:13px;line-height:1.2;margin-top:2px;letter-spacing:1px;}
+  .cal-ev{font-size:10.5px;line-height:1.35;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;background:var(--blue-soft);border-radius:5px;padding:1px 5px;color:var(--ink);}
+  .cal-ev-mas{font-size:10px;color:var(--gray);margin-top:2px;font-weight:700;}
   .day-panel{margin-top:18px;border-top:2px dashed var(--line);padding-top:16px;}
   .evento{border-left:4px solid var(--blue);padding:10px 12px;margin-bottom:8px;background:var(--card-alt);border-radius:0 var(--radius-sm) var(--radius-sm) 0;font-size:13px;}
   .link-box{display:flex;gap:8px;align-items:center;background:var(--card-alt);border:1.5px solid var(--line);border-radius:var(--radius-sm);padding:8px 10px;font-size:12px;font-family:monospace;word-break:break-all;}
@@ -100,6 +102,9 @@
   .dafo-oportunidades{background:var(--blue-soft);} .dafo-oportunidades label{color:var(--blue);}
   .dafo-amenazas{background:var(--amber-soft);} .dafo-amenazas label{color:var(--amber);}
 
+  .archivo-item{display:flex;align-items:center;gap:10px;padding:7px 10px;border:1.5px solid var(--line);border-radius:var(--radius-sm);margin-bottom:6px;background:var(--card-alt);font-size:13px;flex-wrap:wrap;}
+  .archivo-item a{color:var(--ink);font-weight:600;text-decoration:none;flex:1;min-width:150px;}
+  .archivo-item a:hover{color:var(--accent);}
   .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;}
   .stat-card{border-radius:var(--radius-sm);padding:16px 14px;text-align:center;}
   .stat-card .emoji{font-size:26px;}
@@ -201,6 +206,16 @@
   <!-- PRACTICOS -->
   <div class="panel" id="panel-practicos">
     <div class="card">
+      <h3>📎 Materiales y supuestos</h3>
+      <div class="hint" style="margin-top:0;">Sube aquí enunciados o materiales; los alumnos los verán en su pestaña de prácticos. Se guardan en tu Google Drive.</div>
+      <div class="row">
+        <div class="field"><input type="file" id="archPracticosInput"></div>
+        <button class="btn btn-primary" id="archPracticosBtn">Subir archivo</button>
+      </div>
+      <span class="status" id="archPracticosStatus"></span>
+      <div id="archPracticosLista" style="margin-top:10px;"></div>
+    </div>
+    <div class="card">
       <h3>Prácticos enviados por los alumnos</h3>
       <div class="row">
         <div class="field"><label>Filtrar por alumno</label><select id="filtroAlumnoPracticos"></select></div>
@@ -262,7 +277,7 @@
 const API_URL = 'https://script.google.com/macros/s/AKfycbzrEozXfHf41s3QPZTZelrfIuxQ48xs4LAABID3Tmk4JqV0Ys0e_UCGOHlsV5aAAm-w/exec';
 const COACH_KEY = 'cgr-pt-2026'; // cámbiala si quieres
 
-let data = { alumnos:[], calendario:[], practicos:[], temas:[], temasProgreso:[], cg:[], cgProgreso:[], ajustes:[], dafo:[] };
+let data = { alumnos:[], calendario:[], practicos:[], temas:[], temasProgreso:[], cg:[], cgProgreso:[], ajustes:[], dafo:[], archivos:[] };
 let calYear, calMonth, selectedDate=null;
 const MESES=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
 const DOW=['L','M','X','J','V','S','D'];
@@ -339,6 +354,8 @@ function normHora(v){
 function normalizarDatos(){
   (data.calendario||[]).forEach(ev=>{ ev.fecha = normFecha(ev.fecha); ev.hora = normHora(ev.hora); });
   (data.practicos||[]).forEach(p=>{ p.fecha = normFecha(p.fecha); p.fechaFeedback = normFecha(p.fechaFeedback); });
+  (data.archivos||[]).forEach(a=>{ a.fecha = normFecha(a.fecha); });
+  if(!data.archivos) data.archivos = [];
 }
 
 async function loadAll(){
@@ -367,6 +384,7 @@ function refreshUI(){
   renderCatalogTab('temas','Temas',data.temas,data.temasProgreso,'temas');
   renderCatalogTab('cultura','Cultura General',data.cg,data.cgProgreso,'cg');
   renderStats();
+  renderArchivosLista('practicos', 'archPracticosLista');
 }
 
 /* Guarda en el backend en segundo plano; si falla, avisa arriba sin bloquear la interfaz. */
@@ -613,9 +631,13 @@ function renderCalendar(){
     const el = document.createElement('div');
     el.className = 'cal-day'+(iso===hoy?' today':'')+(iso===selectedDate?' selected':'');
     const evs = data.calendario.filter(ev=>ev.fecha===iso);
-    const emojis = evs.slice(0,4).map(ev=>tipoEmoji(ev.tipo)).join('');
-    const extra = evs.length>4 ? '<span style="font-size:10px;color:var(--gray);">+'+(evs.length-4)+'</span>' : '';
-    el.innerHTML = `<div class="num">${d}</div>` + (evs.length? '<div class="cal-emojis">'+emojis+extra+'</div>':'');
+    let evHtml = '';
+    evs.slice(0,3).forEach(ev=>{
+      const texto = ev.tema || ev.notas || tipoNombre(ev.tipo);
+      evHtml += '<div class="cal-ev" title="'+escapeHtml((ev.hora?ev.hora+' · ':'')+tipoNombre(ev.tipo)+(ev.tema?' — '+ev.tema:'')+(ev.notas?' — '+ev.notas:''))+'">'+tipoEmoji(ev.tipo)+' '+escapeHtml(texto)+'</div>';
+    });
+    if(evs.length>3) evHtml += '<div class="cal-ev-mas">+'+(evs.length-3)+' más</div>';
+    el.innerHTML = `<div class="num">${d}</div>` + evHtml;
     el.addEventListener('click', ()=>{ selectedDate=iso; renderCalendar(); renderDayPanel(); });
     grid.appendChild(el);
   }
@@ -738,6 +760,16 @@ function renderCatalogTab(prefix, titulo, catalogo, progreso, tipo){
     <span class="status" id="${prefix}Status"></span>
   </div>
   <div class="card">
+    <h3>📎 Materiales</h3>
+    <div class="hint" style="margin-top:0;">Apuntes, esquemas o documentos de esta sección. Se guardan en tu Google Drive y los alumnos los ven en su página.</div>
+    <div class="row">
+      <div class="field"><input type="file" id="arch${prefix}Input"></div>
+      <button class="btn btn-primary" id="arch${prefix}Btn">Subir archivo</button>
+    </div>
+    <span class="status" id="arch${prefix}Status"></span>
+    <div id="arch${prefix}Lista" style="margin-top:10px;"></div>
+  </div>
+  <div class="card">
     <h3>${titulo} — progreso por alumno</h3>
     <table><thead><tr><th>Nº</th><th>Título</th><th>Progreso</th><th></th></tr></thead><tbody id="${prefix}Tbody"></tbody></table>
     <div class="empty" id="${prefix}Empty" style="display:none;">Todavía no hay temas cargados.</div>
@@ -769,6 +801,61 @@ function renderCatalogTab(prefix, titulo, catalogo, progreso, tipo){
     catalogo.push(t);
     renderCatalogTab(prefix, titulo, catalogo, progreso, tipo);
     syncBg('addTema', Object.assign({tipo}, t));
+  });
+  initSubidaArchivos(tipo, 'arch'+prefix+'Input', 'arch'+prefix+'Btn', 'arch'+prefix+'Status', 'arch'+prefix+'Lista');
+  renderArchivosLista(tipo, 'arch'+prefix+'Lista');
+}
+
+/* ARCHIVOS (materiales en Drive) */
+function fileToBase64(file){
+  return new Promise((resolve,reject)=>{
+    const r = new FileReader();
+    r.onload = ()=>resolve(r.result);
+    r.onerror = reject;
+    r.readAsDataURL(file);
+  });
+}
+function renderArchivosLista(categoria, contId){
+  const cont = document.getElementById(contId);
+  if(!cont) return;
+  const lista = (data.archivos||[]).filter(x=>x.categoria===categoria).sort((a,b)=>String(b.fecha).localeCompare(String(a.fecha)));
+  if(!lista.length){ cont.innerHTML = '<div class="empty" style="padding:8px 0;">Sin archivos todavía.</div>'; return; }
+  cont.innerHTML = lista.map(f=>`<div class="archivo-item">
+    <a href="${escapeHtml(f.url)}" target="_blank" rel="noopener">📎 ${escapeHtml(f.nombre)}</a>
+    <span style="color:var(--gray);font-size:11.5px;">${escapeHtml(f.fecha||'')}</span>
+    <button class="icon-btn" data-delarch="${f.id}">Eliminar</button>
+  </div>`).join('');
+  cont.querySelectorAll('[data-delarch]').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      if(!confirm('¿Eliminar este archivo de la lista?')) return;
+      data.archivos = data.archivos.filter(x=>x.id!==btn.dataset.delarch);
+      renderArchivosLista(categoria, contId);
+      syncBg('deleteArchivo',{id:btn.dataset.delarch});
+    });
+  });
+}
+function initSubidaArchivos(categoria, inputId, btnId, statusId, contId){
+  const btn = document.getElementById(btnId);
+  if(!btn) return;
+  btn.addEventListener('click', async ()=>{
+    const input = document.getElementById(inputId);
+    const st = document.getElementById(statusId);
+    const file = input.files[0];
+    if(!file){ st.textContent='Elige primero un archivo.'; st.className='status err'; return; }
+    if(file.size > 15*1024*1024){ st.textContent='El archivo supera los 15 MB. Súbelo más pequeño o directamente a Drive.'; st.className='status err'; return; }
+    st.innerHTML = '<span class="spinner"></span> Subiendo a Drive...'; st.className='status';
+    btn.disabled = true;
+    try{
+      const base64 = await fileToBase64(file);
+      const id = uid('ar');
+      const res = await apiPost('subirArchivo', { id, categoria, nombre:file.name, base64, fecha: todayISO() });
+      data.archivos.push({ id, categoria, nombre:file.name, url:res.url||'#', fecha: todayISO() });
+      renderArchivosLista(categoria, contId);
+      input.value='';
+      st.textContent='Archivo subido.'; st.className='status ok';
+    }catch(e){
+      st.textContent='Error al subir: '+e.message; st.className='status err';
+    }finally{ btn.disabled=false; }
   });
 }
 
@@ -814,6 +901,7 @@ function renderStats(){
     tbody.appendChild(tr);
   });
 }
+initSubidaArchivos('practicos', 'archPracticosInput', 'archPracticosBtn', 'archPracticosStatus', 'archPracticosLista');
 document.getElementById('statsAlumno').addEventListener('change', renderStats);
 document.getElementById('statsPeriodo').addEventListener('change', renderStats);
 
