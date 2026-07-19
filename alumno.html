@@ -73,6 +73,14 @@
   .objetivo-item.hecho{opacity:.55;text-decoration:line-through;}
   .estudio-item{display:flex;align-items:center;gap:10px;padding:6px 10px;border-bottom:1px solid var(--line);font-size:13px;flex-wrap:wrap;}
   .pct-input{width:62px;font-size:12px;padding:5px 6px;border:1.5px solid var(--line);border-radius:999px;background:var(--card-alt);text-align:center;}
+  .stats-section-title{font-family:'Poppins',sans-serif;font-weight:700;font-size:13px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.04em;margin:20px 0 8px;}
+  .stats-section-title:first-child{margin-top:0;}
+  .stat-num-lg{font-family:'Poppins',sans-serif;font-weight:800;font-size:28px;color:var(--accent-dark);line-height:1.1;}
+  .bloque-row{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
+  .bloque-lbl{font-size:12.5px;font-weight:600;width:100px;flex-shrink:0;}
+  .bloque-bar-bg{flex:1;height:10px;border-radius:999px;background:var(--line);overflow:hidden;}
+  .bloque-bar{height:100%;background:var(--accent);border-radius:999px;}
+  .bloque-val{font-size:12px;font-weight:700;color:var(--ink-soft);width:44px;text-align:right;flex-shrink:0;}
   .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;}
   .stat-card{border-radius:var(--radius-sm);padding:16px 12px;text-align:center;}
   .stat-card .emoji{font-size:24px;}
@@ -467,9 +475,20 @@ function renderEstadisticas(){
   const horasTotales = misEstudio.reduce((s,x)=>s+(parseFloat(x.horas)||0),0);
   const horasPorBloque = {};
   misEstudio.forEach(x=>{ horasPorBloque[x.bloque] = (horasPorBloque[x.bloque]||0)+(parseFloat(x.horas)||0); });
-  const bloquesHtml = Object.keys(horasPorBloque).length
-    ? Object.keys(horasPorBloque).map(b=>`<span>${escapeHtml(b)}: <b>${horasPorBloque[b].toFixed(1)}h</b></span>`).join(' · ')
-    : 'Todavía sin registros';
+  const maxBloque = Math.max(1, ...Object.values(horasPorBloque));
+  const bloquesBarsHtml = Object.keys(horasPorBloque).length
+    ? Object.keys(horasPorBloque).sort((a,b)=>horasPorBloque[b]-horasPorBloque[a]).map(b=>`
+      <div class="bloque-row">
+        <span class="bloque-lbl">${escapeHtml(b)}</span>
+        <div class="bloque-bar-bg"><div class="bloque-bar" style="width:${(horasPorBloque[b]/maxBloque*100)}%;"></div></div>
+        <span class="bloque-val">${horasPorBloque[b].toFixed(1)}h</span>
+      </div>`).join('')
+    : '<div class="empty" style="padding:6px 0;">Todavía sin registros. Anota tus sesiones desde 🗓️ Mi calendario.</div>';
+
+  const semanas = {};
+  misEstudio.forEach(x=>{ const l = lunesDe(x.fecha); semanas[l] = (semanas[l]||0)+(parseFloat(x.horas)||0); });
+  const numSemanas = Object.keys(semanas).length || 1;
+  const mediaSemanal = horasTotales / numSemanas;
 
   function bloqueProgreso(catalogo, progreso, titulo){
     const total = catalogo.length;
@@ -503,8 +522,10 @@ function renderEstadisticas(){
   }
 
   panel.innerHTML = `
+    <div class="stats-section-title">🗓️ Clases con tu preparador</div>
     <div class="card">
-      <h3>Mis sesiones</h3>
+      <h3>Clases realizadas</h3>
+      <div class="hint" style="margin-top:0;">Según el calendario que ha programado tu preparador.</div>
       <div class="stats-grid">
         <div class="stat-card stat-tema"><div class="emoji">📚</div><div class="num">${conteo.Tema}</div><div class="lbl">Tema</div></div>
         <div class="stat-card stat-practico"><div class="emoji">📝</div><div class="num">${conteo['Práctico']}</div><div class="lbl">Práctico</div></div>
@@ -513,12 +534,19 @@ function renderEstadisticas(){
       </div>
       <div class="hint" style="margin:10px 0 0;">Prácticos enviados: <b>${misPracticos.length}</b> · Corregidos: <b>${corregidos}</b></div>
     </div>
+
+    <div class="stats-section-title">⏱️ Tu estudio autónomo</div>
     <div class="card">
-      <h3>⏱️ Mis horas de estudio</h3>
-      <div style="font-family:'Poppins',sans-serif;font-weight:800;font-size:30px;color:var(--accent-dark);">${horasTotales.toFixed(1)}h</div>
-      <div class="prog-leyenda" style="margin-top:6px;">${bloquesHtml}</div>
-      <div class="hint" style="margin:8px 0 0;">Registra tus sesiones de estudio desde 🗓️ Mi calendario.</div>
+      <h3>Horas de estudio registradas por ti</h3>
+      <div class="hint" style="margin-top:0;">Lo que tú mismo/a apuntas en "Registrar estudio", aparte de las clases.</div>
+      <div style="display:flex;gap:24px;flex-wrap:wrap;margin:6px 0 14px;">
+        <div><div class="stat-num-lg">${horasTotales.toFixed(1)}h</div><div class="lbl">Total</div></div>
+        <div><div class="stat-num-lg">${mediaSemanal.toFixed(1)}h</div><div class="lbl">Media semanal</div></div>
+      </div>
+      ${bloquesBarsHtml}
     </div>
+
+    <div class="stats-section-title">📖 Avance del temario</div>
     ${bloqueProgreso(data.temas||[], data.temasProgreso||[], '📚 Mi progreso en Temas')}
     ${bloqueProgreso(data.cg||[], data.cgProgreso||[], '🌍 Mi progreso en Cultura General')}
   `;
