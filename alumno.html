@@ -20,7 +20,7 @@
     --radius:14px; --radius-sm:9px;
     --shadow:0 1px 2px rgba(35,39,89,.05), 0 8px 24px rgba(35,39,89,.06);
   }
-  *{box-sizing:border-box;}
+  *{box-sizing:border-box;} html,body{overflow-x:hidden;max-width:100%;}
   body{margin:0;background:var(--bg);color:var(--ink);font-family:'Inter',-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;font-size:15px;line-height:1.55;}
   .wrap{max-width:780px;margin:0 auto;padding:26px 18px 60px;}
   header{padding-bottom:16px;margin-bottom:20px;position:relative;}
@@ -59,9 +59,9 @@
   .progreso-select{font-size:12px;padding:5px 8px;border-radius:999px;}
   .cal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
   .cal-nav button{background:var(--card-alt);border:1.5px solid var(--line);border-radius:999px;width:32px;height:32px;cursor:pointer;font-size:15px;color:var(--ink);}
-  .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;}
+  .cal-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px;width:100%;}
   .cal-dow{text-align:center;font-size:10px;font-weight:700;color:var(--gray);padding:3px 0;text-transform:uppercase;}
-  .cal-day{min-height:64px;border:1.5px solid var(--line);border-radius:var(--radius-sm);padding:4px 5px;font-size:11px;background:var(--card-alt);}
+  .cal-day{min-height:64px;min-width:0;overflow:hidden;border:1.5px solid var(--line);border-radius:var(--radius-sm);padding:4px 5px;font-size:11px;background:var(--card-alt);box-sizing:border-box;}
   .cal-day.empty{background:transparent;border:none;}
   .cal-day.today{border-color:var(--blue);}
   .cal-day.today .num{color:var(--blue);}
@@ -99,7 +99,13 @@
   .archivo-item a:hover{color:var(--accent);}
   .spinner{display:inline-block;width:13px;height:13px;border:2px solid var(--line);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px;}
   @keyframes spin{to{transform:rotate(360deg);}}
-  @media (max-width:640px){ header h1{font-size:20px;} .tabs{width:100%;} }
+  @media (max-width:640px){
+    header h1{font-size:20px;}
+    .tabs{width:100%;}
+    .cal-day{min-height:52px;padding:3px 3px;font-size:9.5px;}
+    .cal-ev{font-size:8.5px;padding:1px 3px;}
+    .cal-dow{font-size:8.5px;}
+  }
 </style>
 </head>
 <body>
