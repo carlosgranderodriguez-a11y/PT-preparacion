@@ -57,6 +57,22 @@
   td{padding:10px 8px;border-bottom:1px solid var(--line);}
   tr:last-child td{border-bottom:none;}
   .progreso-select{font-size:12px;padding:5px 8px;border-radius:999px;}
+  .cal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+  .cal-nav button{background:var(--card-alt);border:1.5px solid var(--line);border-radius:999px;width:32px;height:32px;cursor:pointer;font-size:15px;color:var(--ink);}
+  .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;}
+  .cal-dow{text-align:center;font-size:10px;font-weight:700;color:var(--gray);padding:3px 0;text-transform:uppercase;}
+  .cal-day{min-height:64px;border:1.5px solid var(--line);border-radius:var(--radius-sm);padding:4px 5px;font-size:11px;background:var(--card-alt);}
+  .cal-day.empty{background:transparent;border:none;}
+  .cal-day.today{border-color:var(--blue);}
+  .cal-day.today .num{color:var(--blue);}
+  .cal-day .num{font-weight:700;}
+  .cal-ev{font-size:9.5px;line-height:1.3;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;background:var(--blue-soft);border-radius:4px;padding:1px 4px;}
+  .cal-ev.cal-nota{background:var(--amber-soft);}
+  .cal-ev-mas{font-size:9px;color:var(--gray);font-weight:700;}
+  .objetivo-item{display:flex;align-items:center;gap:10px;padding:8px 10px;border:1.5px solid var(--line);border-radius:var(--radius-sm);margin-bottom:6px;background:var(--card-alt);font-size:13.5px;}
+  .objetivo-item.hecho{opacity:.55;text-decoration:line-through;}
+  .estudio-item{display:flex;align-items:center;gap:10px;padding:6px 10px;border-bottom:1px solid var(--line);font-size:13px;flex-wrap:wrap;}
+  .pct-input{width:62px;font-size:12px;padding:5px 6px;border:1.5px solid var(--line);border-radius:999px;background:var(--card-alt);text-align:center;}
   .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;}
   .stat-card{border-radius:var(--radius-sm);padding:16px 12px;text-align:center;}
   .stat-card .emoji{font-size:24px;}
@@ -108,10 +124,35 @@
     </div>
 
     <div class="panel active" id="panel-calendario">
+      <div class="card" id="cardObjetivos" style="display:none;">
+        <h3>🎯 Objetivos de esta semana</h3>
+        <div id="listaObjetivos"></div>
+      </div>
       <div class="card">
-        <h3>Próximas clases</h3>
-        <div id="listaEventos"></div>
-        <div class="empty" id="eventosEmpty" style="display:none;">No tienes clases programadas todavía.</div>
+        <h3>🗓️ Esta semana</h3>
+        <div id="listaSemana"></div>
+      </div>
+      <div class="card">
+        <div class="cal-header">
+          <div class="cal-nav"><button id="calPrev">‹</button></div>
+          <h3 id="calTitulo" style="margin:0;"></h3>
+          <div class="cal-nav"><button id="calNext">›</button></div>
+        </div>
+        <div class="cal-grid" id="calDow"></div>
+        <div class="cal-grid" id="calGrid" style="margin-top:4px;"></div>
+      </div>
+      <div class="card">
+        <h3>⏱️ Registrar estudio</h3>
+        <div class="hint" style="margin-top:0;">Apunta cuánto has estudiado cada día para llevar el control de tus horas.</div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:10px;">
+          <div class="field" style="flex:1;min-width:130px;margin-bottom:0;"><label>Fecha</label><input type="date" id="estFecha" style="font-family:inherit;font-size:14px;padding:10px 12px;border:1.5px solid var(--line);border-radius:var(--radius-sm);background:var(--card-alt);color:var(--ink);width:100%;"></div>
+          <div class="field" style="max-width:100px;margin-bottom:0;"><label>Horas</label><input type="number" id="estHoras" min="0.5" step="0.5" value="1" style="font-family:inherit;font-size:14px;padding:10px 12px;border:1.5px solid var(--line);border-radius:var(--radius-sm);background:var(--card-alt);color:var(--ink);width:100%;"></div>
+          <div class="field" style="flex:1;min-width:140px;margin-bottom:0;"><label>Bloque</label><select id="estBloque"></select></div>
+        </div>
+        <div class="field"><label>Notas (opcional)</label><input type="text" id="estNotas" placeholder="Qué has estudiado..." style="font-family:inherit;font-size:14px;padding:10px 12px;border:1.5px solid var(--line);border-radius:var(--radius-sm);background:var(--card-alt);color:var(--ink);width:100%;"></div>
+        <button class="btn" id="btnAddEstudio">Registrar</button>
+        <span class="status" id="estStatus"></span>
+        <div id="listaEstudio" style="margin-top:12px;"></div>
       </div>
     </div>
 
@@ -139,7 +180,17 @@
 
 <script>
 const API_URL = 'https://script.google.com/macros/s/AKfycbzrEozXfHf41s3QPZTZelrfIuxQ48xs4LAABID3Tmk4JqV0Ys0e_UCGOHlsV5aAAm-w/exec';
-const ESTADOS_PROGRESO = ['Pendiente','En estudio','Repasado','Dominado'];
+const ESTADOS_PROGRESO = ['Pendiente','En estudio','Primera vuelta','Dominado'];
+function estadoNorm(e){ return e==='Repasado' ? 'Primera vuelta' : (e||'Pendiente'); }
+const DOW = ['L','M','X','J','V','S','D'];
+const BLOQUES_ESTUDIO = ['Temas','Cultura General','Prácticos','Simulacro','Otro'];
+function lunesDe(fechaISO){
+  const [y,m,d] = fechaISO.split('-').map(Number);
+  const dt = new Date(y, m-1, d);
+  const dow = dt.getDay()===0 ? 6 : dt.getDay()-1;
+  dt.setDate(dt.getDate()-dow);
+  return dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0');
+}
 const MESES=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
 
 let data = { alumnos:[], calendario:[], practicos:[], temas:[], temasProgreso:[], cg:[], cgProgreso:[], ajustes:[] };
@@ -186,6 +237,12 @@ function normalizarDatos(){
   (data.practicos||[]).forEach(p=>{ p.fecha = normFecha(p.fecha); p.fechaFeedback = normFecha(p.fechaFeedback); });
   (data.archivos||[]).forEach(a=>{ a.fecha = normFecha(a.fecha); });
   if(!data.archivos) data.archivos = [];
+  (data.estudio||[]).forEach(x=>{ x.fecha = normFecha(x.fecha); });
+  if(!data.estudio) data.estudio = [];
+  (data.objetivos||[]).forEach(o=>{ o.semana = normFecha(o.semana); });
+  if(!data.objetivos) data.objetivos = [];
+  (data.temasProgreso||[]).forEach(x=>{ x.estado = estadoNorm(x.estado); });
+  (data.cgProgreso||[]).forEach(x=>{ x.estado = estadoNorm(x.estado); });
 }
 function htmlArchivos(categoria, titulo){
   const lista = (data.archivos||[]).filter(x=>x.categoria===categoria).sort((a,b)=>String(b.fecha).localeCompare(String(a.fecha)));
@@ -271,7 +328,28 @@ function mostrarContenido(){
     location.reload();
   });
   document.getElementById('contenido').style.display='block';
-  renderEventos();
+  const now = new Date(); calYear = now.getFullYear(); calMonth = now.getMonth();
+  renderCalAlumno();
+  renderSemana();
+  renderObjetivos();
+  const selB = document.getElementById('estBloque');
+  selB.innerHTML = BLOQUES_ESTUDIO.map(b=>'<option>'+b+'</option>').join('');
+  document.getElementById('estFecha').value = todayISO();
+  document.getElementById('calPrev').addEventListener('click', ()=>{ calMonth--; if(calMonth<0){calMonth=11;calYear--;} renderCalAlumno(); });
+  document.getElementById('calNext').addEventListener('click', ()=>{ calMonth++; if(calMonth>11){calMonth=0;calYear++;} renderCalAlumno(); });
+  document.getElementById('btnAddEstudio').addEventListener('click', ()=>{
+    const st = document.getElementById('estStatus');
+    const fecha = document.getElementById('estFecha').value;
+    const horas = parseFloat(document.getElementById('estHoras').value);
+    if(!fecha || !horas || horas<=0){ st.textContent='Indica fecha y horas.'; st.className='status err'; return; }
+    const reg = { id: uid('es'), alumnoId, fecha, horas, bloque: document.getElementById('estBloque').value, notas: document.getElementById('estNotas').value.trim() };
+    data.estudio.push(reg);
+    document.getElementById('estNotas').value='';
+    st.textContent='Registrado.'; st.className='status ok';
+    renderEstudio(); renderEstadisticas();
+    apiPost('addEstudio', reg).catch(e=>{ st.textContent='Error al guardar: '+e.message; st.className='status err'; });
+  });
+  renderEstudio();
   renderPracticos();
   document.getElementById('archivosPracticos').innerHTML = htmlArchivos('practicos','Materiales de tu preparador');
   renderEstadisticas();
@@ -288,6 +366,94 @@ document.querySelectorAll('.tab').forEach(t=>{
   });
 });
 
+let calYear, calMonth;
+function renderCalAlumno(){
+  document.getElementById('calTitulo').textContent = MESES[calMonth]+' '+calYear;
+  const dow = document.getElementById('calDow'); dow.innerHTML='';
+  DOW.forEach(d=>{ const el=document.createElement('div'); el.className='cal-dow'; el.textContent=d; dow.appendChild(el); });
+  const grid = document.getElementById('calGrid'); grid.innerHTML='';
+  const firstDay = new Date(calYear,calMonth,1);
+  let startOffset = firstDay.getDay(); startOffset = startOffset===0?6:startOffset-1;
+  const daysInMonth = new Date(calYear,calMonth+1,0).getDate();
+  const hoy = todayISO();
+  const misEvs = (data.calendario||[]).filter(ev=>ev.alumnoId===alumnoId || ev.alumnoId==='ALL');
+  for(let i=0;i<startOffset;i++){ const el=document.createElement('div'); el.className='cal-day empty'; grid.appendChild(el); }
+  for(let d=1; d<=daysInMonth; d++){
+    const iso = calYear+'-'+String(calMonth+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+    const el = document.createElement('div');
+    el.className = 'cal-day'+(iso===hoy?' today':'');
+    const evs = misEvs.filter(ev=>ev.fecha===iso);
+    let evHtml = ''; let lineas = 0; let ocultos = 0;
+    evs.forEach(ev=>{
+      if(lineas<3){ evHtml += '<div class="cal-ev">'+tipoEmoji(ev.tipo)+' '+escapeHtml(ev.tema||tipoNombre(ev.tipo))+'</div>'; lineas++; }
+      else { ocultos++; return; }
+      if(ev.notas && lineas<3){ evHtml += '<div class="cal-ev cal-nota">🗒️ '+escapeHtml(ev.notas)+'</div>'; lineas++; }
+    });
+    if(ocultos>0) evHtml += '<div class="cal-ev-mas">+'+ocultos+'</div>';
+    el.innerHTML = '<div class="num">'+d+'</div>'+evHtml;
+    grid.appendChild(el);
+  }
+}
+
+function renderSemana(){
+  const hoy = todayISO();
+  const lunes = lunesDe(hoy);
+  const cont = document.getElementById('listaSemana');
+  const misEvs = (data.calendario||[]).filter(ev=>ev.alumnoId===alumnoId || ev.alumnoId==='ALL');
+  let html = '';
+  const [ly,lm,ld] = lunes.split('-').map(Number);
+  for(let i=0;i<7;i++){
+    const dt = new Date(ly, lm-1, ld+i);
+    const iso = dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0');
+    const evs = misEvs.filter(ev=>ev.fecha===iso).sort((a,b)=>(a.hora||'').localeCompare(b.hora||''));
+    if(!evs.length) continue;
+    const dias = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
+    html += '<div style="font-weight:700;font-size:13px;margin:8px 0 4px;'+(iso===hoy?'color:var(--blue);':'')+'">'+dias[dt.getDay()]+' '+dt.getDate()+(iso===hoy?' · hoy':'')+'</div>';
+    evs.forEach(ev=>{
+      html += `<div class="evento"><div>${tipoEmoji(ev.tipo)} ${ev.hora?('<strong>'+escapeHtml(ev.hora)+'</strong> · '):''}${escapeHtml(tipoNombre(ev.tipo))}${ev.tema?(' — '+escapeHtml(ev.tema)):''}</div>${ev.notas?('<div class="meta">🗒️ '+escapeHtml(ev.notas)+'</div>'):''}</div>`;
+    });
+  }
+  cont.innerHTML = html || '<div class="empty" style="padding:8px 0;">Sin clases esta semana.</div>';
+}
+
+function renderObjetivos(){
+  const lunes = lunesDe(todayISO());
+  const mios = (data.objetivos||[]).filter(o=>(o.alumnoId===alumnoId || o.alumnoId==='ALL') && o.semana===lunes);
+  const card = document.getElementById('cardObjetivos');
+  if(!mios.length){ card.style.display='none'; return; }
+  card.style.display='block';
+  document.getElementById('listaObjetivos').innerHTML = mios.map(o=>{
+    const hecho = String(o.cumplido)==='true' || o.cumplido===true;
+    return `<div class="objetivo-item ${hecho?'hecho':''}"><input type="checkbox" data-obj="${o.id}" ${hecho?'checked':''}> ${escapeHtml(o.texto)}</div>`;
+  }).join('');
+  document.querySelectorAll('[data-obj]').forEach(chk=>{
+    chk.addEventListener('change', ()=>{
+      const o = data.objetivos.find(x=>x.id===chk.dataset.obj);
+      if(o) o.cumplido = chk.checked;
+      renderObjetivos();
+      apiPost('setObjetivoCumplido', { id: chk.dataset.obj, cumplido: chk.checked }).catch(()=>{});
+    });
+  });
+}
+
+function renderEstudio(){
+  const cont = document.getElementById('listaEstudio');
+  const mios = (data.estudio||[]).filter(x=>x.alumnoId===alumnoId).sort((a,b)=>String(b.fecha).localeCompare(String(a.fecha))).slice(0,10);
+  if(!mios.length){ cont.innerHTML=''; return; }
+  cont.innerHTML = '<div class="hint" style="margin:0 0 6px;">Últimos registros:</div>' + mios.map(x=>`<div class="estudio-item">
+    <span>⏱️ <strong>${x.horas}h</strong> · ${escapeHtml(x.bloque)} · ${escapeHtml(x.fecha)}</span>
+    ${x.notas?('<span style="color:var(--gray);">'+escapeHtml(x.notas)+'</span>'):''}
+    <button class="icon-btn" data-delest="${x.id}" style="background:none;border:none;cursor:pointer;color:var(--gray);font-size:12px;margin-left:auto;">Eliminar</button>
+  </div>`).join('');
+  cont.querySelectorAll('[data-delest]').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      data.estudio = data.estudio.filter(x=>x.id!==btn.dataset.delest);
+      renderEstudio(); renderEstadisticas();
+      apiPost('deleteEstudio',{id:btn.dataset.delest}).catch(()=>{});
+    });
+  });
+}
+
 function renderEstadisticas(){
   const panel = document.getElementById('panel-estadisticas');
   const mios = (data.calendario||[]).filter(ev=>ev.alumnoId===alumnoId || ev.alumnoId==='ALL');
@@ -297,30 +463,42 @@ function renderEstadisticas(){
   const misPracticos = (data.practicos||[]).filter(p=>p.alumnoId===alumnoId);
   const corregidos = misPracticos.filter(p=>p.estado==='corregido').length;
 
+  const misEstudio = (data.estudio||[]).filter(x=>x.alumnoId===alumnoId);
+  const horasTotales = misEstudio.reduce((s,x)=>s+(parseFloat(x.horas)||0),0);
+  const horasPorBloque = {};
+  misEstudio.forEach(x=>{ horasPorBloque[x.bloque] = (horasPorBloque[x.bloque]||0)+(parseFloat(x.horas)||0); });
+  const bloquesHtml = Object.keys(horasPorBloque).length
+    ? Object.keys(horasPorBloque).map(b=>`<span>${escapeHtml(b)}: <b>${horasPorBloque[b].toFixed(1)}h</b></span>`).join(' · ')
+    : 'Todavía sin registros';
+
   function bloqueProgreso(catalogo, progreso, titulo){
     const total = catalogo.length;
-    const c = {'Pendiente':0,'En estudio':0,'Repasado':0,'Dominado':0};
+    const c = {'Pendiente':0,'En estudio':0,'Primera vuelta':0,'Dominado':0};
+    let sumaPct = 0;
     catalogo.forEach(t=>{
       const reg = progreso.find(x=>x.alumnoId===alumnoId && x.temaId===t.id);
-      c[reg?reg.estado:'Pendiente']++;
+      c[estadoNorm(reg?reg.estado:'Pendiente')]++;
+      sumaPct += reg && reg.pct!=='' && reg.pct!==undefined ? (parseFloat(reg.pct)||0) : 0;
     });
+    const mediaPct = total ? Math.round(sumaPct/total) : 0;
     const pct = v => total? (v/total*100) : 0;
     return `<div class="card">
       <h3>${titulo}</h3>
       ${total===0 ? '<div class="empty" style="padding:6px 0;">Tu preparador todavía no ha cargado temas.</div>' : `
       <div class="prog-bar">
         <div class="prog-seg" style="width:${pct(c['Dominado'])}%;background:var(--green);"></div>
-        <div class="prog-seg" style="width:${pct(c['Repasado'])}%;background:var(--blue);"></div>
+        <div class="prog-seg" style="width:${pct(c['Primera vuelta'])}%;background:var(--blue);"></div>
         <div class="prog-seg" style="width:${pct(c['En estudio'])}%;background:var(--amber);"></div>
       </div>
       <div class="prog-leyenda">
         <span>🟢 Dominado <b>${c['Dominado']}</b></span>
-        <span>🔵 Repasado <b>${c['Repasado']}</b></span>
+        <span>🔵 Primera vuelta <b>${c['Primera vuelta']}</b></span>
         <span>🟡 En estudio <b>${c['En estudio']}</b></span>
         <span>⚪ Pendiente <b>${c['Pendiente']}</b></span>
         <span>· Total <b>${total}</b></span>
+        <span>· Avance medio <b>${mediaPct}%</b></span>
       </div>
-      <div class="hint" style="margin:8px 0 0;">Marca tu progreso en las pestañas 📚 Temas y 🌍 Cultura General.</div>`}
+      <div class="hint" style="margin:8px 0 0;">Marca tu progreso y el % de cada tema en las pestañas 📚 Temas y 🌍 Cultura General.</div>`}
     </div>`;
   }
 
@@ -334,6 +512,12 @@ function renderEstadisticas(){
         <div class="stat-card stat-repaso"><div class="emoji">🔁</div><div class="num">${conteo.Repaso}</div><div class="lbl">Repaso</div></div>
       </div>
       <div class="hint" style="margin:10px 0 0;">Prácticos enviados: <b>${misPracticos.length}</b> · Corregidos: <b>${corregidos}</b></div>
+    </div>
+    <div class="card">
+      <h3>⏱️ Mis horas de estudio</h3>
+      <div style="font-family:'Poppins',sans-serif;font-weight:800;font-size:30px;color:var(--accent-dark);">${horasTotales.toFixed(1)}h</div>
+      <div class="prog-leyenda" style="margin-top:6px;">${bloquesHtml}</div>
+      <div class="hint" style="margin:8px 0 0;">Registra tus sesiones de estudio desde 🗓️ Mi calendario.</div>
     </div>
     ${bloqueProgreso(data.temas||[], data.temasProgreso||[], '📚 Mi progreso en Temas')}
     ${bloqueProgreso(data.cg||[], data.cgProgreso||[], '🌍 Mi progreso en Cultura General')}
@@ -422,16 +606,24 @@ function renderCatalogTab(prefix, titulo, catalogo, progreso, tipo){
   document.getElementById(prefix+'Empty').style.display = catalogo.length?'none':'block';
   catalogo.slice().sort((a,b)=>String(a.numero||'').localeCompare(String(b.numero||''),undefined,{numeric:true})).forEach(t=>{
     const reg = progreso.find(x=>x.alumnoId===alumnoId && x.temaId===t.id);
-    const estado = reg?reg.estado:'Pendiente';
+    const estado = estadoNorm(reg?reg.estado:'Pendiente');
+    const pctVal = reg && reg.pct!=='' && reg.pct!==undefined ? reg.pct : 0;
     const tr = document.createElement('tr');
     tr.innerHTML = `<td>${escapeHtml(t.numero||'')}</td><td>${escapeHtml(t.titulo)}</td>
-      <td><select class="progreso-select" data-tema="${t.id}">${ESTADOS_PROGRESO.map(e=>'<option'+(e===estado?' selected':'')+'>'+e+'</option>').join('')}</select></td>`;
-    tr.querySelector('select').addEventListener('change', e=>{
+      <td style="white-space:nowrap;"><select class="progreso-select" data-tema="${t.id}">${ESTADOS_PROGRESO.map(e=>'<option'+(e===estado?' selected':'')+'>'+e+'</option>').join('')}</select>
+      <input type="number" class="pct-input" min="0" max="100" step="5" value="${pctVal}" title="% estudiado"> %</td>`;
+    function guardarProgreso(){
+      const nuevoEstado = tr.querySelector('select').value;
+      let nuevoPct = parseInt(tr.querySelector('.pct-input').value)||0;
+      if(nuevoPct<0) nuevoPct=0; if(nuevoPct>100) nuevoPct=100;
       const idx = progreso.findIndex(x=>x.alumnoId===alumnoId && x.temaId===t.id);
-      if(idx>=0) progreso[idx].estado = e.target.value; else progreso.push({alumnoId, temaId:t.id, estado:e.target.value});
+      if(idx>=0){ progreso[idx].estado = nuevoEstado; progreso[idx].pct = nuevoPct; }
+      else progreso.push({alumnoId, temaId:t.id, estado:nuevoEstado, pct:nuevoPct});
       renderEstadisticas();
-      apiPost('setProgreso', { alumnoId, temaId:t.id, estado:e.target.value, tipo }).catch(()=>{});
-    });
+      apiPost('setProgreso', { alumnoId, temaId:t.id, estado:nuevoEstado, pct:nuevoPct, tipo }).catch(()=>{});
+    }
+    tr.querySelector('select').addEventListener('change', guardarProgreso);
+    tr.querySelector('.pct-input').addEventListener('change', guardarProgreso);
     tbody.appendChild(tr);
   });
 }
