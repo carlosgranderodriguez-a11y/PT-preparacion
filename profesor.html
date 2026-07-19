@@ -20,7 +20,7 @@
     --radius:14px; --radius-sm:9px;
     --shadow:0 1px 2px rgba(35,39,89,.05), 0 8px 24px rgba(35,39,89,.06);
   }
-  *{box-sizing:border-box;}
+  *{box-sizing:border-box;} html,body{overflow-x:hidden;max-width:100%;}
   body{margin:0;background:var(--bg);color:var(--ink);font-family:'Inter',-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;font-size:15px;line-height:1.55;}
   .wrap{max-width:1040px;margin:0 auto;padding:26px 18px 60px;}
   header{display:flex;align-items:center;justify-content:space-between;padding-bottom:16px;margin-bottom:20px;flex-wrap:wrap;gap:8px;position:relative;}
@@ -70,9 +70,9 @@
   .cal-header h3{font-family:'Poppins',sans-serif;}
   .cal-nav button{background:var(--card-alt);border:1.5px solid var(--line);border-radius:999px;width:32px;height:32px;cursor:pointer;font-size:15px;color:var(--ink);}
   .cal-nav button:hover{border-color:var(--accent);color:var(--accent);}
-  .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;}
+  .cal-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;width:100%;}
   .cal-dow{text-align:center;font-size:10.5px;font-weight:700;color:var(--gray);padding:4px 0;text-transform:uppercase;}
-  .cal-day{min-height:80px;border:1.5px solid var(--line);border-radius:var(--radius-sm);padding:6px 7px;font-size:12px;cursor:pointer;position:relative;background:var(--card-alt);transition:box-shadow .12s, border-color .12s;}
+  .cal-day{min-height:80px;min-width:0;overflow:hidden;box-sizing:border-box;border:1.5px solid var(--line);border-radius:var(--radius-sm);padding:6px 7px;font-size:12px;cursor:pointer;position:relative;background:var(--card-alt);transition:box-shadow .12s, border-color .12s;}
   .cal-day:hover:not(.empty){border-color:var(--accent);box-shadow:0 2px 8px rgba(35,39,89,.08);}
   .cal-day.empty{background:transparent;border:none;cursor:default;}
   .cal-day.selected{border-color:var(--accent);border-width:2px;background:var(--accent-soft);}
@@ -98,6 +98,15 @@
   .dafo-box{border-radius:var(--radius-sm);padding:10px 12px;}
   .dafo-box label{display:block;margin-bottom:6px;}
   .dafo-box textarea{background:#fff;border:none;}
+  .prog-bar{height:12px;border-radius:999px;background:var(--line);overflow:hidden;display:flex;margin:6px 0 4px;border:1px solid var(--line);}
+  .prog-seg{height:100%;}
+  .prog-leyenda{font-size:12px;color:var(--ink-soft);display:flex;gap:12px;flex-wrap:wrap;}
+  .prog-leyenda b{font-weight:800;}
+  .bloque-row{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
+  .bloque-lbl{font-size:12.5px;font-weight:600;width:100px;flex-shrink:0;}
+  .bloque-bar-bg{flex:1;height:10px;border-radius:999px;background:var(--line);overflow:hidden;}
+  .bloque-bar{height:100%;background:var(--accent);border-radius:999px;}
+  .bloque-val{font-size:12px;font-weight:700;color:var(--ink-soft);width:44px;text-align:right;flex-shrink:0;}
   .dafo-fortalezas{background:var(--green-soft);} .dafo-fortalezas label{color:var(--green);}
   .dafo-debilidades{background:var(--red-soft);} .dafo-debilidades label{color:var(--red);}
   .dafo-oportunidades{background:var(--blue-soft);} .dafo-oportunidades label{color:var(--blue);}
@@ -119,6 +128,9 @@
     .dafo-grid{grid-template-columns:1fr;}
     .tabs{border-radius:var(--radius);width:100%;}
     header h1{font-size:21px;}
+    .cal-day{min-height:60px;padding:3px 3px;font-size:10px;}
+    .cal-ev{font-size:9px;padding:1px 3px;}
+    .cal-dow{font-size:9px;}
   }
 </style>
 </head>
@@ -652,15 +664,33 @@ function renderFichaAlumno(id){
     ${recientes.length? '<table><thead><tr><th>Fecha</th><th>Estado</th></tr></thead><tbody>'+recientes.map(p=>`<tr><td>${escapeHtml(p.fecha)}</td><td><span class="pill ${p.estado}">${p.estado==='pendiente'?'Pendiente':'Corregido'}</span></td></tr>`).join('')+'</tbody></table>' : '<div class="empty">Todavía no ha enviado ningún práctico.</div>'}
 
     <h3 style="font-size:14.5px;margin-top:18px;">⏱️ Horas de estudio registradas</h3>
-    <p style="font-size:13.5px;"><strong>${horasTot.toFixed(1)}h</strong> en total · ${escapeHtml(horasBloqueTxt)}</p>
+    <div style="font-family:'Poppins',sans-serif;font-weight:800;font-size:26px;color:var(--accent-dark);">${horasTot.toFixed(1)}h</div>
+    ${Object.keys(horasBloque).length ? Object.keys(horasBloque).sort((x,y)=>horasBloque[y]-horasBloque[x]).map(b=>{
+      const max = Math.max(1, ...Object.values(horasBloque));
+      return '<div class="bloque-row"><span class="bloque-lbl">'+escapeHtml(b)+'</span><div class="bloque-bar-bg"><div class="bloque-bar" style="width:'+(horasBloque[b]/max*100)+'%;"></div></div><span class="bloque-val">'+horasBloque[b].toFixed(1)+'h</span></div>';
+    }).join('') : '<div class="hint" style="margin:4px 0;">Sin registros todavía.</div>'}
 
-    <h3 style="font-size:14.5px;margin-top:18px;">Temas — progreso</h3>
-    <p style="font-size:13.5px;">De ${rTemas.total} temas: Dominado ${rTemas.conteo['Dominado']} · Primera vuelta ${rTemas.conteo['Primera vuelta']} · En estudio ${rTemas.conteo['En estudio']} · Pendiente ${rTemas.conteo['Pendiente']} · Avance medio <strong>${rTemas.mediaPct}%</strong></p>
-    ${rTemas.estudiados.length? '<div class="hint" style="margin:0 0 8px;">Estudiados: '+rTemas.estudiados.map(escapeHtml).join(', ')+'</div>' : ''}
+    <h3 style="font-size:14.5px;margin-top:18px;">📚 Temas — progreso</h3>
+    ${rTemas.total===0 ? '<div class="hint" style="margin:4px 0;">Sin temas cargados en la pestaña Temas.</div>' : `
+    <div class="prog-bar">
+      <div class="prog-seg" style="width:${rTemas.total?rTemas.conteo['Dominado']/rTemas.total*100:0}%;background:var(--green);"></div>
+      <div class="prog-seg" style="width:${rTemas.total?rTemas.conteo['Primera vuelta']/rTemas.total*100:0}%;background:var(--blue);"></div>
+      <div class="prog-seg" style="width:${rTemas.total?rTemas.conteo['En estudio']/rTemas.total*100:0}%;background:var(--amber);"></div>
+      <div class="prog-seg" style="width:${rTemas.total?rTemas.conteo['Pendiente']/rTemas.total*100:0}%;background:var(--line);"></div>
+    </div>
+    <div class="prog-leyenda"><span>🟢 Dominado <b>${rTemas.conteo['Dominado']}</b></span><span>🔵 Primera vuelta <b>${rTemas.conteo['Primera vuelta']}</b></span><span>🟡 En estudio <b>${rTemas.conteo['En estudio']}</b></span><span>⚪ Pendiente <b>${rTemas.conteo['Pendiente']}</b></span><span>· Avance medio <b>${rTemas.mediaPct}%</b></span></div>`}
+    ${rTemas.estudiados.length? '<div class="hint" style="margin:6px 0 0;">Estudiados: '+rTemas.estudiados.map(escapeHtml).join(', ')+'</div>' : ''}
 
-    <h3 style="font-size:14.5px;margin-top:18px;">Cultura General — progreso</h3>
-    <p style="font-size:13.5px;">De ${rCg.total} temas: Dominado ${rCg.conteo['Dominado']} · Primera vuelta ${rCg.conteo['Primera vuelta']} · En estudio ${rCg.conteo['En estudio']} · Pendiente ${rCg.conteo['Pendiente']} · Avance medio <strong>${rCg.mediaPct}%</strong></p>
-    ${rCg.estudiados.length? '<div class="hint" style="margin:0;">Estudiados: '+rCg.estudiados.map(escapeHtml).join(', ')+'</div>' : ''}
+    <h3 style="font-size:14.5px;margin-top:18px;">🌍 Cultura General — progreso</h3>
+    ${rCg.total===0 ? '<div class="hint" style="margin:4px 0;">Sin temas cargados en la pestaña Cultura General.</div>' : `
+    <div class="prog-bar">
+      <div class="prog-seg" style="width:${rCg.total?rCg.conteo['Dominado']/rCg.total*100:0}%;background:var(--green);"></div>
+      <div class="prog-seg" style="width:${rCg.total?rCg.conteo['Primera vuelta']/rCg.total*100:0}%;background:var(--blue);"></div>
+      <div class="prog-seg" style="width:${rCg.total?rCg.conteo['En estudio']/rCg.total*100:0}%;background:var(--amber);"></div>
+      <div class="prog-seg" style="width:${rCg.total?rCg.conteo['Pendiente']/rCg.total*100:0}%;background:var(--line);"></div>
+    </div>
+    <div class="prog-leyenda"><span>🟢 Dominado <b>${rCg.conteo['Dominado']}</b></span><span>🔵 Primera vuelta <b>${rCg.conteo['Primera vuelta']}</b></span><span>🟡 En estudio <b>${rCg.conteo['En estudio']}</b></span><span>⚪ Pendiente <b>${rCg.conteo['Pendiente']}</b></span><span>· Avance medio <b>${rCg.mediaPct}%</b></span></div>`}
+    ${rCg.estudiados.length? '<div class="hint" style="margin:6px 0 0;">Estudiados: '+rCg.estudiados.map(escapeHtml).join(', ')+'</div>' : ''}
   `;
   ficha.style.display = 'block';
   document.getElementById('btnCerrarFicha').addEventListener('click', ()=> ficha.style.display='none');
