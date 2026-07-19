@@ -221,12 +221,10 @@ function enviarBienvenida_(alumno) {
     const ajustes = sheetToObjects_('Ajustes');
     const urlReg = ajustes.find(function(a){ return a.clave === 'urlAlumno'; });
     const academiaReg = ajustes.find(function(a){ return a.clave === 'academia'; });
-    const url = urlReg && urlReg.valor ? urlReg.valor : '';
+    const url = (urlReg && urlReg.valor) ? urlReg.valor : 'https://carlosgranderodriguez-a11y.github.io/PT-preparacion/alumno.html';
     const academia = academiaReg && academiaReg.valor ? academiaReg.valor : 'Academia PT';
     let cuerpo = 'Hola, me llamo Sara y quiero darte la enhorabuena por la decisión que has tomado. Esto es el principio del camino. ¡Bienvenido/a a tu preparación para las oposiciones de PT! 💪\n\n';
-    if (url) {
-      cuerpo += 'Accede a tu espacio personal aquí:\n' + url + '\n\n';
-    }
+    cuerpo += 'Accede a tu espacio personal aquí:\n' + url + '\n\n';
     cuerpo += 'La primera vez, pulsa "¿Primera vez? Crea tu clave aquí", escribe este mismo correo (' + alumno.email + ') y elige tu clave personal. A partir de entonces entrarás con tu correo y tu clave.\n\n';
     cuerpo += 'En tu espacio verás tu calendario de clases, enviarás tus prácticos, descargarás materiales y llevarás el control de tu estudio.\n\n';
     cuerpo += '¡Mucho ánimo!\n\nSara — ' + academia;
