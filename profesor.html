@@ -162,6 +162,18 @@
       <span class="status" id="panelStatus"></span>
     </div>
     <div class="card">
+      <h3>🎯 Objetivos semanales</h3>
+      <div class="hint" style="margin-top:0;">Los objetivos de la semana en curso aparecen en la página del alumno, que los marca como cumplidos.</div>
+      <div class="row">
+        <div class="field"><label>Alumno</label><select id="objAlumno"></select></div>
+        <div class="field" style="max-width:170px;"><label>Semana (cualquier día)</label><input type="date" id="objSemana"></div>
+      </div>
+      <div class="field" style="margin-bottom:12px;"><label>Objetivo</label><input type="text" id="objTexto" placeholder="Ej: Terminar primera vuelta de los temas 10-12"></div>
+      <button class="btn btn-primary btn-sm" id="btnAddObjetivo">Añadir objetivo</button>
+      <span class="status" id="objStatus"></span>
+      <div id="listaObjetivosPrep" style="margin-top:12px;"></div>
+    </div>
+    <div class="card">
       <h3>Análisis DAFO por alumno</h3>
       <div class="hint" style="margin-top:0;">Fortalezas y debilidades de cada alumno, para ajustar el enfoque de cada clase.</div>
       <div id="listaDafo"></div>
@@ -254,7 +266,7 @@
     </div>
     <div class="card">
       <h3>Detalle por alumno</h3>
-      <table><thead><tr><th>Alumno</th><th>📚 Tema</th><th>📝 Práctico</th><th>⏱️ Simulacro</th><th>🔁 Repaso</th><th>Total</th></tr></thead><tbody id="statsTbody"></tbody></table>
+      <table><thead><tr><th>Alumno</th><th>📚 Tema</th><th>📝 Práctico</th><th>⏱️ Simulacro</th><th>🔁 Repaso</th><th>Total</th><th>⏱️ Horas estudio</th></tr></thead><tbody id="statsTbody"></tbody></table>
       <div class="empty" id="statsEmpty" style="display:none;">Todavía no hay clases programadas.</div>
     </div>
   </div>
@@ -280,7 +292,15 @@
 const API_URL = 'https://script.google.com/macros/s/AKfycbzrEozXfHf41s3QPZTZelrfIuxQ48xs4LAABID3Tmk4JqV0Ys0e_UCGOHlsV5aAAm-w/exec';
 const COACH_KEY = 'cgr-pt-2026'; // cámbiala si quieres
 
-let data = { alumnos:[], calendario:[], practicos:[], temas:[], temasProgreso:[], cg:[], cgProgreso:[], ajustes:[], dafo:[], archivos:[] };
+let data = { alumnos:[], calendario:[], practicos:[], temas:[], temasProgreso:[], cg:[], cgProgreso:[], ajustes:[], dafo:[], archivos:[], estudio:[], objetivos:[] };
+function estadoNorm(e){ return e==='Repasado' ? 'Primera vuelta' : (e||'Pendiente'); }
+function lunesDe(fechaISO){
+  const [y,m,d] = fechaISO.split('-').map(Number);
+  const dt = new Date(y, m-1, d);
+  const dow = dt.getDay()===0 ? 6 : dt.getDay()-1;
+  dt.setDate(dt.getDate()-dow);
+  return dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0');
+}
 let calYear, calMonth, selectedDate=null;
 const MESES=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
 const DOW=['L','M','X','J','V','S','D'];
@@ -359,6 +379,12 @@ function normalizarDatos(){
   (data.practicos||[]).forEach(p=>{ p.fecha = normFecha(p.fecha); p.fechaFeedback = normFecha(p.fechaFeedback); });
   (data.archivos||[]).forEach(a=>{ a.fecha = normFecha(a.fecha); });
   if(!data.archivos) data.archivos = [];
+  (data.estudio||[]).forEach(x=>{ x.fecha = normFecha(x.fecha); });
+  if(!data.estudio) data.estudio = [];
+  (data.objetivos||[]).forEach(o=>{ o.semana = normFecha(o.semana); });
+  if(!data.objetivos) data.objetivos = [];
+  (data.temasProgreso||[]).forEach(x=>{ x.estado = estadoNorm(x.estado); });
+  (data.cgProgreso||[]).forEach(x=>{ x.estado = estadoNorm(x.estado); });
 }
 
 async function loadAll(){
@@ -440,6 +466,7 @@ document.querySelectorAll('.tab').forEach(t=>{
 function renderPanel(){
   document.getElementById('panelTema').value = ajusteVal('temaSemana','');
   document.getElementById('panelSupuesto').value = ajusteVal('supuestoSemana','');
+  renderObjetivosPrep();
   renderDafo();
 }
 function setAjusteLocal(clave, valor){
@@ -454,6 +481,50 @@ document.getElementById('btnGuardarPanel').addEventListener('click', ()=>{
   st.textContent='Guardado.'; st.className='status ok';
   syncBg('saveAjuste', { clave:'temaSemana', valor: tema });
   syncBg('saveAjuste', { clave:'supuestoSemana', valor: supuesto });
+});
+
+function renderObjetivosPrep(){
+  const selA = document.getElementById('objAlumno');
+  const prev = selA.value;
+  selA.innerHTML = '<option value="ALL">— Todos los alumnos —</option>';
+  data.alumnos.forEach(a=>{ const o=document.createElement('option'); o.value=a.id; o.textContent=a.nombre; selA.appendChild(o); });
+  if([...selA.options].some(o=>o.value===prev)) selA.value = prev;
+  if(!document.getElementById('objSemana').value) document.getElementById('objSemana').value = todayISO();
+
+  const lunesActual = lunesDe(todayISO());
+  const lista = (data.objetivos||[]).slice().sort((a,b)=>String(b.semana).localeCompare(String(a.semana)));
+  const cont = document.getElementById('listaObjetivosPrep');
+  if(!lista.length){ cont.innerHTML = '<div class="empty" style="padding:8px 0;">Sin objetivos todavía.</div>'; return; }
+  cont.innerHTML = lista.map(o=>{
+    const alumno = data.alumnos.find(a=>a.id===o.alumnoId);
+    const nombre = o.alumnoId==='ALL' ? 'Todos' : (alumno?alumno.nombre:'(eliminado)');
+    const hecho = String(o.cumplido)==='true' || o.cumplido===true;
+    const esActual = o.semana===lunesActual;
+    return `<div class="archivo-item" style="${esActual?'border-color:var(--accent);':''}">
+      <span style="flex:1;min-width:180px;">${hecho?'✅':'⬜'} <strong>${escapeHtml(nombre)}</strong> · semana del ${escapeHtml(o.semana)}${esActual?' <span class="pill corregido" style="font-size:10px;">actual</span>':''}<br><span style="font-size:12.5px;color:var(--ink-soft);">${escapeHtml(o.texto)}</span></span>
+      <button class="icon-btn" data-delobj="${o.id}">Eliminar</button>
+    </div>`;
+  }).join('');
+  cont.querySelectorAll('[data-delobj]').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      data.objetivos = data.objetivos.filter(x=>x.id!==btn.dataset.delobj);
+      renderObjetivosPrep();
+      syncBg('deleteObjetivo',{id:btn.dataset.delobj});
+    });
+  });
+}
+document.getElementById('btnAddObjetivo').addEventListener('click', ()=>{
+  const st = document.getElementById('objStatus');
+  const texto = document.getElementById('objTexto').value.trim();
+  const fechaRef = document.getElementById('objSemana').value;
+  if(!texto){ st.textContent='Escribe el objetivo.'; st.className='status err'; return; }
+  if(!fechaRef){ st.textContent='Elige la semana.'; st.className='status err'; return; }
+  const obj = { id: uid('ob'), alumnoId: document.getElementById('objAlumno').value, semana: lunesDe(fechaRef), texto, cumplido: false };
+  data.objetivos.push(obj);
+  document.getElementById('objTexto').value='';
+  st.textContent='Objetivo añadido.'; st.className='status ok';
+  renderObjetivosPrep();
+  syncBg('addObjetivo', obj);
 });
 
 function renderDafo(){
@@ -546,18 +617,26 @@ function renderFichaAlumno(id){
   const recientes = misPracticos.slice(0,5);
 
   function resumenTemas(catalogo, progreso){
-    const conteo = {'Pendiente':0,'En estudio':0,'Repasado':0,'Dominado':0};
+    const conteo = {'Pendiente':0,'En estudio':0,'Primera vuelta':0,'Dominado':0};
     const estudiados = [];
+    let sumaPct = 0;
     catalogo.forEach(t=>{
       const reg = progreso.find(x=>x.alumnoId===id && x.temaId===t.id);
-      const estado = reg?reg.estado:'Pendiente';
+      const estado = estadoNorm(reg?reg.estado:'Pendiente');
       conteo[estado] = (conteo[estado]||0)+1;
-      if(estado!=='Pendiente') estudiados.push(t.titulo+' ('+estado+')');
+      sumaPct += reg && reg.pct!=='' && reg.pct!==undefined ? (parseFloat(reg.pct)||0) : 0;
+      if(estado!=='Pendiente') estudiados.push(t.titulo+' ('+estado+(reg&&reg.pct?' '+reg.pct+'%':'')+')');
     });
-    return {conteo, estudiados, total: catalogo.length};
+    const mediaPct = catalogo.length ? Math.round(sumaPct/catalogo.length) : 0;
+    return {conteo, estudiados, total: catalogo.length, mediaPct};
   }
   const rTemas = resumenTemas(data.temas, data.temasProgreso);
   const rCg = resumenTemas(data.cg, data.cgProgreso);
+  const miEstudio = (data.estudio||[]).filter(x=>x.alumnoId===id);
+  const horasTot = miEstudio.reduce((s,x)=>s+(parseFloat(x.horas)||0),0);
+  const horasBloque = {};
+  miEstudio.forEach(x=>{ horasBloque[x.bloque] = (horasBloque[x.bloque]||0)+(parseFloat(x.horas)||0); });
+  const horasBloqueTxt = Object.keys(horasBloque).map(b=>b+': '+horasBloque[b].toFixed(1)+'h').join(' · ') || 'sin registros';
 
   ficha.innerHTML = `
     <div style="display:flex;justify-content:space-between;align-items:baseline;">
@@ -572,12 +651,15 @@ function renderFichaAlumno(id){
     <p style="font-size:13.5px;">Total: <strong>${misPracticos.length}</strong> · Pendientes: <strong style="color:var(--amber);">${pendientes}</strong> · Corregidos: <strong style="color:var(--green);">${corregidos}</strong></p>
     ${recientes.length? '<table><thead><tr><th>Fecha</th><th>Estado</th></tr></thead><tbody>'+recientes.map(p=>`<tr><td>${escapeHtml(p.fecha)}</td><td><span class="pill ${p.estado}">${p.estado==='pendiente'?'Pendiente':'Corregido'}</span></td></tr>`).join('')+'</tbody></table>' : '<div class="empty">Todavía no ha enviado ningún práctico.</div>'}
 
+    <h3 style="font-size:14.5px;margin-top:18px;">⏱️ Horas de estudio registradas</h3>
+    <p style="font-size:13.5px;"><strong>${horasTot.toFixed(1)}h</strong> en total · ${escapeHtml(horasBloqueTxt)}</p>
+
     <h3 style="font-size:14.5px;margin-top:18px;">Temas — progreso</h3>
-    <p style="font-size:13.5px;">De ${rTemas.total} temas: Dominado ${rTemas.conteo['Dominado']} · Repasado ${rTemas.conteo['Repasado']} · En estudio ${rTemas.conteo['En estudio']} · Pendiente ${rTemas.conteo['Pendiente']}</p>
+    <p style="font-size:13.5px;">De ${rTemas.total} temas: Dominado ${rTemas.conteo['Dominado']} · Primera vuelta ${rTemas.conteo['Primera vuelta']} · En estudio ${rTemas.conteo['En estudio']} · Pendiente ${rTemas.conteo['Pendiente']} · Avance medio <strong>${rTemas.mediaPct}%</strong></p>
     ${rTemas.estudiados.length? '<div class="hint" style="margin:0 0 8px;">Estudiados: '+rTemas.estudiados.map(escapeHtml).join(', ')+'</div>' : ''}
 
     <h3 style="font-size:14.5px;margin-top:18px;">Cultura General — progreso</h3>
-    <p style="font-size:13.5px;">De ${rCg.total} temas: Dominado ${rCg.conteo['Dominado']} · Repasado ${rCg.conteo['Repasado']} · En estudio ${rCg.conteo['En estudio']} · Pendiente ${rCg.conteo['Pendiente']}</p>
+    <p style="font-size:13.5px;">De ${rCg.total} temas: Dominado ${rCg.conteo['Dominado']} · Primera vuelta ${rCg.conteo['Primera vuelta']} · En estudio ${rCg.conteo['En estudio']} · Pendiente ${rCg.conteo['Pendiente']} · Avance medio <strong>${rCg.mediaPct}%</strong></p>
     ${rCg.estudiados.length? '<div class="hint" style="margin:0;">Estudiados: '+rCg.estudiados.map(escapeHtml).join(', ')+'</div>' : ''}
   `;
   ficha.style.display = 'block';
@@ -805,7 +887,8 @@ function renderCatalogTab(prefix, titulo, catalogo, progreso, tipo){
   catalogo.slice().sort((a,b)=>String(a.numero||'').localeCompare(String(b.numero||''), undefined,{numeric:true})).forEach(t=>{
     const progresoTexto = data.alumnos.map(al=>{
       const reg = progreso.find(x=>x.alumnoId===al.id && x.temaId===t.id);
-      return escapeHtml(al.nombre)+': <em>'+escapeHtml(reg?reg.estado:'Pendiente')+'</em>';
+      const pctTxt = reg && reg.pct!=='' && reg.pct!==undefined ? ' '+reg.pct+'%' : '';
+      return escapeHtml(al.nombre)+': <em>'+escapeHtml(estadoNorm(reg?reg.estado:'Pendiente'))+pctTxt+'</em>';
     }).join(' · ') || '<span class="hint" style="margin:0;">Sin alumnos</span>';
     const tr = document.createElement('tr');
     tr.innerHTML = `<td>${escapeHtml(t.numero||'')}</td><td>${escapeHtml(t.titulo)}</td><td style="font-size:12.5px;">${progresoTexto}</td><td><button class="icon-btn" data-del="${t.id}">Eliminar</button></td>`;
@@ -922,8 +1005,9 @@ function renderStats(){
     const c = {Tema:0,'Práctico':0,Simulacro:0,Repaso:0};
     mios.forEach(ev=>{ const t=tipoNombre(ev.tipo); if(c[t]!==undefined) c[t]++; });
     const total = c.Tema + c['Práctico'] + c.Simulacro + c.Repaso;
+    const horasAl = (data.estudio||[]).filter(x=>x.alumnoId===a.id).reduce((s,x)=>s+(parseFloat(x.horas)||0),0);
     const tr = document.createElement('tr');
-    tr.innerHTML = `<td>${escapeHtml(a.nombre)}</td><td>${c.Tema}</td><td>${c['Práctico']}</td><td>${c.Simulacro}</td><td>${c.Repaso}</td><td><strong>${total}</strong></td>`;
+    tr.innerHTML = `<td>${escapeHtml(a.nombre)}</td><td>${c.Tema}</td><td>${c['Práctico']}</td><td>${c.Simulacro}</td><td>${c.Repaso}</td><td><strong>${total}</strong></td><td><strong>${horasAl.toFixed(1)}h</strong></td>`;
     tbody.appendChild(tr);
   });
 }
