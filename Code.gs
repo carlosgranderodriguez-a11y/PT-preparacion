@@ -215,6 +215,27 @@ function enviarRecordatorios() {
   });
 }
 
+function enviarBienvenida_(alumno) {
+  try {
+    if (!alumno.email) return;
+    const ajustes = sheetToObjects_('Ajustes');
+    const urlReg = ajustes.find(function(a){ return a.clave === 'urlAlumno'; });
+    const academiaReg = ajustes.find(function(a){ return a.clave === 'academia'; });
+    const url = urlReg && urlReg.valor ? urlReg.valor : '';
+    const academia = academiaReg && academiaReg.valor ? academiaReg.valor : 'Academia PT';
+    let cuerpo = 'Hola ' + alumno.nombre + ',\n\n';
+    cuerpo += 'Te damos la bienvenida a ' + academia + '. Ya tienes tu espacio personal de preparación, donde verás tu calendario de clases, enviarás tus prácticos, descargarás materiales y llevarás el control de tu estudio.\n\n';
+    if (url) {
+      cuerpo += 'Accede aquí:\n' + url + '\n\n';
+    }
+    cuerpo += 'La primera vez, pulsa "¿Primera vez? Crea tu clave aquí", escribe este mismo correo (' + alumno.email + ') y elige tu clave personal. A partir de entonces entrarás con tu correo y tu clave.\n\n';
+    cuerpo += '¡Mucho ánimo con la preparación!\n\n' + academia;
+    MailApp.sendEmail(alumno.email, '👋 Bienvenido/a a ' + academia + ' — tu acceso', cuerpo);
+  } catch (err) {
+    // No bloquear el alta si el correo falla
+  }
+}
+
 function doGet(e) {
   ensureHeaders_();
   const action = e.parameter.action;
@@ -256,6 +277,7 @@ function doPost(e) {
     switch (action) {
       case 'addAlumno':
         appendObject_('Alumnos', p);
+        enviarBienvenida_(p);
         break;
       case 'updateAlumno':
         updateObjectById_('Alumnos', 'id', p.id, p);
