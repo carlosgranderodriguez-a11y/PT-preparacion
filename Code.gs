@@ -21,9 +21,11 @@ const HEADERS = {
   Calendario: ['id', 'fecha', 'hora', 'alumnoId', 'tipo', 'tema', 'notas'],
   Practicos: ['id', 'alumnoId', 'fecha', 'texto', 'fotoUrl', 'estado', 'feedback', 'fechaFeedback'],
   Temas: ['id', 'numero', 'titulo'],
-  TemasProgreso: ['alumnoId', 'temaId', 'estado'],
+  TemasProgreso: ['alumnoId', 'temaId', 'estado', 'pct'],
   CG: ['id', 'numero', 'titulo'],
-  CGProgreso: ['alumnoId', 'temaId', 'estado'],
+  CGProgreso: ['alumnoId', 'temaId', 'estado', 'pct'],
+  Estudio: ['id', 'alumnoId', 'fecha', 'horas', 'bloque', 'notas'],
+  Objetivos: ['id', 'alumnoId', 'semana', 'texto', 'cumplido'],
   Dafo: ['alumnoId', 'fortalezas', 'debilidades', 'oportunidades', 'amenazas'],
   Archivos: ['id', 'categoria', 'nombre', 'url', 'fecha'],
   Ajustes: ['clave', 'valor']
@@ -39,11 +41,18 @@ function getSheet_(name) {
 function ensureHeaders_() {
   Object.keys(HEADERS).forEach(name => {
     const sh = getSheet_(name);
-    if (sh.getLastRow() === 0) sh.appendRow(HEADERS[name]);
+    if (sh.getLastRow() === 0) {
+      sh.appendRow(HEADERS[name]);
+    } else {
+      const cur = sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0];
+      if (cur.length < HEADERS[name].length) {
+        sh.getRange(1, 1, 1, HEADERS[name].length).setValues([HEADERS[name]]);
+      }
+    }
   });
 }
 
-const DATE_FIELDS = { Calendario: ['fecha'], Practicos: ['fecha', 'fechaFeedback'], Archivos: ['fecha'] };
+const DATE_FIELDS = { Calendario: ['fecha'], Practicos: ['fecha', 'fechaFeedback'], Archivos: ['fecha'], Estudio: ['fecha'], Objetivos: ['semana'] };
 const TIME_FIELDS = { Calendario: ['hora'] };
 
 function normalizeRow_(sheetName, obj) {
@@ -122,6 +131,19 @@ function setKeyValue_(sheetName, keyCols, keyVals, valueCol, value) {
   sh.appendRow(row);
 }
 
+function upsertProgreso_(sheetName, alumnoId, temaId, estado, pct) {
+  const sh = getSheet_(sheetName);
+  const values = sh.getDataRange().getValues();
+  for (let r = 1; r < values.length; r++) {
+    if (String(values[r][0]) === String(alumnoId) && String(values[r][1]) === String(temaId)) {
+      if (estado !== undefined) sh.getRange(r + 1, 3).setValue(estado);
+      if (pct !== undefined) sh.getRange(r + 1, 4).setValue(pct);
+      return;
+    }
+  }
+  sh.appendRow([alumnoId, temaId, estado || '', pct !== undefined ? pct : '']);
+}
+
 function upsertByKey_(sheetName, keyField, keyValue, updates) {
   const sh = getSheet_(sheetName);
   const values = sh.getDataRange().getValues();
@@ -161,6 +183,38 @@ function guardarFoto_(base64Data, nombre) {
   return 'https://drive.google.com/uc?id=' + file.getId();
 }
 
+/**
+ * RECORDATORIOS AUTOMÁTICOS POR EMAIL.
+ * Para activarlos: en el editor de Apps Script, icono del reloj (Activadores) >
+ * "Añadir activador" > función: enviarRecordatorios > Basado en tiempo >
+ * Temporizador diario > entre 19:00 y 20:00. Guardar.
+ * Cada tarde enviará un email a los alumnos que tengan clase al día siguiente.
+ */
+function enviarRecordatorios() {
+  const tz = Session.getScriptTimeZone();
+  const manana = new Date();
+  manana.setDate(manana.getDate() + 1);
+  const fManana = Utilities.formatDate(manana, tz, 'yyyy-MM-dd');
+  const alumnos = sheetToObjects_('Alumnos');
+  const eventos = sheetToObjects_('Calendario');
+  const ajustes = sheetToObjects_('Ajustes');
+  const academiaReg = ajustes.find(function(a){ return a.clave === 'academia'; });
+  const academia = academiaReg ? academiaReg.valor : 'Academia PT';
+  alumnos.forEach(function(al) {
+    if (!al.email) return;
+    const evs = eventos.filter(function(ev) {
+      return (ev.alumnoId === al.id || ev.alumnoId === 'ALL') && String(ev.fecha) === fManana;
+    });
+    if (!evs.length) return;
+    let cuerpo = 'Hola ' + al.nombre + ',\n\nMañana tienes programado:\n\n';
+    evs.forEach(function(ev) {
+      cuerpo += '• ' + (ev.hora ? ev.hora + ' — ' : '') + (ev.tipo || '') + (ev.tema ? ': ' + ev.tema : '') + (ev.notas ? ' (' + ev.notas + ')' : '') + '\n';
+    });
+    cuerpo += '\n¡A por ello!\n\n' + academia;
+    MailApp.sendEmail(al.email, '📅 Recordatorio: mañana tienes clase', cuerpo);
+  });
+}
+
 function doGet(e) {
   ensureHeaders_();
   const action = e.parameter.action;
@@ -181,6 +235,8 @@ function doGet(e) {
       cgProgreso: sheetToObjects_('CGProgreso'),
       dafo: sheetToObjects_('Dafo'),
       archivos: sheetToObjects_('Archivos'),
+      estudio: sheetToObjects_('Estudio'),
+      objetivos: sheetToObjects_('Objetivos'),
       ajustes: sheetToObjects_('Ajustes')
     };
   } else {
@@ -235,7 +291,22 @@ function doPost(e) {
         deleteObjectById_(p.tipo === 'cg' ? 'CG' : 'Temas', 'id', p.id);
         break;
       case 'setProgreso':
-        setKeyValue_(p.tipo === 'cg' ? 'CGProgreso' : 'TemasProgreso', [0, 1], [p.alumnoId, p.temaId], 2, p.estado);
+        upsertProgreso_(p.tipo === 'cg' ? 'CGProgreso' : 'TemasProgreso', p.alumnoId, p.temaId, p.estado, p.pct);
+        break;
+      case 'addEstudio':
+        appendObject_('Estudio', p);
+        break;
+      case 'deleteEstudio':
+        deleteObjectById_('Estudio', 'id', p.id);
+        break;
+      case 'addObjetivo':
+        appendObject_('Objetivos', p);
+        break;
+      case 'deleteObjetivo':
+        deleteObjectById_('Objetivos', 'id', p.id);
+        break;
+      case 'setObjetivoCumplido':
+        updateObjectById_('Objetivos', 'id', p.id, { cumplido: p.cumplido });
         break;
       case 'subirArchivo':
         var urlArchivo = guardarEnDrive_(p.base64, p.nombre, 'PT_Materiales');
