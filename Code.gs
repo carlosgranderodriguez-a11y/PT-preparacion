@@ -28,6 +28,7 @@ const HEADERS = {
   Objetivos: ['id', 'alumnoId', 'semana', 'texto', 'cumplido'],
   Dafo: ['alumnoId', 'fortalezas', 'debilidades', 'oportunidades', 'amenazas'],
   Archivos: ['id', 'categoria', 'nombre', 'url', 'fecha'],
+  Recursos: ['id', 'fecha', 'titulo', 'texto', 'url', 'archivoUrl'],
   Ajustes: ['clave', 'valor']
 };
 
@@ -52,7 +53,7 @@ function ensureHeaders_() {
   });
 }
 
-const DATE_FIELDS = { Calendario: ['fecha'], Practicos: ['fecha', 'fechaFeedback'], Archivos: ['fecha'], Estudio: ['fecha'], Objetivos: ['semana'] };
+const DATE_FIELDS = { Calendario: ['fecha'], Practicos: ['fecha', 'fechaFeedback'], Archivos: ['fecha'], Estudio: ['fecha'], Objetivos: ['semana'], Recursos: ['fecha'] };
 const TIME_FIELDS = { Calendario: ['hora'] };
 
 function normalizeRow_(sheetName, obj) {
@@ -257,6 +258,7 @@ function doGet(e) {
       cgProgreso: sheetToObjects_('CGProgreso'),
       dafo: sheetToObjects_('Dafo'),
       archivos: sheetToObjects_('Archivos'),
+      recursos: sheetToObjects_('Recursos'),
       estudio: sheetToObjects_('Estudio'),
       objetivos: sheetToObjects_('Objetivos'),
       ajustes: sheetToObjects_('Ajustes')
@@ -338,6 +340,18 @@ function doPost(e) {
         break;
       case 'deleteArchivo':
         deleteObjectById_('Archivos', 'id', p.id);
+        break;
+      case 'addRecurso':
+        if (p.base64) {
+          p.archivoUrl = guardarEnDrive_(p.base64, p.nombre || ('recurso_' + p.id), 'PT_Materiales');
+          delete p.base64;
+          delete p.nombre;
+        }
+        appendObject_('Recursos', p);
+        result = { ok: true, url: p.archivoUrl || '' };
+        break;
+      case 'deleteRecurso':
+        deleteObjectById_('Recursos', 'id', p.id);
         break;
       case 'saveDafo':
         upsertByKey_('Dafo', 'alumnoId', p.alumnoId, p);
