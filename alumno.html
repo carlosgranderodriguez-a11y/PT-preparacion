@@ -134,6 +134,7 @@
       <div class="tab" data-tab="practicos">📝 Mis prácticos</div>
       <div class="tab" data-tab="temas">📚 Temas</div>
       <div class="tab" data-tab="cultura">🌍 Cultura General</div>
+      <div class="tab" data-tab="recursos">📰 Recursos</div>
       <div class="tab" data-tab="estadisticas">📊 Estadísticas</div>
     </div>
 
@@ -188,6 +189,7 @@
 
     <div class="panel" id="panel-temas"></div>
     <div class="panel" id="panel-cultura"></div>
+    <div class="panel" id="panel-recursos"></div>
     <div class="panel" id="panel-estadisticas"></div>
   </div>
 </div>
@@ -253,6 +255,8 @@ function normalizarDatos(){
   if(!data.archivos) data.archivos = [];
   (data.estudio||[]).forEach(x=>{ x.fecha = normFecha(x.fecha); });
   if(!data.estudio) data.estudio = [];
+  (data.recursos||[]).forEach(r=>{ r.fecha = normFecha(r.fecha); });
+  if(!data.recursos) data.recursos = [];
   (data.objetivos||[]).forEach(o=>{ o.semana = normFecha(o.semana); });
   if(!data.objetivos) data.objetivos = [];
   (data.temasProgreso||[]).forEach(x=>{ x.estado = estadoNorm(x.estado); });
@@ -366,6 +370,7 @@ function mostrarContenido(){
   renderEstudio();
   renderPracticos();
   document.getElementById('archivosPracticos').innerHTML = htmlArchivos('practicos','Materiales de tu preparador');
+  renderRecursos();
   renderEstadisticas();
   renderCatalogTab('temas','Temas',data.temas,data.temasProgreso,'temas');
   renderCatalogTab('cultura','Cultura General',data.cg,data.cgProgreso,'cg');
@@ -564,6 +569,18 @@ function htmlArchivoAdjunto(url, claseImg){
     return `<img class="${claseImg}" src="${escapeHtml(url)}">`;
   }
   return `<a href="${escapeHtml(url)}" target="_blank" rel="noopener" class="archivo-item" style="display:flex;text-decoration:none;">📄 Ver documento adjunto</a>`;
+}
+function renderRecursos(){
+  const panel = document.getElementById('panel-recursos');
+  const lista = (data.recursos||[]).slice().sort((a,b)=>String(b.fecha).localeCompare(String(a.fecha)));
+  if(!lista.length){ panel.innerHTML = '<div class="card"><div class="empty">Tu preparador todavía no ha publicado nada aquí.</div></div>'; return; }
+  panel.innerHTML = lista.map(r=>`<div class="card">
+    <h3 style="margin-bottom:2px;">${escapeHtml(r.titulo)}</h3>
+    <div class="hint" style="margin-top:0;">${escapeHtml(r.fecha)}</div>
+    ${r.texto?`<p style="font-size:13.5px;white-space:pre-wrap;">${escapeHtml(r.texto)}</p>`:''}
+    ${r.url?`<a href="${escapeHtml(r.url)}" target="_blank" rel="noopener" style="color:var(--accent-dark);font-weight:600;font-size:13px;">🔗 ${escapeHtml(r.url)}</a><br>`:''}
+    ${r.archivoUrl?htmlArchivoAdjunto(r.archivoUrl,'practico-photo'):''}
+  </div>`).join('');
 }
 function tipoEmoji(nombre){
   if(nombre==='Teoría') nombre='Tema';
