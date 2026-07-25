@@ -1,5 +1,5 @@
 /**
- * BACKEND — Academia PT (Pedagogía Terapéutica, oposición Comunidad de Madrid)
+ * BACKEND — Oposición PT2028 (Pedagogía Terapéutica, oposición Comunidad de Madrid)
  * Conecta profesor.html y alumno.html con un Google Sheet.
  *
  * INSTALACIÓN:
@@ -203,7 +203,7 @@ function enviarRecordatorios() {
   const eventos = sheetToObjects_('Calendario');
   const ajustes = sheetToObjects_('Ajustes');
   const academiaReg = ajustes.find(function(a){ return a.clave === 'academia'; });
-  const academia = academiaReg ? academiaReg.valor : 'Academia PT';
+  const academia = academiaReg ? academiaReg.valor : 'Oposición PT2028';
   alumnos.forEach(function(al) {
     if (!al.email) return;
     const evs = eventos.filter(function(ev) {
@@ -226,7 +226,7 @@ function enviarBienvenida_(alumno) {
     const urlReg = ajustes.find(function(a){ return a.clave === 'urlAlumno'; });
     const academiaReg = ajustes.find(function(a){ return a.clave === 'academia'; });
     const url = (urlReg && urlReg.valor) ? urlReg.valor : 'https://carlosgranderodriguez-a11y.github.io/PT-preparacion/alumno.html';
-    const academia = academiaReg && academiaReg.valor ? academiaReg.valor : 'Academia PT';
+    const academia = academiaReg && academiaReg.valor ? academiaReg.valor : 'Oposición PT2028';
     let cuerpo = 'Hola, me llamo Sara y quiero darte la enhorabuena por la decisión que has tomado. Esto es el principio del camino. ¡Bienvenido/a a tu preparación para las oposiciones de PT! 💪\n\n';
     cuerpo += 'Accede a tu espacio personal aquí:\n' + url + '\n\n';
     cuerpo += 'La primera vez, pulsa "¿Primera vez? Crea tu clave aquí", escribe este mismo correo (' + alumno.email + ') y elige tu clave personal. A partir de entonces entrarás con tu correo y tu clave.\n\n';
