@@ -158,6 +158,7 @@
     <div class="tab" data-tab="practicos">📝 Prácticos</div>
     <div class="tab" data-tab="temas">📚 Temas</div>
     <div class="tab" data-tab="cultura">🌍 Cultura General</div>
+    <div class="tab" data-tab="recursos">📰 Recursos</div>
     <div class="tab" data-tab="estadisticas">📊 Estadísticas</div>
     <div class="tab" data-tab="ajustes">⚙️ Ajustes</div>
   </div>
@@ -260,6 +261,26 @@
   <!-- CULTURA GENERAL -->
   <div class="panel" id="panel-cultura"></div>
 
+  <!-- RECURSOS -->
+  <div class="panel" id="panel-recursos">
+    <div class="card">
+      <h3>Publicar noticia o recurso</h3>
+      <div class="field" style="margin-bottom:12px;"><label>Título</label><input type="text" id="recTitulo" placeholder="Ej: Nueva convocatoria publicada en el BOCM"></div>
+      <div class="field" style="margin-bottom:12px;"><label>Texto</label><textarea id="recTexto" placeholder="Cuenta la noticia, comparte el recurso o añade tu comentario..." style="min-height:100px;"></textarea></div>
+      <div class="row">
+        <div class="field"><label>Enlace externo (opcional)</label><input type="text" id="recUrl" placeholder="https://..."></div>
+        <div class="field"><label>Archivo adjunto (opcional)</label><input type="file" id="recArchivo"></div>
+      </div>
+      <button class="btn btn-primary" id="btnPublicarRecurso">Publicar</button>
+      <span class="status" id="recStatus"></span>
+    </div>
+    <div class="card">
+      <h3>Publicados</h3>
+      <div id="listaRecursos"></div>
+      <div class="empty" id="recursosEmpty" style="display:none;">Todavía no has publicado nada.</div>
+    </div>
+  </div>
+
   <!-- ESTADISTICAS -->
   <div class="panel" id="panel-estadisticas">
     <div class="card">
@@ -304,7 +325,7 @@
 const API_URL = 'https://script.google.com/macros/s/AKfycbzrEozXfHf41s3QPZTZelrfIuxQ48xs4LAABID3Tmk4JqV0Ys0e_UCGOHlsV5aAAm-w/exec';
 const COACH_KEY = 'cgr-pt-2026'; // cámbiala si quieres
 
-let data = { alumnos:[], calendario:[], practicos:[], temas:[], temasProgreso:[], cg:[], cgProgreso:[], ajustes:[], dafo:[], archivos:[], estudio:[], objetivos:[] };
+let data = { alumnos:[], calendario:[], practicos:[], temas:[], temasProgreso:[], cg:[], cgProgreso:[], ajustes:[], dafo:[], archivos:[], estudio:[], objetivos:[], recursos:[] };
 function estadoNorm(e){ return e==='Repasado' ? 'Primera vuelta' : (e||'Pendiente'); }
 function lunesDe(fechaISO){
   const [y,m,d] = fechaISO.split('-').map(Number);
@@ -402,6 +423,8 @@ function normalizarDatos(){
   if(!data.estudio) data.estudio = [];
   (data.objetivos||[]).forEach(o=>{ o.semana = normFecha(o.semana); });
   if(!data.objetivos) data.objetivos = [];
+  (data.recursos||[]).forEach(r=>{ r.fecha = normFecha(r.fecha); });
+  if(!data.recursos) data.recursos = [];
   (data.temasProgreso||[]).forEach(x=>{ x.estado = estadoNorm(x.estado); });
   (data.cgProgreso||[]).forEach(x=>{ x.estado = estadoNorm(x.estado); });
 }
@@ -433,6 +456,7 @@ function refreshUI(){
   renderCatalogTab('cultura','Cultura General',data.cg,data.cgProgreso,'cg');
   renderStats();
   renderArchivosLista('practicos', 'archPracticosLista');
+  renderRecursos();
 }
 
 /* Guarda en el backend en segundo plano; si falla, avisa arriba sin bloquear la interfaz. */
@@ -1004,6 +1028,57 @@ function initSubidaArchivos(categoria, inputId, btnId, statusId, contId){
     }finally{ btn.disabled=false; }
   });
 }
+
+/* RECURSOS */
+function renderRecursos(){
+  const lista = (data.recursos||[]).slice().sort((a,b)=>String(b.fecha).localeCompare(String(a.fecha)));
+  document.getElementById('recursosEmpty').style.display = lista.length?'none':'block';
+  document.getElementById('listaRecursos').innerHTML = lista.map(r=>`<div class="card" style="margin-bottom:10px;">
+    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;">
+      <h3 style="margin:0;">${escapeHtml(r.titulo)}</h3>
+      <button class="icon-btn" data-delrec="${r.id}">Eliminar</button>
+    </div>
+    <div class="hint" style="margin:2px 0 8px;">${escapeHtml(r.fecha)}</div>
+    ${r.texto?`<p style="font-size:13.5px;white-space:pre-wrap;">${escapeHtml(r.texto)}</p>`:''}
+    ${r.url?`<a href="${escapeHtml(r.url)}" target="_blank" rel="noopener" style="color:var(--accent-dark);font-weight:600;font-size:13px;">🔗 ${escapeHtml(r.url)}</a><br>`:''}
+    ${r.archivoUrl?htmlArchivoAdjunto(r.archivoUrl,'practico-photo'):''}
+  </div>`).join('');
+  document.querySelectorAll('[data-delrec]').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      if(!confirm('¿Eliminar esta publicación?')) return;
+      data.recursos = data.recursos.filter(x=>x.id!==btn.dataset.delrec);
+      renderRecursos();
+      syncBg('deleteRecurso', {id:btn.dataset.delrec});
+    });
+  });
+}
+document.getElementById('btnPublicarRecurso').addEventListener('click', async ()=>{
+  const st = document.getElementById('recStatus');
+  const titulo = document.getElementById('recTitulo').value.trim();
+  const texto = document.getElementById('recTexto').value.trim();
+  const url = document.getElementById('recUrl').value.trim();
+  const fileInput = document.getElementById('recArchivo');
+  const file = fileInput.files[0];
+  if(!titulo){ st.textContent='Ponle un título.'; st.className='status err'; return; }
+  const reg = { id: uid('rec'), fecha: todayISO(), titulo, texto, url, archivoUrl:'' };
+  const payload = Object.assign({}, reg);
+  if(file){
+    if(file.size > 15*1024*1024){ st.textContent='El archivo supera los 15 MB.'; st.className='status err'; return; }
+    st.innerHTML = '<span class="spinner"></span> Publicando...'; st.className='status';
+    try{
+      payload.base64 = await fileToBase64(file);
+      payload.nombre = file.name;
+    }catch(e){ st.textContent='Error al leer el archivo.'; st.className='status err'; return; }
+  }
+  data.recursos.push(reg);
+  document.getElementById('recTitulo').value=''; document.getElementById('recTexto').value=''; document.getElementById('recUrl').value=''; fileInput.value='';
+  renderRecursos();
+  st.textContent='Publicado.'; st.className='status ok';
+  try{
+    const res = await apiPost('addRecurso', payload);
+    if(res.url){ reg.archivoUrl = res.url; renderRecursos(); }
+  }catch(e){ st.textContent='Error al guardar: '+e.message; st.className='status err'; }
+});
 
 /* ESTADISTICAS */
 function eventosFiltradosStats(){
