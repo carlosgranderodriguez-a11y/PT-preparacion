@@ -322,6 +322,13 @@ const TIPOS_SESION=[
   {nombre:'Simulacro', emoji:'⏱️'},
   {nombre:'Repaso', emoji:'🔁'}
 ];
+function htmlArchivoAdjunto(url, claseImg){
+  if(!url) return '';
+  if(url.indexOf('uc?id=')>-1){
+    return `<img class="${claseImg}" src="${escapeHtml(url)}">`;
+  }
+  return `<a href="${escapeHtml(url)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:6px;color:var(--ink);font-weight:600;text-decoration:none;background:var(--card-alt);border:1.5px solid var(--line);border-radius:var(--radius-sm);padding:8px 12px;margin:8px 0;">📄 Ver documento adjunto</a>`;
+}
 function tipoEmoji(nombre){
   if(nombre==='Teoría') nombre='Tema'; // compatibilidad con eventos antiguos
   const t = TIPOS_SESION.find(x=>x.nombre===nombre);
@@ -857,7 +864,7 @@ function renderPracticos(){
     </div>
     <div data-body style="display:none;margin-top:10px;">`;
     if(p.texto) html += `<textarea readonly style="min-height:120px;">${escapeHtml(p.texto)}</textarea>`;
-    if(p.fotoUrl) html += `<img class="practico-photo" src="${escapeHtml(p.fotoUrl)}">`;
+    if(p.fotoUrl) html += htmlArchivoAdjunto(p.fotoUrl, 'practico-photo');
     if(p.estado==='corregido'){
       html += `<div class="hint" style="margin-top:8px;">Tu feedback:</div><div style="white-space:pre-wrap;font-size:13.5px;background:var(--paper);padding:10px;border-radius:3px;">${escapeHtml(p.feedback)}</div>`;
     } else {
