@@ -3,22 +3,23 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Academia PT — Profesor</title>
+<title>Oposición PT2028 — Profesor</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.47.0/tabler-icons.min.css">
 <style>
   :root{
-    --bg:#F3F4FB; --card:#FFFFFF; --card-alt:#FAFAFF;
-    --ink:#232759; --ink-soft:#5A5F94;
-    --accent:#FF6B4A; --accent-dark:#E85A3B; --accent-soft:#FFE4DA;
-    --green:#1E9E6C; --green-soft:#DCF5E9;
-    --amber:#C98A1F; --amber-soft:#FBEED0;
-    --red:#E5484D; --red-soft:#FBDCDD;
-    --blue:#3E6BF2; --blue-soft:#E3E9FE;
-    --line:#E6E7F3; --gray:#8B8FB3;
+    --bg:#F1F3F0; --card:#FFFFFF; --card-alt:#F6F8F5;
+    --ink:#16281F; --ink-soft:#48594E;
+    --accent:#2F7A63; --accent-dark:#1D5A45; --accent-soft:#E1EEE8;
+    --green:#227A4E; --green-soft:#DCF0E3;
+    --amber:#B5811C; --amber-soft:#F7ECD4;
+    --red:#B23A3A; --red-soft:#F3DCDC;
+    --blue:#3E8873; --blue-soft:#DFEEEA;
+    --line:#DEE2DC; --gray:#788077;
     --radius:14px; --radius-sm:9px;
-    --shadow:0 1px 2px rgba(35,39,89,.05), 0 8px 24px rgba(35,39,89,.06);
+    --shadow:0 1px 2px rgba(22,40,31,.05), 0 8px 24px rgba(22,40,31,.06);
   }
   *{box-sizing:border-box;} html,body{overflow-x:hidden;max-width:100%;}
   body{margin:0;background:var(--bg);color:var(--ink);font-family:'Inter',-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;font-size:15px;line-height:1.55;}
@@ -29,9 +30,11 @@
   header .sub{font-size:12.5px;color:var(--gray);font-weight:600;}
 
   .tabs{display:flex;gap:6px;margin-bottom:20px;flex-wrap:wrap;background:var(--card);padding:6px;border-radius:999px;box-shadow:var(--shadow);width:fit-content;max-width:100%;}
-  .tab{padding:9px 16px;cursor:pointer;font-size:13px;font-weight:700;color:var(--ink-soft);border-radius:999px;white-space:nowrap;transition:background .15s,color .15s;}
+  .tab{display:inline-flex;align-items:center;gap:6px;padding:9px 16px;cursor:pointer;font-size:13px;font-weight:700;color:var(--ink-soft);border-radius:999px;white-space:nowrap;transition:background .15s,color .15s,border-color .15s;border:1px solid transparent;}
+  .tab:not(.active){border-color:var(--line);}
+  .tab i{font-size:15px;}
   .tab:hover{background:var(--card-alt);}
-  .tab.active{color:#fff;background:var(--ink);}
+  .tab.active{color:#fff;background:var(--ink);border-color:var(--ink);}
   .panel{display:none;} .panel.active{display:block;animation:fadein .25s ease;}
   @keyframes fadein{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:translateY(0);}}
 
@@ -137,7 +140,7 @@
 <body>
 
 <div class="lock-screen" id="lockScreen">
-  <h2 style="font-family:Georgia,serif;">Academia PT — Profesor</h2>
+  <h2 style="font-family:Georgia,serif;">Oposición PT2028 — Profesor</h2>
   <p class="hint" style="margin-top:0;">Introduce tu clave de acceso.</p>
   <input type="password" id="lockInput" placeholder="Clave">
   <button class="btn btn-primary" id="lockBtn">Entrar</button>
@@ -147,20 +150,20 @@
 <div class="wrap" id="app" style="display:none;">
   <div id="errorBanner" style="display:none;background:#fdf6f5;border:1px solid var(--red-soft);color:var(--red);padding:12px 16px;border-radius:4px;margin-bottom:14px;font-size:13px;white-space:pre-wrap;"></div>
   <header>
-    <h1 id="academiaNombre">Academia PT</h1>
+    <h1 id="academiaNombre">Oposición PT2028</h1>
     <div class="sub">Panel del profesor</div>
   </header>
 
   <div class="tabs">
-    <div class="tab active" data-tab="panel">🧭 Panel</div>
-    <div class="tab" data-tab="alumnos">🧑‍🎓 Alumnos</div>
-    <div class="tab" data-tab="calendario">📅 Calendario</div>
-    <div class="tab" data-tab="practicos">📝 Prácticos</div>
-    <div class="tab" data-tab="temas">📚 Temas</div>
-    <div class="tab" data-tab="cultura">🌍 Cultura General</div>
-    <div class="tab" data-tab="recursos">📰 Recursos</div>
-    <div class="tab" data-tab="estadisticas">📊 Estadísticas</div>
-    <div class="tab" data-tab="ajustes">⚙️ Ajustes</div>
+    <div class="tab active" data-tab="panel"><i class="ti ti-compass" aria-hidden="true"></i> Panel</div>
+    <div class="tab" data-tab="alumnos"><i class="ti ti-users" aria-hidden="true"></i> Alumnos</div>
+    <div class="tab" data-tab="calendario"><i class="ti ti-calendar" aria-hidden="true"></i> Calendario</div>
+    <div class="tab" data-tab="practicos"><i class="ti ti-file-text" aria-hidden="true"></i> Prácticos</div>
+    <div class="tab" data-tab="temas"><i class="ti ti-book-2" aria-hidden="true"></i> Temas</div>
+    <div class="tab" data-tab="cultura"><i class="ti ti-world" aria-hidden="true"></i> Cultura General</div>
+    <div class="tab" data-tab="recursos"><i class="ti ti-news" aria-hidden="true"></i> Recursos</div>
+    <div class="tab" data-tab="estadisticas"><i class="ti ti-chart-bar" aria-hidden="true"></i> Estadísticas</div>
+    <div class="tab" data-tab="ajustes"><i class="ti ti-settings" aria-hidden="true"></i> Ajustes</div>
   </div>
 
   <!-- PANEL -->
@@ -175,7 +178,7 @@
       <span class="status" id="panelStatus"></span>
     </div>
     <div class="card">
-      <h3>🎯 Objetivos semanales</h3>
+      <h3><i class="ti ti-target" aria-hidden="true"></i> Objetivos semanales</h3>
       <div class="hint" style="margin-top:0;">Los objetivos de la semana en curso aparecen en la página del alumno, que los marca como cumplidos.</div>
       <div class="row">
         <div class="field"><label>Alumno</label><select id="objAlumno"></select></div>
@@ -234,7 +237,7 @@
   <!-- PRACTICOS -->
   <div class="panel" id="panel-practicos">
     <div class="card">
-      <h3>📎 Materiales y supuestos</h3>
+      <h3><i class="ti ti-paperclip" aria-hidden="true"></i> Materiales y supuestos</h3>
       <div class="hint" style="margin-top:0;">Sube aquí enunciados o materiales; los alumnos los verán en su pestaña de prácticos. Se guardan en tu Google Drive.</div>
       <div class="row">
         <div class="field"><input type="file" id="archPracticosInput"></div>
@@ -299,7 +302,7 @@
     </div>
     <div class="card">
       <h3>Detalle por alumno</h3>
-      <table><thead><tr><th>Alumno</th><th>📚 Tema</th><th>📝 Práctico</th><th>⏱️ Simulacro</th><th>🔁 Repaso</th><th>Total</th><th>⏱️ Horas estudio</th></tr></thead><tbody id="statsTbody"></tbody></table>
+      <table><thead><tr><th>Alumno</th><th><i class="ti ti-book-2" aria-hidden="true"></i> Tema</th><th><i class="ti ti-file-text" aria-hidden="true"></i> Práctico</th><th><i class="ti ti-stopwatch" aria-hidden="true"></i> Simulacro</th><th><i class="ti ti-repeat" aria-hidden="true"></i> Repaso</th><th>Total</th><th><i class="ti ti-clock" aria-hidden="true"></i> Horas estudio</th></tr></thead><tbody id="statsTbody"></tbody></table>
       <div class="empty" id="statsEmpty" style="display:none;">Todavía no hay clases programadas.</div>
     </div>
   </div>
@@ -338,22 +341,22 @@ let calYear, calMonth, selectedDate=null;
 const MESES=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
 const DOW=['L','M','X','J','V','S','D'];
 const TIPOS_SESION=[
-  {nombre:'Tema', emoji:'📚'},
-  {nombre:'Práctico', emoji:'📝'},
-  {nombre:'Simulacro', emoji:'⏱️'},
-  {nombre:'Repaso', emoji:'🔁'}
+  {nombre:'Tema', icono:'book-2'},
+  {nombre:'Práctico', icono:'file-text'},
+  {nombre:'Simulacro', icono:'stopwatch'},
+  {nombre:'Repaso', icono:'repeat'}
 ];
 function htmlArchivoAdjunto(url, claseImg){
   if(!url) return '';
   if(url.indexOf('uc?id=')>-1){
     return `<img class="${claseImg}" src="${escapeHtml(url)}">`;
   }
-  return `<a href="${escapeHtml(url)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:6px;color:var(--ink);font-weight:600;text-decoration:none;background:var(--card-alt);border:1.5px solid var(--line);border-radius:var(--radius-sm);padding:8px 12px;margin:8px 0;">📄 Ver documento adjunto</a>`;
+  return `<a href="${escapeHtml(url)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:6px;color:var(--ink);font-weight:600;text-decoration:none;background:var(--card-alt);border:1.5px solid var(--line);border-radius:var(--radius-sm);padding:8px 12px;margin:8px 0;"><i class="ti ti-file-description" aria-hidden="true"></i> Ver documento adjunto</a>`;
 }
 function tipoEmoji(nombre){
   if(nombre==='Teoría') nombre='Tema'; // compatibilidad con eventos antiguos
   const t = TIPOS_SESION.find(x=>x.nombre===nombre);
-  return t ? t.emoji : '📌';
+  return '<i class="ti ti-'+(t?t.icono:'bookmark')+'" aria-hidden="true"></i>';
 }
 function tipoNombre(nombre){ return nombre==='Teoría' ? 'Tema' : nombre; }
 
@@ -445,8 +448,8 @@ async function loadAll(){
 
 /* Repinta toda la interfaz usando los datos locales, sin llamar al backend. */
 function refreshUI(){
-  document.getElementById('academiaNombre').textContent = ajusteVal('academia','Academia PT');
-  document.getElementById('ajNombreAcademia').value = ajusteVal('academia','Academia PT');
+  document.getElementById('academiaNombre').textContent = ajusteVal('academia','Oposición PT2028');
+  document.getElementById('ajNombreAcademia').value = ajusteVal('academia','Oposición PT2028');
   document.getElementById('ajUrlAlumno').value = ajusteVal('urlAlumno','');
   renderAlumnos(); populateFiltros();
   renderPanel();
@@ -544,7 +547,7 @@ function renderObjetivosPrep(){
     const hecho = String(o.cumplido)==='true' || o.cumplido===true;
     const esActual = o.semana===lunesActual;
     return `<div class="archivo-item" style="${esActual?'border-color:var(--accent);':''}">
-      <span style="flex:1;min-width:180px;">${hecho?'✅':'⬜'} <strong>${escapeHtml(nombre)}</strong> · semana del ${escapeHtml(o.semana)}${esActual?' <span class="pill corregido" style="font-size:10px;">actual</span>':''}<br><span style="font-size:12.5px;color:var(--ink-soft);">${escapeHtml(o.texto)}</span></span>
+      <span style="flex:1;min-width:180px;"><i class="ti ${hecho?'ti-square-rounded-check':'ti-square-rounded'}" style="color:${hecho?'var(--accent)':'var(--gray)'};vertical-align:-2px;" aria-hidden="true"></i> <strong>${escapeHtml(nombre)}</strong> · semana del ${escapeHtml(o.semana)}${esActual?' <span class="pill corregido" style="font-size:10px;">actual</span>':''}<br><span style="font-size:12.5px;color:var(--ink-soft);">${escapeHtml(o.texto)}</span></span>
       <button class="icon-btn" data-delobj="${o.id}">Eliminar</button>
     </div>`;
   }).join('');
@@ -581,10 +584,10 @@ function renderDafo(){
     box.style.marginBottom = '10px';
     box.innerHTML = `<h3 style="font-size:14.5px;">${escapeHtml(a.nombre)}</h3>
       <div class="dafo-grid">
-        <div class="dafo-box dafo-fortalezas field"><label>💪 Fortalezas</label><textarea data-campo="fortalezas" style="min-height:70px;">${escapeHtml(reg.fortalezas||'')}</textarea></div>
-        <div class="dafo-box dafo-debilidades field"><label>⚠️ Debilidades</label><textarea data-campo="debilidades" style="min-height:70px;">${escapeHtml(reg.debilidades||'')}</textarea></div>
-        <div class="dafo-box dafo-oportunidades field"><label>🌱 Oportunidades</label><textarea data-campo="oportunidades" style="min-height:70px;">${escapeHtml(reg.oportunidades||'')}</textarea></div>
-        <div class="dafo-box dafo-amenazas field"><label>🚧 Amenazas</label><textarea data-campo="amenazas" style="min-height:70px;">${escapeHtml(reg.amenazas||'')}</textarea></div>
+        <div class="dafo-box dafo-fortalezas field"><label><i class="ti ti-trending-up" aria-hidden="true"></i> Fortalezas</label><textarea data-campo="fortalezas" style="min-height:70px;">${escapeHtml(reg.fortalezas||'')}</textarea></div>
+        <div class="dafo-box dafo-debilidades field"><label><i class="ti ti-trending-down" aria-hidden="true"></i> Debilidades</label><textarea data-campo="debilidades" style="min-height:70px;">${escapeHtml(reg.debilidades||'')}</textarea></div>
+        <div class="dafo-box dafo-oportunidades field"><label><i class="ti ti-bulb" aria-hidden="true"></i> Oportunidades</label><textarea data-campo="oportunidades" style="min-height:70px;">${escapeHtml(reg.oportunidades||'')}</textarea></div>
+        <div class="dafo-box dafo-amenazas field"><label><i class="ti ti-alert-triangle" aria-hidden="true"></i> Amenazas</label><textarea data-campo="amenazas" style="min-height:70px;">${escapeHtml(reg.amenazas||'')}</textarea></div>
       </div>
       <button class="btn btn-primary btn-sm" data-guardar-dafo="${a.id}">Guardar DAFO</button>
       <span class="status" data-status-dafo="${a.id}"></span>`;
@@ -684,9 +687,9 @@ function renderFichaAlumno(id){
   ficha.innerHTML = `
     <div style="display:flex;justify-content:space-between;align-items:baseline;">
       <h3 style="margin:0;">Ficha de ${escapeHtml(a.nombre)}</h3>
-      <button class="icon-btn" id="btnCerrarFicha">Cerrar ✕</button>
+      <button class="icon-btn" id="btnCerrarFicha">Cerrar <i class="ti ti-x" aria-hidden="true"></i></button>
     </div>
-    <div class="hint" style="margin-top:6px;">✉️ ${escapeHtml(a.email||'sin correo')} · Clave: ${a.tieneClave ? '✅ creada' : '⏳ pendiente de crear por el alumno'} ${a.notas?(' · '+escapeHtml(a.notas)):''}</div>
+    <div class="hint" style="margin-top:6px;"><i class="ti ti-mail" aria-hidden="true"></i> ${escapeHtml(a.email||'sin correo')} · Clave: ${a.tieneClave ? '<i class="ti ti-circle-check" aria-hidden="true"></i> creada' : '<i class="ti ti-clock" aria-hidden="true"></i> pendiente de crear por el alumno'} ${a.notas?(' · '+escapeHtml(a.notas)):''}</div>
     <div class="link-box" style="margin-bottom:10px;">${escapeHtml(link)} <button class="btn btn-sm btn-secondary" id="btnCopiarLinkFicha">Copiar enlace</button></div>
     <div style="margin-bottom:16px;"><button class="btn btn-sm btn-danger" id="btnResetClave">Restablecer clave del alumno</button> <span class="status" id="resetClaveStatus" style="display:inline;"></span></div>
 
@@ -694,14 +697,14 @@ function renderFichaAlumno(id){
     <p style="font-size:13.5px;">Total: <strong>${misPracticos.length}</strong> · Pendientes: <strong style="color:var(--amber);">${pendientes}</strong> · Corregidos: <strong style="color:var(--green);">${corregidos}</strong></p>
     ${recientes.length? '<table><thead><tr><th>Fecha</th><th>Estado</th></tr></thead><tbody>'+recientes.map(p=>`<tr><td>${escapeHtml(p.fecha)}</td><td><span class="pill ${p.estado}">${p.estado==='pendiente'?'Pendiente':'Corregido'}</span></td></tr>`).join('')+'</tbody></table>' : '<div class="empty">Todavía no ha enviado ningún práctico.</div>'}
 
-    <h3 style="font-size:14.5px;margin-top:18px;">⏱️ Horas de estudio registradas</h3>
+    <h3 style="font-size:14.5px;margin-top:18px;"><i class="ti ti-clock" aria-hidden="true"></i> Horas de estudio registradas</h3>
     <div style="font-family:'Poppins',sans-serif;font-weight:800;font-size:26px;color:var(--accent-dark);">${horasTot.toFixed(1)}h</div>
     ${Object.keys(horasBloque).length ? Object.keys(horasBloque).sort((x,y)=>horasBloque[y]-horasBloque[x]).map(b=>{
       const max = Math.max(1, ...Object.values(horasBloque));
       return '<div class="bloque-row"><span class="bloque-lbl">'+escapeHtml(b)+'</span><div class="bloque-bar-bg"><div class="bloque-bar" style="width:'+(horasBloque[b]/max*100)+'%;"></div></div><span class="bloque-val">'+horasBloque[b].toFixed(1)+'h</span></div>';
     }).join('') : '<div class="hint" style="margin:4px 0;">Sin registros todavía.</div>'}
 
-    <h3 style="font-size:14.5px;margin-top:18px;">📚 Temas — progreso</h3>
+    <h3 style="font-size:14.5px;margin-top:18px;"><i class="ti ti-book-2" aria-hidden="true"></i> Temas — progreso</h3>
     ${rTemas.total===0 ? '<div class="hint" style="margin:4px 0;">Sin temas cargados en la pestaña Temas.</div>' : `
     <div class="prog-bar">
       <div class="prog-seg" style="width:${rTemas.total?rTemas.conteo['Dominado']/rTemas.total*100:0}%;background:var(--green);"></div>
@@ -709,10 +712,10 @@ function renderFichaAlumno(id){
       <div class="prog-seg" style="width:${rTemas.total?rTemas.conteo['En estudio']/rTemas.total*100:0}%;background:var(--amber);"></div>
       <div class="prog-seg" style="width:${rTemas.total?rTemas.conteo['Pendiente']/rTemas.total*100:0}%;background:var(--line);"></div>
     </div>
-    <div class="prog-leyenda"><span>🟢 Dominado <b>${rTemas.conteo['Dominado']}</b></span><span>🔵 Primera vuelta <b>${rTemas.conteo['Primera vuelta']}</b></span><span>🟡 En estudio <b>${rTemas.conteo['En estudio']}</b></span><span>⚪ Pendiente <b>${rTemas.conteo['Pendiente']}</b></span><span>· Avance medio <b>${rTemas.mediaPct}%</b></span></div>`}
+    <div class="prog-leyenda"><span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--accent-dark);margin-right:2px;"></span>Dominado <b>${rTemas.conteo['Dominado']}</b></span><span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--blue);margin-right:2px;"></span>Primera vuelta <b>${rTemas.conteo['Primera vuelta']}</b></span><span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--amber);margin-right:2px;"></span>En estudio <b>${rTemas.conteo['En estudio']}</b></span><span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--line);margin-right:2px;"></span>Pendiente <b>${rTemas.conteo['Pendiente']}</b></span><span>· Avance medio <b>${rTemas.mediaPct}%</b></span></div>`}
     ${rTemas.estudiados.length? '<div class="hint" style="margin:6px 0 0;">Estudiados: '+rTemas.estudiados.map(escapeHtml).join(', ')+'</div>' : ''}
 
-    <h3 style="font-size:14.5px;margin-top:18px;">🌍 Cultura General — progreso</h3>
+    <h3 style="font-size:14.5px;margin-top:18px;"><i class="ti ti-world" aria-hidden="true"></i> Cultura General — progreso</h3>
     ${rCg.total===0 ? '<div class="hint" style="margin:4px 0;">Sin temas cargados en la pestaña Cultura General.</div>' : `
     <div class="prog-bar">
       <div class="prog-seg" style="width:${rCg.total?rCg.conteo['Dominado']/rCg.total*100:0}%;background:var(--green);"></div>
@@ -720,7 +723,7 @@ function renderFichaAlumno(id){
       <div class="prog-seg" style="width:${rCg.total?rCg.conteo['En estudio']/rCg.total*100:0}%;background:var(--amber);"></div>
       <div class="prog-seg" style="width:${rCg.total?rCg.conteo['Pendiente']/rCg.total*100:0}%;background:var(--line);"></div>
     </div>
-    <div class="prog-leyenda"><span>🟢 Dominado <b>${rCg.conteo['Dominado']}</b></span><span>🔵 Primera vuelta <b>${rCg.conteo['Primera vuelta']}</b></span><span>🟡 En estudio <b>${rCg.conteo['En estudio']}</b></span><span>⚪ Pendiente <b>${rCg.conteo['Pendiente']}</b></span><span>· Avance medio <b>${rCg.mediaPct}%</b></span></div>`}
+    <div class="prog-leyenda"><span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--accent-dark);margin-right:2px;"></span>Dominado <b>${rCg.conteo['Dominado']}</b></span><span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--blue);margin-right:2px;"></span>Primera vuelta <b>${rCg.conteo['Primera vuelta']}</b></span><span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--amber);margin-right:2px;"></span>En estudio <b>${rCg.conteo['En estudio']}</b></span><span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--line);margin-right:2px;"></span>Pendiente <b>${rCg.conteo['Pendiente']}</b></span><span>· Avance medio <b>${rCg.mediaPct}%</b></span></div>`}
     ${rCg.estudiados.length? '<div class="hint" style="margin:6px 0 0;">Estudiados: '+rCg.estudiados.map(escapeHtml).join(', ')+'</div>' : ''}
   `;
   ficha.style.display = 'block';
@@ -800,7 +803,7 @@ function renderCalendar(){
       } else { ocultos++; return; }
       if(ev.notas){
         if(lineas < MAX_LINEAS){
-          evHtml += '<div class="cal-ev cal-nota" title="'+titleTxt+'">🗒️ '+escapeHtml(ev.notas)+'</div>';
+          evHtml += '<div class="cal-ev cal-nota" title="'+titleTxt+'"><i class="ti ti-note" aria-hidden="true"></i> '+escapeHtml(ev.notas)+'</div>';
           lineas++;
         }
       }
@@ -833,7 +836,7 @@ function renderDayPanel(){
   html += `<div style="margin-top:14px;">
     <div class="row">
       <div class="field"><label>Alumno</label><select id="evAlumno"></select></div>
-      <div class="field"><label>Tipo</label><select id="evTipo">${TIPOS_SESION.map(t=>'<option value="'+t.nombre+'">'+t.emoji+' '+t.nombre+'</option>').join('')}</select></div>
+      <div class="field"><label>Tipo</label><select id="evTipo">${TIPOS_SESION.map(t=>'<option value="'+t.nombre+'">'+t.nombre+'</option>').join('')}</select></div>
       <div class="field" style="max-width:110px;"><label>Hora</label><input type="time" id="evHora"></div>
     </div>
     <div class="row">
@@ -929,7 +932,7 @@ function renderCatalogTab(prefix, titulo, catalogo, progreso, tipo){
     <span class="status" id="${prefix}Status"></span>
   </div>
   <div class="card">
-    <h3>📎 Materiales</h3>
+    <h3><i class="ti ti-paperclip" aria-hidden="true"></i> Materiales</h3>
     <div class="hint" style="margin-top:0;">Apuntes, esquemas o documentos de esta sección. Se guardan en tu Google Drive y los alumnos los ven en su página.</div>
     <div class="row">
       <div class="field"><input type="file" id="arch${prefix}Input"></div>
@@ -991,7 +994,7 @@ function renderArchivosLista(categoria, contId){
   const lista = (data.archivos||[]).filter(x=>x.categoria===categoria).sort((a,b)=>String(b.fecha).localeCompare(String(a.fecha)));
   if(!lista.length){ cont.innerHTML = '<div class="empty" style="padding:8px 0;">Sin archivos todavía.</div>'; return; }
   cont.innerHTML = lista.map(f=>`<div class="archivo-item">
-    <a href="${escapeHtml(f.url)}" target="_blank" rel="noopener">📎 ${escapeHtml(f.nombre)}</a>
+    <a href="${escapeHtml(f.url)}" target="_blank" rel="noopener"><i class="ti ti-paperclip" aria-hidden="true"></i> ${escapeHtml(f.nombre)}</a>
     <span style="color:var(--gray);font-size:11.5px;">${escapeHtml(f.fecha||'')}</span>
     <button class="icon-btn" data-delarch="${f.id}">Eliminar</button>
   </div>`).join('');
@@ -1040,7 +1043,7 @@ function renderRecursos(){
     </div>
     <div class="hint" style="margin:2px 0 8px;">${escapeHtml(r.fecha)}</div>
     ${r.texto?`<p style="font-size:13.5px;white-space:pre-wrap;">${escapeHtml(r.texto)}</p>`:''}
-    ${r.url?`<a href="${escapeHtml(r.url)}" target="_blank" rel="noopener" style="color:var(--accent-dark);font-weight:600;font-size:13px;">🔗 ${escapeHtml(r.url)}</a><br>`:''}
+    ${r.url?`<a href="${escapeHtml(r.url)}" target="_blank" rel="noopener" style="color:var(--accent-dark);font-weight:600;font-size:13px;"><i class="ti ti-link" aria-hidden="true"></i> ${escapeHtml(r.url)}</a><br>`:''}
     ${r.archivoUrl?htmlArchivoAdjunto(r.archivoUrl,'practico-photo'):''}
   </div>`).join('');
   document.querySelectorAll('[data-delrec]').forEach(btn=>{
@@ -1105,10 +1108,10 @@ function renderStats(){
   evs.forEach(ev=>{ const t = tipoNombre(ev.tipo); if(conteo[t]!==undefined) conteo[t]++; });
 
   document.getElementById('statsGrid').innerHTML = `
-    <div class="stat-card stat-tema"><div class="emoji">📚</div><div class="num">${conteo.Tema}</div><div class="lbl">Tema</div></div>
-    <div class="stat-card stat-practico"><div class="emoji">📝</div><div class="num">${conteo['Práctico']}</div><div class="lbl">Práctico</div></div>
+    <div class="stat-card stat-tema"><div class="emoji"><i class="ti ti-book-2" aria-hidden="true"></i></div><div class="num">${conteo.Tema}</div><div class="lbl">Tema</div></div>
+    <div class="stat-card stat-practico"><div class="emoji"><i class="ti ti-file-text" aria-hidden="true"></i></div><div class="num">${conteo['Práctico']}</div><div class="lbl">Práctico</div></div>
     <div class="stat-card stat-simulacro"><div class="emoji">⏱️</div><div class="num">${conteo.Simulacro}</div><div class="lbl">Simulacro</div></div>
-    <div class="stat-card stat-repaso"><div class="emoji">🔁</div><div class="num">${conteo.Repaso}</div><div class="lbl">Repaso</div></div>`;
+    <div class="stat-card stat-repaso"><div class="emoji"><i class="ti ti-repeat" aria-hidden="true"></i></div><div class="num">${conteo.Repaso}</div><div class="lbl">Repaso</div></div>`;
 
   const tbody = document.getElementById('statsTbody'); tbody.innerHTML='';
   document.getElementById('statsEmpty').style.display = data.calendario.length?'none':'block';
@@ -1129,7 +1132,7 @@ document.getElementById('statsPeriodo').addEventListener('change', renderStats);
 
 /* AJUSTES */
 document.getElementById('btnGuardarAjustes').addEventListener('click', ()=>{
-  const valor = document.getElementById('ajNombreAcademia').value.trim() || 'Academia PT';
+  const valor = document.getElementById('ajNombreAcademia').value.trim() || 'Oposición PT2028';
   setAjusteLocal('academia', valor);
   document.getElementById('academiaNombre').textContent = valor;
   const st = document.getElementById('ajustesStatus'); st.textContent='Guardado.'; st.className='status ok';
