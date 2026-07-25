@@ -180,7 +180,10 @@ function guardarFoto_(base64Data, nombre) {
   const blob = Utilities.newBlob(Utilities.base64Decode(data), contentType, nombre);
   const file = folder.createFile(blob);
   file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
-  return 'https://drive.google.com/uc?id=' + file.getId();
+  if (contentType.indexOf('image/') === 0) {
+    return 'https://drive.google.com/uc?id=' + file.getId();
+  }
+  return 'https://drive.google.com/file/d/' + file.getId() + '/view';
 }
 
 /**
