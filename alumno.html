@@ -377,14 +377,25 @@ function mostrarContenido(){
   renderEstadisticas();
   renderCatalogTab('temas','Temas',data.temas,data.temasProgreso,'temas');
   renderCatalogTab('cultura','Cultura General',data.cg,data.cgProgreso,'cg');
+  try{
+    const tabGuardada = localStorage.getItem('pt_alumno_tab');
+    if(tabGuardada) activarTab(tabGuardada);
+  }catch(e){}
 }
 
+function activarTab(nombreTab){
+  const tab = document.querySelector('.tab[data-tab="'+nombreTab+'"]');
+  if(!tab) return false;
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));
+  tab.classList.add('active');
+  document.getElementById('panel-'+nombreTab).classList.add('active');
+  return true;
+}
 document.querySelectorAll('.tab').forEach(t=>{
   t.addEventListener('click', ()=>{
-    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
-    document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));
-    t.classList.add('active');
-    document.getElementById('panel-'+t.dataset.tab).classList.add('active');
+    activarTab(t.dataset.tab);
+    try{ localStorage.setItem('pt_alumno_tab', t.dataset.tab); }catch(e){}
   });
 });
 
