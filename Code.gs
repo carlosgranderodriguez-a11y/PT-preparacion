@@ -46,6 +46,8 @@ function getSheet_(name) {
 }
 
 function ensureHeaders_() {
+  const cache = CacheService.getScriptCache();
+  if (cache.get('headers_ok_v1')) return;
   Object.keys(HEADERS).forEach(name => {
     const sh = getSheet_(name);
     if (sh.getLastRow() === 0) {
@@ -57,6 +59,7 @@ function ensureHeaders_() {
       }
     }
   });
+  try { cache.put('headers_ok_v1', '1', 21600); } catch (err) { /* no pasa nada si falla */ }
 }
 
 const DATE_FIELDS = { Calendario: ['fecha'], Practicos: ['fecha', 'fechaFeedback'], Archivos: ['fecha'], Estudio: ['fecha'], Objetivos: ['semana'], Recursos: ['fecha'] };
