@@ -20,9 +20,9 @@ const HEADERS = {
   Alumnos: ['id', 'nombre', 'email', 'clave', 'etapa', 'discapacidad', 'notas'],
   Calendario: ['id', 'fecha', 'hora', 'alumnoId', 'tipo', 'tema', 'notas'],
   Practicos: ['id', 'alumnoId', 'fecha', 'texto', 'fotoUrl', 'estado', 'feedback', 'fechaFeedback'],
-  Temas: ['id', 'numero', 'titulo'],
+  Temas: ['id', 'numero', 'titulo', 'archivoUrl'],
   TemasProgreso: ['alumnoId', 'temaId', 'estado', 'pct'],
-  CG: ['id', 'numero', 'titulo'],
+  CG: ['id', 'numero', 'titulo', 'archivoUrl'],
   CGProgreso: ['alumnoId', 'temaId', 'estado', 'pct'],
   Estudio: ['id', 'alumnoId', 'fecha', 'horas', 'bloque', 'notas'],
   Objetivos: ['id', 'alumnoId', 'semana', 'texto', 'cumplido'],
@@ -319,11 +319,26 @@ function doPost(e) {
         });
         break;
       case 'addTema':
-        appendObject_(p.tipo === 'cg' ? 'CG' : 'Temas', { id: p.id, numero: p.numero, titulo: p.titulo });
+        if (p.base64) {
+          p.archivoUrl = guardarEnDrive_(p.base64, p.nombre || ('tema_' + p.id), 'PT_Materiales');
+          delete p.base64;
+          delete p.nombre;
+        }
+        appendObject_(p.tipo === 'cg' ? 'CG' : 'Temas', { id: p.id, numero: p.numero, titulo: p.titulo, archivoUrl: p.archivoUrl || '' });
+        result = { ok: true, url: p.archivoUrl || '' };
         break;
       case 'deleteTema':
         deleteObjectById_(p.tipo === 'cg' ? 'CG' : 'Temas', 'id', p.id);
         break;
+      case 'setArchivoTema': {
+        var urlTema = '';
+        if (p.base64) {
+          urlTema = guardarEnDrive_(p.base64, p.nombre || ('tema_' + p.id), 'PT_Materiales');
+        }
+        updateObjectById_(p.tipo === 'cg' ? 'CG' : 'Temas', 'id', p.id, { archivoUrl: urlTema });
+        result = { ok: true, url: urlTema };
+        break;
+      }
       case 'setProgreso':
         upsertProgreso_(p.tipo === 'cg' ? 'CGProgreso' : 'TemasProgreso', p.alumnoId, p.temaId, p.estado, p.pct);
         break;
