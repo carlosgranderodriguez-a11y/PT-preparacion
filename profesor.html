@@ -240,7 +240,8 @@
       <h3><i class="ti ti-paperclip" aria-hidden="true"></i> Materiales y supuestos</h3>
       <div class="hint" style="margin-top:0;">Sube aquí enunciados o materiales; los alumnos los verán en su pestaña de prácticos. Se guardan en tu Google Drive.</div>
       <div class="row">
-        <div class="field"><input type="file" id="archPracticosInput"></div>
+        <div class="field"><label>Título (opcional, para encontrarlo fácil)</label><input type="text" id="archPracticosTitulo" placeholder="Ej: Supuesto TEA - convocatoria 2024"></div>
+        <div class="field"><label>Archivo</label><input type="file" id="archPracticosInput"></div>
         <button class="btn btn-primary" id="archPracticosBtn">Subir archivo</button>
       </div>
       <span class="status" id="archPracticosStatus"></span>
@@ -941,7 +942,8 @@ function renderCatalogTab(prefix, titulo, catalogo, progreso, tipo){
     <h3><i class="ti ti-paperclip" aria-hidden="true"></i> Materiales generales</h3>
     <div class="hint" style="margin-top:0;">Documentos generales de esta sección que no pertenecen a un tema concreto (por ejemplo, el temario completo). Para adjuntar un archivo a un tema en particular, usa el campo de arriba o el botón "Adjuntar" de su fila.</div>
     <div class="row">
-      <div class="field"><input type="file" id="arch${prefix}Input"></div>
+      <div class="field"><label>Título (opcional, para encontrarlo fácil)</label><input type="text" id="arch${prefix}Titulo" placeholder="Ej: Resumen de la unidad 3"></div>
+      <div class="field"><label>Archivo</label><input type="file" id="arch${prefix}Input"></div>
       <button class="btn btn-primary" id="arch${prefix}Btn">Subir archivo</button>
     </div>
     <span class="status" id="arch${prefix}Status"></span>
@@ -1023,7 +1025,7 @@ function renderCatalogTab(prefix, titulo, catalogo, progreso, tipo){
       document.getElementById(prefix+'Status').className = 'status err';
     }
   });
-  initSubidaArchivos(tipo, 'arch'+prefix+'Input', 'arch'+prefix+'Btn', 'arch'+prefix+'Status', 'arch'+prefix+'Lista');
+  initSubidaArchivos(tipo, 'arch'+prefix+'Input', 'arch'+prefix+'Btn', 'arch'+prefix+'Status', 'arch'+prefix+'Lista', 'arch'+prefix+'Titulo');
   renderArchivosLista(tipo, 'arch'+prefix+'Lista');
 }
 
@@ -1042,7 +1044,8 @@ function renderArchivosLista(categoria, contId){
   const lista = (data.archivos||[]).filter(x=>x.categoria===categoria).sort((a,b)=>String(b.fecha).localeCompare(String(a.fecha)));
   if(!lista.length){ cont.innerHTML = '<div class="empty" style="padding:8px 0;">Sin archivos todavía.</div>'; return; }
   cont.innerHTML = lista.map(f=>`<div class="archivo-item">
-    <a href="${escapeHtml(f.url)}" target="_blank" rel="noopener"><i class="ti ti-paperclip" aria-hidden="true"></i> ${escapeHtml(f.nombre)}</a>
+    <a href="${escapeHtml(f.url)}" target="_blank" rel="noopener"><i class="ti ti-paperclip" aria-hidden="true"></i> ${escapeHtml(f.titulo || f.nombre)}</a>
+    ${f.titulo ? `<span style="color:var(--gray);font-size:11px;">(${escapeHtml(f.nombre)})</span>` : ''}
     <span style="color:var(--gray);font-size:11.5px;">${escapeHtml(f.fecha||'')}</span>
     <button class="icon-btn" data-delarch="${f.id}">Eliminar</button>
   </div>`).join('');
@@ -1055,12 +1058,14 @@ function renderArchivosLista(categoria, contId){
     });
   });
 }
-function initSubidaArchivos(categoria, inputId, btnId, statusId, contId){
+function initSubidaArchivos(categoria, inputId, btnId, statusId, contId, tituloId){
   const btn = document.getElementById(btnId);
   if(!btn) return;
   btn.addEventListener('click', async ()=>{
     const input = document.getElementById(inputId);
     const st = document.getElementById(statusId);
+    const tituloInput = tituloId ? document.getElementById(tituloId) : null;
+    const titulo = tituloInput ? tituloInput.value.trim() : '';
     const file = input.files[0];
     if(!file){ st.textContent='Elige primero un archivo.'; st.className='status err'; return; }
     if(file.size > 15*1024*1024){ st.textContent='El archivo supera los 15 MB. Súbelo más pequeño o directamente a Drive.'; st.className='status err'; return; }
@@ -1069,10 +1074,10 @@ function initSubidaArchivos(categoria, inputId, btnId, statusId, contId){
     try{
       const base64 = await fileToBase64(file);
       const id = uid('ar');
-      const res = await apiPost('subirArchivo', { id, categoria, nombre:file.name, base64, fecha: todayISO() });
-      data.archivos.push({ id, categoria, nombre:file.name, url:res.url||'#', fecha: todayISO() });
+      const res = await apiPost('subirArchivo', { id, categoria, nombre:file.name, titulo, base64, fecha: todayISO() });
+      data.archivos.push({ id, categoria, nombre:file.name, titulo, url:res.url||'#', fecha: todayISO() });
       renderArchivosLista(categoria, contId);
-      input.value='';
+      input.value=''; if(tituloInput) tituloInput.value='';
       st.textContent='Archivo subido.'; st.className='status ok';
     }catch(e){
       st.textContent='Error al subir: '+e.message; st.className='status err';
@@ -1174,7 +1179,7 @@ function renderStats(){
     tbody.appendChild(tr);
   });
 }
-initSubidaArchivos('practicos', 'archPracticosInput', 'archPracticosBtn', 'archPracticosStatus', 'archPracticosLista');
+initSubidaArchivos('practicos', 'archPracticosInput', 'archPracticosBtn', 'archPracticosStatus', 'archPracticosLista', 'archPracticosTitulo');
 document.getElementById('statsAlumno').addEventListener('change', renderStats);
 document.getElementById('statsPeriodo').addEventListener('change', renderStats);
 
