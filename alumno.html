@@ -664,15 +664,18 @@ function renderCatalogTab(prefix, titulo, catalogo, progreso, tipo){
     <div class="hint" style="margin-top:0;color:var(--gray);font-size:12px;">Marca tu nivel de estudio en cada tema para llevar el ritmo.</div>
     <table><thead><tr><th>Nº</th><th>Título</th><th>Tu progreso</th></tr></thead><tbody id="${prefix}Tbody"></tbody></table>
     <div class="empty" id="${prefix}Empty" style="display:none;">Tu preparador todavía no ha cargado el temario.</div>
-  </div>` + htmlArchivos(tipo, 'Materiales');
+  </div>` + htmlArchivos(tipo, 'Materiales generales');
   const tbody = document.getElementById(prefix+'Tbody');
   document.getElementById(prefix+'Empty').style.display = catalogo.length?'none':'block';
   catalogo.slice().sort((a,b)=>String(a.numero||'').localeCompare(String(b.numero||''),undefined,{numeric:true})).forEach(t=>{
     const reg = progreso.find(x=>x.alumnoId===alumnoId && x.temaId===t.id);
     const estado = estadoNorm(reg?reg.estado:'Pendiente');
     const pctVal = reg && reg.pct!=='' && reg.pct!==undefined ? reg.pct : 0;
+    const tituloCell = t.archivoUrl
+      ? `${escapeHtml(t.titulo)} <a href="${escapeHtml(t.archivoUrl)}" target="_blank" rel="noopener" title="Ver archivo adjunto" style="color:var(--accent);"><i class="ti ti-paperclip" aria-hidden="true"></i></a>`
+      : escapeHtml(t.titulo);
     const tr = document.createElement('tr');
-    tr.innerHTML = `<td>${escapeHtml(t.numero||'')}</td><td>${escapeHtml(t.titulo)}</td>
+    tr.innerHTML = `<td>${escapeHtml(t.numero||'')}</td><td>${tituloCell}</td>
       <td style="white-space:nowrap;"><select class="progreso-select" data-tema="${t.id}">${ESTADOS_PROGRESO.map(e=>'<option'+(e===estado?' selected':'')+'>'+e+'</option>').join('')}</select>
       <input type="number" class="pct-input" min="0" max="100" step="5" value="${pctVal}" title="% estudiado"> %</td>`;
     function guardarProgreso(){
