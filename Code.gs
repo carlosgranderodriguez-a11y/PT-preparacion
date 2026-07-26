@@ -273,7 +273,7 @@ function buildFullData_() {
     objetivos: sheetToObjects_('Objetivos'),
     ajustes: sheetToObjects_('Ajustes')
   };
-  try { cache.put('getAll_v1', JSON.stringify(result), 30); } catch (err) { /* si supera 100KB, seguimos sin caché */ }
+  try { cache.put('getAll_v1', JSON.stringify(result), 300); } catch (err) { /* si supera 100KB, seguimos sin caché */ }
   return result;
 }
 
