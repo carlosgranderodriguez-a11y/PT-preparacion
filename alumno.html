@@ -218,8 +218,10 @@ function escapeHtml(s){ return (s||'').toString().replace(/[&<>"']/g,c=>({'&':'&
 function todayISO(){ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
 function uid(pre){ return (pre||'id')+'_'+Date.now()+'_'+Math.random().toString(36).slice(2,7); }
 
-async function apiGet(action){
-  const res = await fetch(API_URL+'?action='+action);
+async function apiGet(action, params){
+  let url = API_URL+'?action='+action;
+  if(params){ Object.keys(params).forEach(k=>{ url += '&'+k+'='+encodeURIComponent(params[k]); }); }
+  const res = await fetch(url);
   const text = await res.text();
   try{ return JSON.parse(text); }
   catch(e){ throw new Error('El backend no devolvió JSON. Respuesta: '+text.slice(0,300)); }
@@ -290,6 +292,12 @@ document.getElementById('toggleModo').addEventListener('click', e=>{
 document.getElementById('loginBtn').addEventListener('click', doLogin);
 document.getElementById('loginPass').addEventListener('keydown', e=>{ if(e.key==='Enter' && !modoCrear) doLogin(); });
 
+async function cargarDatosAlumno(id){
+  data = await apiGet('getAlumnoData', {id});
+  normalizarDatos();
+  alumno = data.alumno;
+}
+
 async function doLogin(){
   const st = document.getElementById('loginStatus');
   const email = document.getElementById('loginEmail').value.trim().toLowerCase();
@@ -307,6 +315,8 @@ async function doLogin(){
     if(!res.alumnoId) throw new Error('Respuesta inesperada del servidor.');
     try{ localStorage.setItem('pt_alumno_id', res.alumnoId); }catch(e){}
     alumnoId = res.alumnoId;
+    st.innerHTML = '<span class="spinner"></span> Cargando tu espacio...'; st.className='status';
+    await cargarDatosAlumno(alumnoId);
     document.getElementById('loginScreen').style.display='none';
     mostrarContenido();
   }catch(e){
@@ -315,19 +325,23 @@ async function doLogin(){
 }
 
 async function init(){
+  try{ alumnoId = localStorage.getItem('pt_alumno_id'); }catch(e){ alumnoId = null; }
+  if(!alumnoId){
+    document.getElementById('loginScreen').style.display='block';
+    return;
+  }
   try{
-    data = await apiGet('getAll'); normalizarDatos();
+    await cargarDatosAlumno(alumnoId);
   }catch(e){
-    document.getElementById('alumnoNombre').textContent = '';
     document.getElementById('sinAlumno').style.display='block';
     document.getElementById('sinAlumno').innerHTML = '<p>No se ha podido conectar con el backend.</p><p style="font-size:12px;color:var(--gray);white-space:pre-wrap;">'+e.message+'</p>';
     return;
   }
-  try{ alumnoId = localStorage.getItem('pt_alumno_id'); }catch(e){ alumnoId = null; }
-  if(alumnoId && data.alumnos.find(a=>a.id===alumnoId)){
+  if(alumno){
     mostrarContenido();
   } else {
     alumnoId = null;
+    try{ localStorage.removeItem('pt_alumno_id'); }catch(e){}
     document.getElementById('alumnoNombre').textContent = '';
     document.getElementById('loginScreen').style.display='block';
   }
@@ -335,7 +349,6 @@ async function init(){
 
 function mostrarContenido(){
   document.getElementById('academiaNombre').textContent = ajusteVal('academia','Oposición PT2028');
-  alumno = data.alumnos.find(a=>a.id===alumnoId);
   if(!alumno){
     document.getElementById('loginScreen').style.display='block';
     document.getElementById('alumnoNombre').textContent='';
