@@ -315,8 +315,14 @@ async function doLogin(){
     if(!res.alumnoId) throw new Error('Respuesta inesperada del servidor.');
     try{ localStorage.setItem('pt_alumno_id', res.alumnoId); }catch(e){}
     alumnoId = res.alumnoId;
-    st.innerHTML = '<span class="spinner"></span> Cargando tu espacio...'; st.className='status';
-    await cargarDatosAlumno(alumnoId);
+    if(res.data){
+      data = res.data;
+      normalizarDatos();
+      alumno = data.alumno;
+    } else {
+      st.innerHTML = '<span class="spinner"></span> Cargando tu espacio...'; st.className='status';
+      await cargarDatosAlumno(alumnoId);
+    }
     document.getElementById('loginScreen').style.display='none';
     mostrarContenido();
   }catch(e){
