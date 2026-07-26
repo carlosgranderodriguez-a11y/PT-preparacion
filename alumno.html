@@ -75,7 +75,6 @@
   .objetivo-item{display:flex;align-items:center;gap:10px;padding:8px 10px;border:1.5px solid var(--line);border-radius:var(--radius-sm);margin-bottom:6px;background:var(--card-alt);font-size:13.5px;}
   .objetivo-item.hecho{opacity:.55;text-decoration:line-through;}
   .estudio-item{display:flex;align-items:center;gap:10px;padding:6px 10px;border-bottom:1px solid var(--line);font-size:13px;flex-wrap:wrap;}
-  .pct-input{width:62px;font-size:12px;padding:5px 6px;border:1.5px solid var(--line);border-radius:999px;background:var(--card-alt);text-align:center;}
   .stats-section-title{font-family:'Poppins',sans-serif;font-weight:700;font-size:13px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.04em;margin:20px 0 8px;}
   .stats-section-title:first-child{margin-top:0;}
   .stat-num-lg{font-family:'Poppins',sans-serif;font-weight:800;font-size:28px;color:var(--accent-dark);line-height:1.1;}
@@ -518,13 +517,10 @@ function renderEstadisticas(){
   function bloqueProgreso(catalogo, progreso, titulo){
     const total = catalogo.length;
     const c = {'Pendiente':0,'En estudio':0,'Primera vuelta':0,'Dominado':0};
-    let sumaPct = 0;
     catalogo.forEach(t=>{
       const reg = progreso.find(x=>x.alumnoId===alumnoId && x.temaId===t.id);
       c[estadoNorm(reg?reg.estado:'Pendiente')]++;
-      sumaPct += reg && reg.pct!=='' && reg.pct!==undefined ? (parseFloat(reg.pct)||0) : 0;
     });
-    const mediaPct = total ? Math.round(sumaPct/total) : 0;
     const pct = v => total? (v/total*100) : 0;
     return `<div class="card">
       <h3>${titulo}</h3>
@@ -541,7 +537,6 @@ function renderEstadisticas(){
         <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--amber);margin-right:2px;"></span>En estudio <b>${c['En estudio']}</b></span>
         <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--line);margin-right:2px;"></span>Pendiente <b>${c['Pendiente']}</b></span>
         <span>· Total <b>${total}</b></span>
-        <span>· Avance medio <b>${mediaPct}%</b></span>
       </div>
       <div class="hint" style="margin:8px 0 0;">Marca tu progreso y el % de cada tema en las pestañas <i class="ti ti-book-2" aria-hidden="true"></i> Temas y <i class="ti ti-world" aria-hidden="true"></i> Cultura General.</div>`}
     </div>`;
@@ -681,26 +676,21 @@ function renderCatalogTab(prefix, titulo, catalogo, progreso, tipo){
   catalogo.slice().sort((a,b)=>String(a.numero||'').localeCompare(String(b.numero||''),undefined,{numeric:true})).forEach(t=>{
     const reg = progreso.find(x=>x.alumnoId===alumnoId && x.temaId===t.id);
     const estado = estadoNorm(reg?reg.estado:'Pendiente');
-    const pctVal = reg && reg.pct!=='' && reg.pct!==undefined ? reg.pct : 0;
     const tituloCell = t.archivoUrl
       ? `${escapeHtml(t.titulo)} <a href="${escapeHtml(t.archivoUrl)}" target="_blank" rel="noopener" title="Ver archivo adjunto" style="color:var(--accent);"><i class="ti ti-paperclip" aria-hidden="true"></i></a>`
       : escapeHtml(t.titulo);
     const tr = document.createElement('tr');
     tr.innerHTML = `<td>${escapeHtml(t.numero||'')}</td><td>${tituloCell}</td>
-      <td style="white-space:nowrap;"><select class="progreso-select" data-tema="${t.id}">${ESTADOS_PROGRESO.map(e=>'<option'+(e===estado?' selected':'')+'>'+e+'</option>').join('')}</select>
-      <input type="number" class="pct-input" min="0" max="100" step="5" value="${pctVal}" title="% estudiado"> %</td>`;
+      <td style="white-space:nowrap;"><select class="progreso-select" data-tema="${t.id}">${ESTADOS_PROGRESO.map(e=>'<option'+(e===estado?' selected':'')+'>'+e+'</option>').join('')}</select></td>`;
     function guardarProgreso(){
       const nuevoEstado = tr.querySelector('select').value;
-      let nuevoPct = parseInt(tr.querySelector('.pct-input').value)||0;
-      if(nuevoPct<0) nuevoPct=0; if(nuevoPct>100) nuevoPct=100;
       const idx = progreso.findIndex(x=>x.alumnoId===alumnoId && x.temaId===t.id);
-      if(idx>=0){ progreso[idx].estado = nuevoEstado; progreso[idx].pct = nuevoPct; }
-      else progreso.push({alumnoId, temaId:t.id, estado:nuevoEstado, pct:nuevoPct});
+      if(idx>=0){ progreso[idx].estado = nuevoEstado; }
+      else progreso.push({alumnoId, temaId:t.id, estado:nuevoEstado});
       renderEstadisticas();
-      apiPost('setProgreso', { alumnoId, temaId:t.id, estado:nuevoEstado, pct:nuevoPct, tipo }).catch(()=>{});
+      apiPost('setProgreso', { alumnoId, temaId:t.id, estado:nuevoEstado, tipo }).catch(()=>{});
     }
     tr.querySelector('select').addEventListener('change', guardarProgreso);
-    tr.querySelector('.pct-input').addEventListener('change', guardarProgreso);
     tbody.appendChild(tr);
   });
 }
