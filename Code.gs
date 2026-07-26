@@ -238,43 +238,66 @@ function enviarBienvenida_(alumno) {
   }
 }
 
+function buildFullData_() {
+  const cache = CacheService.getScriptCache();
+  const cached = cache.get('getAll_v1');
+  if (cached) {
+    try { return JSON.parse(cached); } catch (err) { /* si el caché está corrupto, recalculamos */ }
+  }
+  const result = {
+    alumnos: sheetToObjects_('Alumnos').map(function(a){
+      var tiene = !!a.clave;
+      delete a.clave;
+      a.tieneClave = tiene;
+      return a;
+    }),
+    calendario: sheetToObjects_('Calendario'),
+    practicos: sheetToObjects_('Practicos'),
+    temas: sheetToObjects_('Temas'),
+    temasProgreso: sheetToObjects_('TemasProgreso'),
+    cg: sheetToObjects_('CG'),
+    cgProgreso: sheetToObjects_('CGProgreso'),
+    dafo: sheetToObjects_('Dafo'),
+    archivos: sheetToObjects_('Archivos'),
+    recursos: sheetToObjects_('Recursos'),
+    estudio: sheetToObjects_('Estudio'),
+    objetivos: sheetToObjects_('Objetivos'),
+    ajustes: sheetToObjects_('Ajustes')
+  };
+  try { cache.put('getAll_v1', JSON.stringify(result), 30); } catch (err) { /* si supera 100KB, seguimos sin caché */ }
+  return result;
+}
+
 function doGet(e) {
   ensureHeaders_();
   const action = e.parameter.action;
-  let result;
+
   if (action === 'getAll') {
-    const cache = CacheService.getScriptCache();
-    const cached = cache.get('getAll_v1');
-    if (cached) {
-      return ContentService.createTextOutput(cached).setMimeType(ContentService.MimeType.JSON);
-    }
-    result = {
-      alumnos: sheetToObjects_('Alumnos').map(function(a){
-        var tiene = !!a.clave;
-        delete a.clave;
-        a.tieneClave = tiene;
-        return a;
-      }),
-      calendario: sheetToObjects_('Calendario'),
-      practicos: sheetToObjects_('Practicos'),
-      temas: sheetToObjects_('Temas'),
-      temasProgreso: sheetToObjects_('TemasProgreso'),
-      cg: sheetToObjects_('CG'),
-      cgProgreso: sheetToObjects_('CGProgreso'),
-      dafo: sheetToObjects_('Dafo'),
-      archivos: sheetToObjects_('Archivos'),
-      recursos: sheetToObjects_('Recursos'),
-      estudio: sheetToObjects_('Estudio'),
-      objetivos: sheetToObjects_('Objetivos'),
-      ajustes: sheetToObjects_('Ajustes')
-    };
-    const json = JSON.stringify(result);
-    try { cache.put('getAll_v1', json, 20); } catch (err) { /* si supera 100KB, seguimos sin caché */ }
-    return ContentService.createTextOutput(json).setMimeType(ContentService.MimeType.JSON);
-  } else {
-    result = { error: 'acción desconocida' };
+    return ContentService.createTextOutput(JSON.stringify(buildFullData_())).setMimeType(ContentService.MimeType.JSON);
   }
-  return ContentService.createTextOutput(JSON.stringify(result)).setMimeType(ContentService.MimeType.JSON);
+
+  if (action === 'getAlumnoData') {
+    const id = e.parameter.id;
+    const full = buildFullData_();
+    const alumno = full.alumnos.find(function(a){ return a.id === id; }) || null;
+    const scoped = {
+      alumno: alumno,
+      calendario: full.calendario.filter(function(ev){ return ev.alumnoId === id || ev.alumnoId === 'ALL'; }),
+      practicos: full.practicos.filter(function(p){ return p.alumnoId === id; }),
+      temas: full.temas,
+      temasProgreso: full.temasProgreso.filter(function(x){ return x.alumnoId === id; }),
+      cg: full.cg,
+      cgProgreso: full.cgProgreso.filter(function(x){ return x.alumnoId === id; }),
+      archivos: full.archivos,
+      recursos: full.recursos,
+      estudio: full.estudio.filter(function(x){ return x.alumnoId === id; }),
+      objetivos: full.objetivos.filter(function(o){ return o.alumnoId === id || o.alumnoId === 'ALL'; }),
+      ajustes: full.ajustes
+    };
+    return ContentService.createTextOutput(JSON.stringify(scoped)).setMimeType(ContentService.MimeType.JSON);
+  }
+
+  return ContentService.createTextOutput(JSON.stringify({ error: 'acción desconocida' })).setMimeType(ContentService.MimeType.JSON);
 }
 
 function doPost(e) {
