@@ -666,16 +666,13 @@ function renderFichaAlumno(id){
   function resumenTemas(catalogo, progreso){
     const conteo = {'Pendiente':0,'En estudio':0,'Primera vuelta':0,'Dominado':0};
     const estudiados = [];
-    let sumaPct = 0;
     catalogo.forEach(t=>{
       const reg = progreso.find(x=>x.alumnoId===id && x.temaId===t.id);
       const estado = estadoNorm(reg?reg.estado:'Pendiente');
       conteo[estado] = (conteo[estado]||0)+1;
-      sumaPct += reg && reg.pct!=='' && reg.pct!==undefined ? (parseFloat(reg.pct)||0) : 0;
-      if(estado!=='Pendiente') estudiados.push(t.titulo+' ('+estado+(reg&&reg.pct?' '+reg.pct+'%':'')+')');
+      if(estado!=='Pendiente') estudiados.push(t.titulo+' ('+estado+')');
     });
-    const mediaPct = catalogo.length ? Math.round(sumaPct/catalogo.length) : 0;
-    return {conteo, estudiados, total: catalogo.length, mediaPct};
+    return {conteo, estudiados, total: catalogo.length};
   }
   const rTemas = resumenTemas(data.temas, data.temasProgreso);
   const rCg = resumenTemas(data.cg, data.cgProgreso);
@@ -713,7 +710,7 @@ function renderFichaAlumno(id){
       <div class="prog-seg" style="width:${rTemas.total?rTemas.conteo['En estudio']/rTemas.total*100:0}%;background:var(--amber);"></div>
       <div class="prog-seg" style="width:${rTemas.total?rTemas.conteo['Pendiente']/rTemas.total*100:0}%;background:var(--line);"></div>
     </div>
-    <div class="prog-leyenda"><span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--accent-dark);margin-right:2px;"></span>Dominado <b>${rTemas.conteo['Dominado']}</b></span><span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--blue);margin-right:2px;"></span>Primera vuelta <b>${rTemas.conteo['Primera vuelta']}</b></span><span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--amber);margin-right:2px;"></span>En estudio <b>${rTemas.conteo['En estudio']}</b></span><span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--line);margin-right:2px;"></span>Pendiente <b>${rTemas.conteo['Pendiente']}</b></span><span>· Avance medio <b>${rTemas.mediaPct}%</b></span></div>`}
+    <div class="prog-leyenda"><span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--accent-dark);margin-right:2px;"></span>Dominado <b>${rTemas.conteo['Dominado']}</b></span><span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--blue);margin-right:2px;"></span>Primera vuelta <b>${rTemas.conteo['Primera vuelta']}</b></span><span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--amber);margin-right:2px;"></span>En estudio <b>${rTemas.conteo['En estudio']}</b></span><span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--line);margin-right:2px;"></span>Pendiente <b>${rTemas.conteo['Pendiente']}</b></span></div>`}
     ${rTemas.estudiados.length? '<div class="hint" style="margin:6px 0 0;">Estudiados: '+rTemas.estudiados.map(escapeHtml).join(', ')+'</div>' : ''}
 
     <h3 style="font-size:14.5px;margin-top:18px;"><i class="ti ti-world" aria-hidden="true"></i> Cultura General — progreso</h3>
@@ -724,7 +721,7 @@ function renderFichaAlumno(id){
       <div class="prog-seg" style="width:${rCg.total?rCg.conteo['En estudio']/rCg.total*100:0}%;background:var(--amber);"></div>
       <div class="prog-seg" style="width:${rCg.total?rCg.conteo['Pendiente']/rCg.total*100:0}%;background:var(--line);"></div>
     </div>
-    <div class="prog-leyenda"><span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--accent-dark);margin-right:2px;"></span>Dominado <b>${rCg.conteo['Dominado']}</b></span><span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--blue);margin-right:2px;"></span>Primera vuelta <b>${rCg.conteo['Primera vuelta']}</b></span><span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--amber);margin-right:2px;"></span>En estudio <b>${rCg.conteo['En estudio']}</b></span><span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--line);margin-right:2px;"></span>Pendiente <b>${rCg.conteo['Pendiente']}</b></span><span>· Avance medio <b>${rCg.mediaPct}%</b></span></div>`}
+    <div class="prog-leyenda"><span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--accent-dark);margin-right:2px;"></span>Dominado <b>${rCg.conteo['Dominado']}</b></span><span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--blue);margin-right:2px;"></span>Primera vuelta <b>${rCg.conteo['Primera vuelta']}</b></span><span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--amber);margin-right:2px;"></span>En estudio <b>${rCg.conteo['En estudio']}</b></span><span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--line);margin-right:2px;"></span>Pendiente <b>${rCg.conteo['Pendiente']}</b></span></div>`}
     ${rCg.estudiados.length? '<div class="hint" style="margin:6px 0 0;">Estudiados: '+rCg.estudiados.map(escapeHtml).join(', ')+'</div>' : ''}
   `;
   ficha.style.display = 'block';
@@ -954,8 +951,7 @@ function renderCatalogTab(prefix, titulo, catalogo, progreso, tipo){
   catalogo.slice().sort((a,b)=>String(a.numero||'').localeCompare(String(b.numero||''), undefined,{numeric:true})).forEach(t=>{
     const progresoTexto = data.alumnos.map(al=>{
       const reg = progreso.find(x=>x.alumnoId===al.id && x.temaId===t.id);
-      const pctTxt = reg && reg.pct!=='' && reg.pct!==undefined ? ' '+reg.pct+'%' : '';
-      return escapeHtml(al.nombre)+': <em>'+escapeHtml(estadoNorm(reg?reg.estado:'Pendiente'))+pctTxt+'</em>';
+      return escapeHtml(al.nombre)+': <em>'+escapeHtml(estadoNorm(reg?reg.estado:'Pendiente'))+'</em>';
     }).join(' · ') || '<span class="hint" style="margin:0;">Sin alumnos</span>';
     const tr = document.createElement('tr');
     const archivoCell = t.archivoUrl
