@@ -268,7 +268,7 @@ function normalizarDatos(){
 function htmlArchivos(categoria, titulo){
   const lista = (data.archivos||[]).filter(x=>x.categoria===categoria).sort((a,b)=>String(b.fecha).localeCompare(String(a.fecha)));
   if(!lista.length) return '';
-  return `<div class="card"><h3><i class="ti ti-paperclip" aria-hidden="true"></i> ${titulo}</h3>` + lista.map(f=>`<div class="archivo-item"><a href="${escapeHtml(f.url)}" target="_blank" rel="noopener"><i class="ti ti-paperclip" aria-hidden="true"></i> ${escapeHtml(f.nombre)}</a><span style="color:var(--gray);font-size:11.5px;">${escapeHtml(f.fecha||'')}</span></div>`).join('') + '</div>';
+  return `<div class="card"><h3><i class="ti ti-paperclip" aria-hidden="true"></i> ${titulo}</h3>` + lista.map(f=>`<div class="archivo-item"><a href="${escapeHtml(f.url)}" target="_blank" rel="noopener"><i class="ti ti-paperclip" aria-hidden="true"></i> ${escapeHtml(f.titulo || f.nombre)}</a><span style="color:var(--gray);font-size:11.5px;">${escapeHtml(f.fecha||'')}</span></div>`).join('') + '</div>';
 }
 
 async function hashClave(email, pass){
