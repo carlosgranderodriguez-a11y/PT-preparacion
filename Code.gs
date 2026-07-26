@@ -243,6 +243,11 @@ function doGet(e) {
   const action = e.parameter.action;
   let result;
   if (action === 'getAll') {
+    const cache = CacheService.getScriptCache();
+    const cached = cache.get('getAll_v1');
+    if (cached) {
+      return ContentService.createTextOutput(cached).setMimeType(ContentService.MimeType.JSON);
+    }
     result = {
       alumnos: sheetToObjects_('Alumnos').map(function(a){
         var tiene = !!a.clave;
@@ -263,6 +268,9 @@ function doGet(e) {
       objetivos: sheetToObjects_('Objetivos'),
       ajustes: sheetToObjects_('Ajustes')
     };
+    const json = JSON.stringify(result);
+    try { cache.put('getAll_v1', json, 20); } catch (err) { /* si supera 100KB, seguimos sin caché */ }
+    return ContentService.createTextOutput(json).setMimeType(ContentService.MimeType.JSON);
   } else {
     result = { error: 'acción desconocida' };
   }
@@ -271,6 +279,7 @@ function doGet(e) {
 
 function doPost(e) {
   ensureHeaders_();
+  try { CacheService.getScriptCache().remove('getAll_v1'); } catch (err) { /* no pasa nada si falla */ }
   let result = { ok: true };
   try {
     const body = JSON.parse(e.postData.contents);
