@@ -302,12 +302,15 @@ function doGet(e) {
 
 function doPost(e) {
   ensureHeaders_();
-  try { CacheService.getScriptCache().remove('getAll_v1'); } catch (err) { /* no pasa nada si falla */ }
   let result = { ok: true };
   try {
     const body = JSON.parse(e.postData.contents);
     const action = body.action;
     const p = body.payload || {};
+
+    if (action !== 'loginAlumno') {
+      try { CacheService.getScriptCache().remove('getAll_v1'); } catch (err) { /* no pasa nada si falla */ }
+    }
 
     switch (action) {
       case 'addAlumno':
