@@ -27,7 +27,7 @@ const HEADERS = {
   Estudio: ['id', 'alumnoId', 'fecha', 'horas', 'bloque', 'notas'],
   Objetivos: ['id', 'alumnoId', 'semana', 'texto', 'cumplido'],
   Dafo: ['alumnoId', 'fortalezas', 'debilidades', 'oportunidades', 'amenazas'],
-  Archivos: ['id', 'categoria', 'nombre', 'url', 'fecha'],
+  Archivos: ['id', 'categoria', 'nombre', 'titulo', 'url', 'fecha'],
   Recursos: ['id', 'fecha', 'titulo', 'texto', 'url', 'archivoUrl'],
   Ajustes: ['clave', 'valor']
 };
@@ -359,7 +359,7 @@ function doPost(e) {
         break;
       case 'subirArchivo':
         var urlArchivo = guardarEnDrive_(p.base64, p.nombre, 'PT_Materiales');
-        appendObject_('Archivos', { id: p.id, categoria: p.categoria, nombre: p.nombre, url: urlArchivo, fecha: p.fecha });
+        appendObject_('Archivos', { id: p.id, categoria: p.categoria, nombre: p.nombre, titulo: p.titulo || '', url: urlArchivo, fecha: p.fecha });
         result = { ok: true, url: urlArchivo };
         break;
       case 'deleteArchivo':
