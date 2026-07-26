@@ -32,8 +32,14 @@ const HEADERS = {
   Ajustes: ['clave', 'valor']
 };
 
+let _ss_ = null;
+function getSpreadsheet_() {
+  if (!_ss_) _ss_ = SpreadsheetApp.openById(SHEET_ID);
+  return _ss_;
+}
+
 function getSheet_(name) {
-  const ss = SpreadsheetApp.openById(SHEET_ID);
+  const ss = getSpreadsheet_();
   let sh = ss.getSheetByName(name);
   if (!sh) sh = ss.insertSheet(name);
   return sh;
