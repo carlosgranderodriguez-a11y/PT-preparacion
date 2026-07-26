@@ -927,24 +927,25 @@ function renderCatalogTab(prefix, titulo, catalogo, progreso, tipo){
     <div class="row">
       <div class="field" style="max-width:90px;"><label>Nº</label><input type="text" id="${prefix}Num"></div>
       <div class="field"><label>Título</label><input type="text" id="${prefix}Titulo"></div>
+      <div class="field"><label>Archivo del tema (PDF o foto, opcional)</label><input type="file" id="${prefix}Archivo"></div>
     </div>
     <button class="btn btn-primary btn-sm" id="${prefix}BtnAdd">Añadir</button>
     <span class="status" id="${prefix}Status"></span>
   </div>
   <div class="card">
-    <h3><i class="ti ti-paperclip" aria-hidden="true"></i> Materiales</h3>
-    <div class="hint" style="margin-top:0;">Apuntes, esquemas o documentos de esta sección. Se guardan en tu Google Drive y los alumnos los ven en su página.</div>
+    <h3>${titulo} — progreso por alumno</h3>
+    <table><thead><tr><th>Nº</th><th>Título</th><th>Archivo</th><th>Progreso</th><th></th></tr></thead><tbody id="${prefix}Tbody"></tbody></table>
+    <div class="empty" id="${prefix}Empty" style="display:none;">Todavía no hay temas cargados.</div>
+  </div>
+  <div class="card">
+    <h3><i class="ti ti-paperclip" aria-hidden="true"></i> Materiales generales</h3>
+    <div class="hint" style="margin-top:0;">Documentos generales de esta sección que no pertenecen a un tema concreto (por ejemplo, el temario completo). Para adjuntar un archivo a un tema en particular, usa el campo de arriba o el botón "Adjuntar" de su fila.</div>
     <div class="row">
       <div class="field"><input type="file" id="arch${prefix}Input"></div>
       <button class="btn btn-primary" id="arch${prefix}Btn">Subir archivo</button>
     </div>
     <span class="status" id="arch${prefix}Status"></span>
     <div id="arch${prefix}Lista" style="margin-top:10px;"></div>
-  </div>
-  <div class="card">
-    <h3>${titulo} — progreso por alumno</h3>
-    <table><thead><tr><th>Nº</th><th>Título</th><th>Progreso</th><th></th></tr></thead><tbody id="${prefix}Tbody"></tbody></table>
-    <div class="empty" id="${prefix}Empty" style="display:none;">Todavía no hay temas cargados.</div>
   </div>`;
   const tbody = document.getElementById(prefix+'Tbody');
   document.getElementById(prefix+'Empty').style.display = catalogo.length?'none':'block';
@@ -955,7 +956,10 @@ function renderCatalogTab(prefix, titulo, catalogo, progreso, tipo){
       return escapeHtml(al.nombre)+': <em>'+escapeHtml(estadoNorm(reg?reg.estado:'Pendiente'))+pctTxt+'</em>';
     }).join(' · ') || '<span class="hint" style="margin:0;">Sin alumnos</span>';
     const tr = document.createElement('tr');
-    tr.innerHTML = `<td>${escapeHtml(t.numero||'')}</td><td>${escapeHtml(t.titulo)}</td><td style="font-size:12.5px;">${progresoTexto}</td><td><button class="icon-btn" data-del="${t.id}">Eliminar</button></td>`;
+    const archivoCell = t.archivoUrl
+      ? `<a href="${escapeHtml(t.archivoUrl)}" target="_blank" rel="noopener" style="font-size:12px;font-weight:600;color:var(--accent-dark);"><i class="ti ti-file-description" aria-hidden="true"></i> Ver</a> · <button class="icon-btn" data-quitararch="${t.id}">Quitar</button>`
+      : `<button class="icon-btn" data-adjuntar="${t.id}"><i class="ti ti-paperclip" aria-hidden="true"></i> Adjuntar</button><input type="file" data-inputarch="${t.id}" style="display:none;">`;
+    tr.innerHTML = `<td>${escapeHtml(t.numero||'')}</td><td>${escapeHtml(t.titulo)}</td><td style="white-space:nowrap;">${archivoCell}</td><td style="font-size:12.5px;">${progresoTexto}</td><td><button class="icon-btn" data-del="${t.id}">Eliminar</button></td>`;
     tr.querySelector('[data-del]').addEventListener('click', ()=>{
       if(!confirm('¿Eliminar este tema?')) return;
       const idx = catalogo.findIndex(x=>x.id===t.id);
@@ -963,17 +967,61 @@ function renderCatalogTab(prefix, titulo, catalogo, progreso, tipo){
       renderCatalogTab(prefix, titulo, catalogo, progreso, tipo);
       syncBg('deleteTema', { id:t.id, tipo });
     });
+    const btnAdjuntar = tr.querySelector('[data-adjuntar]');
+    if(btnAdjuntar){
+      const inputArch = tr.querySelector('[data-inputarch]');
+      btnAdjuntar.addEventListener('click', ()=> inputArch.click());
+      inputArch.addEventListener('change', async ()=>{
+        const file = inputArch.files[0];
+        if(!file) return;
+        if(file.size > 15*1024*1024){ alert('El archivo supera los 15 MB.'); return; }
+        btnAdjuntar.textContent = 'Subiendo...';
+        try{
+          const base64 = await fileToBase64(file);
+          const res = await apiPost('setArchivoTema', { id:t.id, tipo, base64, nombre:file.name });
+          t.archivoUrl = res.url || '';
+          renderCatalogTab(prefix, titulo, catalogo, progreso, tipo);
+        }catch(e){
+          alert('Error al subir: '+e.message);
+          btnAdjuntar.innerHTML = '<i class="ti ti-paperclip" aria-hidden="true"></i> Adjuntar';
+        }
+      });
+    }
+    const btnQuitar = tr.querySelector('[data-quitararch]');
+    if(btnQuitar){
+      btnQuitar.addEventListener('click', ()=>{
+        if(!confirm('¿Quitar el archivo de este tema?')) return;
+        t.archivoUrl = '';
+        renderCatalogTab(prefix, titulo, catalogo, progreso, tipo);
+        syncBg('setArchivoTema', { id:t.id, tipo, archivoUrl:'' });
+      });
+    }
     tbody.appendChild(tr);
   });
-  document.getElementById(prefix+'BtnAdd').addEventListener('click', ()=>{
+  document.getElementById(prefix+'BtnAdd').addEventListener('click', async ()=>{
     const numero = document.getElementById(prefix+'Num').value.trim();
     const titulo2 = document.getElementById(prefix+'Titulo').value.trim();
     const st = document.getElementById(prefix+'Status');
+    const fileInput = document.getElementById(prefix+'Archivo');
+    const file = fileInput.files[0];
     if(!titulo2){ st.textContent='Escribe un título.'; st.className='status err'; return; }
-    const t = { id: uid('t'), numero, titulo: titulo2 };
+    if(file && file.size > 15*1024*1024){ st.textContent='El archivo supera los 15 MB.'; st.className='status err'; return; }
+    const t = { id: uid('t'), numero, titulo: titulo2, archivoUrl:'' };
+    const payload = Object.assign({tipo}, t);
+    if(file){
+      st.innerHTML = '<span class="spinner"></span> Subiendo archivo...'; st.className='status';
+      try{ payload.base64 = await fileToBase64(file); payload.nombre = file.name; }
+      catch(e){ st.textContent='Error al leer el archivo.'; st.className='status err'; return; }
+    }
     catalogo.push(t);
     renderCatalogTab(prefix, titulo, catalogo, progreso, tipo);
-    syncBg('addTema', Object.assign({tipo}, t));
+    try{
+      const res = await apiPost('addTema', payload);
+      if(res.url){ t.archivoUrl = res.url; renderCatalogTab(prefix, titulo, catalogo, progreso, tipo); }
+    }catch(e){
+      document.getElementById(prefix+'Status').textContent = 'Error: '+e.message;
+      document.getElementById(prefix+'Status').className = 'status err';
+    }
   });
   initSubidaArchivos(tipo, 'arch'+prefix+'Input', 'arch'+prefix+'Btn', 'arch'+prefix+'Status', 'arch'+prefix+'Lista');
   renderArchivosLista(tipo, 'arch'+prefix+'Lista');
