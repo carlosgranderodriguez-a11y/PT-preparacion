@@ -268,6 +268,25 @@ function buildFullData_() {
   return result;
 }
 
+function buildAlumnoScoped_(id) {
+  const full = buildFullData_();
+  const alumno = full.alumnos.find(function(a){ return a.id === id; }) || null;
+  return {
+    alumno: alumno,
+    calendario: full.calendario.filter(function(ev){ return ev.alumnoId === id || ev.alumnoId === 'ALL'; }),
+    practicos: full.practicos.filter(function(p){ return p.alumnoId === id; }),
+    temas: full.temas,
+    temasProgreso: full.temasProgreso.filter(function(x){ return x.alumnoId === id; }),
+    cg: full.cg,
+    cgProgreso: full.cgProgreso.filter(function(x){ return x.alumnoId === id; }),
+    archivos: full.archivos,
+    recursos: full.recursos,
+    estudio: full.estudio.filter(function(x){ return x.alumnoId === id; }),
+    objetivos: full.objetivos.filter(function(o){ return o.alumnoId === id || o.alumnoId === 'ALL'; }),
+    ajustes: full.ajustes
+  };
+}
+
 function doGet(e) {
   ensureHeaders_();
   const action = e.parameter.action;
@@ -278,23 +297,7 @@ function doGet(e) {
 
   if (action === 'getAlumnoData') {
     const id = e.parameter.id;
-    const full = buildFullData_();
-    const alumno = full.alumnos.find(function(a){ return a.id === id; }) || null;
-    const scoped = {
-      alumno: alumno,
-      calendario: full.calendario.filter(function(ev){ return ev.alumnoId === id || ev.alumnoId === 'ALL'; }),
-      practicos: full.practicos.filter(function(p){ return p.alumnoId === id; }),
-      temas: full.temas,
-      temasProgreso: full.temasProgreso.filter(function(x){ return x.alumnoId === id; }),
-      cg: full.cg,
-      cgProgreso: full.cgProgreso.filter(function(x){ return x.alumnoId === id; }),
-      archivos: full.archivos,
-      recursos: full.recursos,
-      estudio: full.estudio.filter(function(x){ return x.alumnoId === id; }),
-      objetivos: full.objetivos.filter(function(o){ return o.alumnoId === id || o.alumnoId === 'ALL'; }),
-      ajustes: full.ajustes
-    };
-    return ContentService.createTextOutput(JSON.stringify(scoped)).setMimeType(ContentService.MimeType.JSON);
+    return ContentService.createTextOutput(JSON.stringify(buildAlumnoScoped_(id))).setMimeType(ContentService.MimeType.JSON);
   }
 
   return ContentService.createTextOutput(JSON.stringify({ error: 'acción desconocida' })).setMimeType(ContentService.MimeType.JSON);
@@ -412,7 +415,8 @@ function doPost(e) {
         if (!al1) { result = { error: 'No hay ningún alumno registrado con ese correo. Habla con tu preparador.' }; break; }
         if (al1.clave) { result = { error: 'Este correo ya tiene una clave creada. Si la has olvidado, pide a tu preparador que la restablezca.' }; break; }
         updateObjectById_('Alumnos', 'id', al1.id, { clave: p.clave });
-        result = { ok: true, alumnoId: al1.id, nombre: al1.nombre };
+        try { CacheService.getScriptCache().remove('getAll_v1'); } catch (errc) {}
+        result = { ok: true, alumnoId: al1.id, nombre: al1.nombre, data: buildAlumnoScoped_(al1.id) };
         break;
       }
       case 'loginAlumno': {
@@ -421,7 +425,7 @@ function doPost(e) {
         if (!al2) { result = { error: 'Correo o clave incorrectos.' }; break; }
         if (!al2.clave) { result = { error: 'Todavía no has creado tu clave. Usa la opción "Primera vez".' }; break; }
         if (String(al2.clave) !== String(p.clave)) { result = { error: 'Correo o clave incorrectos.' }; break; }
-        result = { ok: true, alumnoId: al2.id, nombre: al2.nombre };
+        result = { ok: true, alumnoId: al2.id, nombre: al2.nombre, data: buildAlumnoScoped_(al2.id) };
         break;
       }
       case 'resetClaveAlumno':
