@@ -243,6 +243,16 @@
   .prog-row .ico-circle{width:36px;height:36px;font-size:18px;background:transparent;border:1px solid var(--line);}
   .prog-t{font-family:var(--serif);font-weight:600;font-size:16px;}
   .prog-d{font-size:12.5px;color:var(--gray);}
+  .idx-row{display:grid;grid-template-columns:62px minmax(0,1fr) 118px;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--line);}
+  .idx-row:first-of-type{border-top:none;}
+  .idx-c{font-weight:600;font-size:13px;color:var(--forest);}
+  .idx-t{font-size:14px;color:var(--ink-soft);}
+  .idx-row.n1 .idx-t{font-family:var(--serif);font-weight:600;font-size:15.5px;color:var(--ink);}
+  .idx-row.n2{padding-left:18px;} .idx-row.n3{padding-left:36px;}
+  .idx-row.e2 .idx-t{color:var(--gray);text-decoration:line-through;}
+  @media (max-width:600px){ .idx-row{grid-template-columns:44px minmax(0,1fr) 100px;gap:8px;} .idx-row.n2{padding-left:4px;} .idx-row.n3{padding-left:8px;} .idx-c{font-size:12px;} }
+  .idx-sel{font-size:13px;padding:5px 8px;border:1px solid var(--line);border-radius:8px;background:#fff;}
+  .idx-row.e1 .idx-sel{background:var(--amber-soft);} .idx-row.e2 .idx-sel{background:var(--green-soft);}
   .meter{display:flex;align-items:center;gap:10px;}
   .meter-bg{flex:1;height:8px;border-radius:999px;background:#E3E9E1;overflow:hidden;}
   .meter-fill{height:100%;background:var(--forest-3);border-radius:999px;transition:width .3s;}
@@ -1163,19 +1173,64 @@ document.getElementById('btnEnviarPractico').addEventListener('click', async ()=
 });
 
 /* ---------- PROGRAMACIÓN Y DEFENSA (se guarda en este dispositivo) ---------- */
-const PROG_SECC = [
-  {t:'Contextualización', d:'Analiza el contexto del centro y del alumnado.', i:'file-description'},
-  {t:'Objetivos', d:'Define objetivos generales y específicos.', i:'target'},
-  {t:'Intervención educativa', d:'Diseña las medidas y actuaciones.', i:'users'},
-  {t:'Evaluación', d:'Selecciona indicadores e instrumentos.', i:'chart-bar'}
+/* Índice de la programación: n = nivel de sangría, c = numeración, t = título. Las UPD llevan solo su código. */
+const PROG_IDX = [
+  {n:1,c:"1",t:"INTRODUCCIÓN"},
+  {n:1,c:"2",t:"JUSTIFICACIÓN LEGAL"},
+  {n:2,c:"2.1",t:"Justificación psicopedagógica"},
+  {n:1,c:"3",t:"ANÁLISIS DEL CONTEXTO"},
+  {n:2,c:"3.1",t:"Características generales del centro"},
+  {n:2,c:"3.2",t:"Características del alumnado destinatario"},
+  {n:3,c:"3.2.1",t:"Síntesis del informe psicopedagógico"},
+  {n:3,c:"3.2.2",t:"Motivación y estilo de aprendizaje"},
+  {n:3,c:"3.2.3",t:"Nivel de competencia curricular en Matemáticas"},
+  {n:3,c:"3.2.4",t:"Necesidades educativas prioritarias"},
+  {n:1,c:"4",t:"CONTEXTO DEL SEGUNDO CICLO Y ALUMNADO DESTINATARIO"},
+  {n:1,c:"5",t:"ELEMENTOS DEL CURRÍCULO DEL 2º CICLO"},
+  {n:2,c:"5.1",t:"Objetivos generales de etapa"},
+  {n:2,c:"5.2",t:"Competencias clave"},
+  {n:2,c:"5.3",t:"Contenidos"},
+  {n:2,c:"5.4",t:"Competencias específicas y criterios de evaluación"},
+  {n:2,c:"5.5",t:"Contenidos transversales para la consecución de los objetivos del desarrollo sostenible (ODS)"},
+  {n:1,c:"6",t:"ESTRATEGIAS PARA LA ATENCIÓN A LAS DIFERENCIAS INDIVIDUALES"},
+  {n:2,c:"6.1",t:"Medidas de atención educativa"},
+  {n:2,c:"6.2",t:"ACNEAE del centro y alumnado atendido por PT"},
+  {n:2,c:"6.3",t:"Organización del apoyo de Alexander y Mario"},
+  {n:2,c:"6.4",t:"Objetivos específicos de la intervención de PT"},
+  {n:1,c:"7",t:"MÉTODOS PEDAGÓGICOS"},
+  {n:1,c:"8",t:"PLANIFICACIÓN DE LOS ESPACIOS Y RECURSOS UTILIZADOS"},
+  {n:2,c:"8.1",t:"Espacios y organización temporal"},
+  {n:2,c:"8.2",t:"Recursos personales y coordinaciones"},
+  {n:2,c:"8.3",t:"Recursos materiales, curriculares y didácticos"},
+  {n:1,c:"9",t:"PROCEDIMIENTOS, INSTRUMENTOS, CRITERIOS DE EVALUACIÓN Y CALIFICACIÓN"},
+  {n:1,c:"10",t:"UNIDADES DIDÁCTICAS Y SU ADAPTACIÓN"},
+  {n:2,c:"UPD1",t:""},
+  {n:2,c:"UPD2",t:""},
+  {n:2,c:"UPD3",t:""},
+  {n:2,c:"UPD4",t:""},
+  {n:2,c:"UPD5",t:""},
+  {n:2,c:"UPD6",t:""},
+  {n:2,c:"UPD7",t:""},
+  {n:2,c:"UPD8",t:""},
+  {n:2,c:"UPD9",t:""},
+  {n:2,c:"UPD10",t:""},
+  {n:2,c:"UPD11",t:""},
+  {n:2,c:"UPD12",t:""},
+  {n:2,c:"UPD13",t:""},
+  {n:2,c:"UPD14",t:""},
+  {n:2,c:"UPD15",t:""},
+  {n:2,c:"UPD16",t:""},
+  {n:1,c:"11",t:"CONCLUSIÓN"},
+  {n:1,c:"12",t:"FUENTES BIBLIOGRÁFICAS Y WEBGRAFÍA"}
 ];
+const PROG_EST = ['Pendiente','En proceso','Hecho'];
 const PROG_PASOS = [['Planificación','Estructura y enfoque'],['Borrador','Desarrolla tu programación'],['Revisión','Mejora con feedback'],['Defensa','Practica tu exposición']];
 const PROG_CHECKS = ['Organiza tus ideas','Controla el tiempo','Mejora tu comunicación','Ensaya con feedback'];
 function progLoad(){
   let o = null;
   try{ o = JSON.parse(ls('pt_prog_'+alumnoId)||'null'); }catch(e){}
   o = o || {};
-  if(!Array.isArray(o.sec)) o.sec = [0,0,0,0];
+  if(!o.idx || typeof o.idx!=='object' || Array.isArray(o.idx)) o.idx = {};
   if(!Array.isArray(o.chk)) o.chk = [false,false,false,false];
   if(typeof o.ensayos!=='number') o.ensayos = 0;
   return o;
@@ -1183,18 +1238,16 @@ function progLoad(){
 function progSave(o){ ls('pt_prog_'+alumnoId, JSON.stringify(o)); }
 function renderProgramacion(){
   const o = progLoad();
-  const media = o.sec.reduce((a,b)=>a+b,0)/o.sec.length;
+  const hechos = PROG_IDX.filter(x=>o.idx[x.c]===2).length;
+  const enProc = PROG_IDX.filter(x=>o.idx[x.c]===1).length;
+  const media = Math.round((hechos*2+enProc)/(PROG_IDX.length*2)*100);
   const cur = media===0 ? 0 : media<60 ? 1 : media<100 ? 2 : 3;
   const stepper = PROG_PASOS.map((p,i)=>`<div class="step ${i<cur?'done':''} ${i===cur?'cur':''}"><span class="step-c">${i<cur?'<i class="ti ti-check"></i>':(i+1)}</span><div class="step-t">${p[0]}<div class="step-s">${p[1]}</div></div></div>`).join('');
-  const filas = PROG_SECC.map((s,i)=>{
-    const v = o.sec[i];
-    const pill = v>=100 ? '<span class="pill ok prog-pill"><i class="ti ti-check"></i> Completado</span>' : v>0 ? '<span class="pill wait prog-pill"><i class="ti ti-clock"></i> En proceso</span>' : '<span class="pill todo prog-pill"><i class="ti ti-clock"></i> Pendiente</span>';
-    return `<div class="prog-row">
-      <div class="ico-circle"><i class="ti ti-${s.i}"></i></div>
-      <div><div class="prog-t">${s.t}</div><div class="prog-d">${s.d}</div></div>
-      <div class="meter"><div class="meter-bg"><div class="meter-fill" style="width:${v}%"></div></div><b>${v}%</b></div>
-      ${pill}
-      <div class="prog-sel"><select class="pct" data-sec="${i}" aria-label="Avance de ${s.t}">${[0,25,50,75,100].map(n=>`<option value="${n}"${n===v?' selected':''}>${n}%</option>`).join('')}</select></div>
+  const filas = PROG_IDX.map(x=>{
+    const v = o.idx[x.c]||0;
+    return `<div class="idx-row n${x.n} e${v}">
+      <span class="idx-c">${escapeHtml(x.c)}</span><span class="idx-t">${escapeHtml(x.t)}</span>
+      <select class="idx-sel" data-idx="${escapeHtml(x.c)}" aria-label="Estado de ${escapeHtml(x.c+' '+x.t)}">${PROG_EST.map((e,k)=>`<option value="${k}"${k===v?' selected':''}>${e}</option>`).join('')}</select>
     </div>`;
   }).join('');
   const checks = PROG_CHECKS.map((c,i)=>`<label class="check"><input type="checkbox" data-chk="${i}" ${o.chk[i]?'checked':''}> ${c}</label>`).join('');
@@ -1203,7 +1256,8 @@ function renderProgramacion(){
     <div class="page-head"><div><h1>Programación y defensa</h1><p class="lead">Construye tu propuesta paso a paso.</p></div></div>
     <div class="stepper">${stepper}</div>
     <div class="split">
-      <div class="card"><div class="card-head"><h3>Mi programación</h3></div>${filas}
+      <div class="card"><div class="card-head"><h3>Mi programación</h3><span class="cg-count">${hechos} de ${PROG_IDX.length} apartados · ${media}%</span></div>
+        <div class="meter" style="margin-bottom:10px;"><div class="meter-bg"><div class="meter-fill" style="width:${media}%"></div></div></div>${filas}
         <p class="hint" style="margin:10px 0 0;"><i class="ti ti-device-floppy"></i> Tu avance en esta sección se guarda en este dispositivo.</p>
       </div>
       <div class="stack">
@@ -1218,8 +1272,9 @@ function renderProgramacion(){
       </div>
     </div>`;
   const panel = document.getElementById('panel-programacion');
-  panel.querySelectorAll('select.pct').forEach(sel=>sel.addEventListener('change', ()=>{
-    const s = progLoad(); s.sec[parseInt(sel.dataset.sec,10)] = parseInt(sel.value,10); progSave(s); renderProgramacion();
+  panel.querySelectorAll('select.idx-sel').forEach(sel=>sel.addEventListener('change', ()=>{
+    const s = progLoad(); s.idx[sel.dataset.idx] = parseInt(sel.value,10); progSave(s);
+    const y = window.scrollY; renderProgramacion(); window.scrollTo(0,y);
   }));
   panel.querySelectorAll('[data-chk]').forEach(c=>c.addEventListener('change', ()=>{
     const s = progLoad(); s.chk[parseInt(c.dataset.chk,10)] = c.checked; progSave(s);
