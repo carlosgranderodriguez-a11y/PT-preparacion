@@ -855,10 +855,13 @@ function renderSemana(){
   const evs = misEventos();
   const lunes = lunesDe(hoy);
   const enSemana = evs.filter(e=>e.fecha>=lunes && e.fecha<=addDays(lunes,6));
-  const objs = (data.objetivos||[]).filter(o=>(o.alumnoId===alumnoId||o.alumnoId==='ALL') && o.semana===lunes);
+  const todosObj = (data.objetivos||[]).filter(o=>o.alumnoId===alumnoId||o.alumnoId==='ALL');
+  const objsSemana = todosObj.filter(o=>o.semana===lunes);
+  // Se muestran los de esta semana, los de semanas futuras y los de semanas pasadas que sigan sin cumplir
+  const objs = todosObj.filter(o=>o.semana>=lunes || !objHecho(o)).sort((a,b)=>String(a.semana).localeCompare(String(b.semana)));
   const partes = [];
   if(enSemana.length) partes.push(enSemana.length+(enSemana.length===1?' clase':' clases'));
-  if(objs.length) partes.push(objs.length+(objs.length===1?' objetivo':' objetivos'));
+  if(objsSemana.length) partes.push(objsSemana.length+(objsSemana.length===1?' objetivo':' objetivos'));
   document.getElementById('heroTexto').textContent = partes.length ? partes.join(' y ')+' esta semana' : 'Continúa con tu planificación';
 
   // próxima clase
@@ -879,6 +882,7 @@ function renderSemana(){
   renderPendientes(objs, pe, mp);
   renderWeek(); renderCalMes(); renderEstudio();
 }
+function objHecho(o){ return String(o.cumplido)==='true' || o.cumplido===true; }
 function renderPendientes(objs, pe, mp){
   let html = `<div class="card-head"><h3><i class="ti ti-list-check"></i> Tus pendientes</h3></div>`;
   let n = 0;
@@ -889,8 +893,10 @@ function renderPendientes(objs, pe, mp){
   });
   objs.forEach(o=>{
     n++;
-    const hecho = String(o.cumplido)==='true' || o.cumplido===true;
-    html += `<label class="pend obj ${hecho?'done':''}"><input type="checkbox" data-obj="${escapeHtml(o.id)}" ${hecho?'checked':''}><span class="ico-circle tone-green"><i class="ti ti-target"></i></span><div><div class="pend-t">${escapeHtml(o.texto)}</div><div class="pend-s">Objetivo de la semana</div></div></label>`;
+    const hecho = objHecho(o);
+    const lunesHoy = lunesDe(hoy);
+    const cuando = o.semana===lunesHoy ? 'Objetivo de la semana' : (o.semana>lunesHoy ? 'Objetivo para la semana del '+fechaCorta(o.semana) : 'Pendiente de la semana del '+fechaCorta(o.semana));
+    html += `<label class="pend obj ${hecho?'done':''}"><input type="checkbox" data-obj="${escapeHtml(o.id)}" ${hecho?'checked':''}><span class="ico-circle tone-green"><i class="ti ti-target"></i></span><div><div class="pend-t">${escapeHtml(o.texto)}</div><div class="pend-s">${escapeHtml(cuando)}</div></div></label>`;
   });
   if(pe){
     const lim = addDays(hoy,7);
