@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" type="image/png" href="favicon.png">
 <title>Oposición PT2028 — Profesor</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -29,8 +30,10 @@
   /* ---------- Layout (mismo estilo que la página del alumno) ---------- */
   .shell{display:grid;grid-template-columns:248px minmax(0,1fr);min-height:100vh;}
   .sidebar{background:linear-gradient(180deg,var(--forest) 0%,var(--forest-2) 100%);color:#E9F1EB;display:flex;flex-direction:column;padding:22px 14px 18px;position:sticky;top:0;height:100vh;overflow-y:auto;z-index:40;}
-  .brand{display:flex;align-items:center;gap:10px;padding:2px 8px 22px;}
+  .brand{display:flex;flex-direction:column;align-items:center;text-align:center;gap:10px;padding:2px 8px 22px;}
   .brand svg{width:34px;height:34px;flex-shrink:0;}
+  .brand-logo{width:150px;height:118px;background:#fff;border-radius:14px;padding:8px 10px;flex-shrink:0;display:flex;align-items:center;justify-content:center;}
+  .brand-logo img{max-width:100%;max-height:100%;display:block;}
   .brand-name{font-family:var(--serif);font-weight:600;font-size:21px;line-height:1.1;color:#fff;}
   .brand-sub{font-size:10.5px;color:#B9CDBF;margin-top:4px;letter-spacing:.02em;}
   .tabs{display:flex;flex-direction:column;gap:3px;}
@@ -203,7 +206,8 @@
 <body>
 
 <div class="lock-screen" id="lockScreen">
-  <h2 style="font-family:Georgia,serif;">Oposición PT2028 — Profesor</h2>
+  <img src="logo.png" alt="PT Madrid" style="width:140px;height:auto;display:block;margin:0 auto 10px;">
+  <h2 style="margin:0 0 6px;">Panel del profesor</h2>
   <p class="hint" style="margin-top:0;">Introduce tu clave de acceso.</p>
   <input type="password" id="lockInput" placeholder="Clave">
   <button class="btn btn-primary" id="lockBtn">Entrar</button>
@@ -212,7 +216,7 @@
 
 <div class="shell" id="app" style="display:none;">
   <aside class="sidebar" id="sidebar">
-    <div class="brand"><svg viewBox="0 0 48 48" fill="none" aria-hidden="true"><path d="M24 44V22" stroke="#DCE8DF" stroke-width="2.4" stroke-linecap="round"/><path d="M24 30c-8 0-13-5-13-14 8 0 13 5 13 14Z" fill="#B5CBB3"/><path d="M24 24c0-8 5-13 13-13 0 8-5 13-13 13Z" fill="#DCE8DF"/></svg><div><div class="brand-name">PT Madrid</div><div class="brand-sub">Panel de la preparadora</div></div></div>
+    <div class="brand"><span class="brand-logo"><img src="logo.png" alt="PT Madrid"></span><div><div class="brand-name">PT Madrid</div><div class="brand-sub">Panel de la preparadora</div></div></div>
     <nav class="tabs">
           <div class="tab active" data-tab="panel" data-titulo="Panel" data-sub="Resumen de la semana, objetivos y análisis DAFO."><i class="ti ti-compass" aria-hidden="true"></i> Panel</div>
       <div class="tab" data-tab="alumnos" data-titulo="Alumnos" data-sub="Añade alumnos y consulta la ficha de cada uno."><i class="ti ti-users" aria-hidden="true"></i> Alumnos</div>

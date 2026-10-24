@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" type="image/png" href="favicon.png">
 <title>PT Madrid — Mi preparación</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -34,8 +35,10 @@
   /* ---------- Layout ---------- */
   .app{display:grid;grid-template-columns:248px minmax(0,1fr);min-height:100vh;}
   .sidebar{background:linear-gradient(180deg,var(--forest) 0%,var(--forest-2) 100%);color:#E9F1EB;display:flex;flex-direction:column;padding:22px 14px 18px;position:sticky;top:0;height:100vh;overflow-y:auto;z-index:40;}
-  .brand{display:flex;align-items:center;gap:10px;padding:2px 8px 22px;}
+  .brand{display:flex;flex-direction:column;align-items:center;text-align:center;gap:10px;padding:2px 8px 22px;}
   .brand svg{width:34px;height:34px;flex-shrink:0;}
+  .brand-logo{width:150px;height:118px;background:#fff;border-radius:14px;padding:8px 10px;flex-shrink:0;display:flex;align-items:center;justify-content:center;}
+  .brand-logo img{max-width:100%;max-height:100%;display:block;}
   .brand-name{font-family:var(--serif);font-weight:600;font-size:22px;line-height:1;color:#fff;letter-spacing:.2px;}
   .brand-sub{font-size:10.5px;color:#B9CDBF;margin-top:4px;letter-spacing:.02em;}
   .nav{display:flex;flex-direction:column;gap:3px;}
@@ -127,8 +130,8 @@
   /* ---------- Login ---------- */
   .login-wrap{min-height:100vh;display:none;align-items:center;justify-content:center;padding:24px;background:linear-gradient(160deg,#DCE8DD 0%,var(--bg) 60%);}
   .login-card{width:100%;max-width:410px;}
-  .login-brand{display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:6px;}
-  .login-brand svg{width:40px;height:40px;}
+  .login-brand{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;margin-bottom:6px;}
+  .login-brand img{width:150px;height:auto;display:block;}
   .login-brand span{font-family:var(--serif);font-size:30px;font-weight:600;color:var(--forest);}
   .login-sub{text-align:center;color:var(--gray);font-size:13px;margin-bottom:18px;}
 
@@ -401,8 +404,7 @@
 <!-- ===== LOGIN ===== -->
 <div id="loginScreen" class="login-wrap">
   <div class="card login-card">
-    <div class="login-brand">
-      <svg viewBox="0 0 48 48" fill="none" aria-hidden="true"><path d="M24 44V22" stroke="#1F4D3A" stroke-width="2.4" stroke-linecap="round"/><path d="M24 30c-8 0-13-5-13-14 8 0 13 5 13 14Z" fill="#2B6049"/><path d="M24 24c0-8 5-13 13-13 0 8-5 13-13 13Z" fill="#7E9D7F"/></svg>
+    <div class="login-brand"><img src="logo.png" alt="PT Madrid">
       <span>PT Madrid</span>
     </div>
     <div class="login-sub">Tu camino a la plaza</div>
@@ -422,8 +424,7 @@
 <!-- ===== APP ===== -->
 <div id="app" class="app" style="display:none;">
   <aside class="sidebar" id="sidebar">
-    <div class="brand">
-      <svg viewBox="0 0 48 48" fill="none" aria-hidden="true"><path d="M24 44V22" stroke="#DCE8DF" stroke-width="2.4" stroke-linecap="round"/><path d="M24 30c-8 0-13-5-13-14 8 0 13 5 13 14Z" fill="#B5CBB3"/><path d="M24 24c0-8 5-13 13-13 0 8-5 13-13 13Z" fill="#DCE8DF"/></svg>
+    <div class="brand"><span class="brand-logo"><img src="logo.png" alt="PT Madrid"></span>
       <div><div class="brand-name">PT Madrid</div><div class="brand-sub">Tu camino a la plaza</div></div>
     </div>
     <nav class="nav">
