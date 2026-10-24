@@ -25,6 +25,8 @@ const HEADERS = {
   CG: ['id', 'numero', 'titulo', 'archivoUrl'],
   CGProgreso: ['alumnoId', 'temaId', 'estado', 'pct'],
   Estudio: ['id', 'alumnoId', 'fecha', 'horas', 'bloque', 'notas'],
+  // Planificador personal del alumno (privado: solo se envía a su propia cuenta, nunca al panel del profesor). tipo: 'tarea' | 'nota'. dia: 0=lunes … 6=domingo, 7=cualquier día
+  Planificador: ['id', 'alumnoId', 'semana', 'dia', 'tipo', 'texto', 'hecho'],
   Objetivos: ['id', 'alumnoId', 'semana', 'texto', 'cumplido'],
   Dafo: ['alumnoId', 'fortalezas', 'debilidades', 'oportunidades', 'amenazas'],
   Archivos: ['id', 'categoria', 'nombre', 'titulo', 'url', 'fecha'],
@@ -55,7 +57,7 @@ function getSheet_(name) {
 
 function ensureHeaders_() {
   const cache = CacheService.getScriptCache();
-  if (cache.get('headers_ok_v3')) return;
+  if (cache.get('headers_ok_v4')) return;
   Object.keys(HEADERS).forEach(name => {
     const sh = getSheet_(name);
     if (sh.getLastRow() === 0) {
@@ -67,10 +69,10 @@ function ensureHeaders_() {
       }
     }
   });
-  try { cache.put('headers_ok_v3', '1', 21600); } catch (err) { /* no pasa nada si falla */ }
+  try { cache.put('headers_ok_v4', '1', 21600); } catch (err) { /* no pasa nada si falla */ }
 }
 
-const DATE_FIELDS = { Calendario: ['fecha'], Practicos: ['fecha', 'fechaFeedback'], Archivos: ['fecha'], Estudio: ['fecha'], Objetivos: ['semana'], Recursos: ['fecha'], Cuadernos: ['fecha'], Examenes: ['fecha'], Notas: ['fechaRegistro', 'fechaActualizacion'] };
+const DATE_FIELDS = { Calendario: ['fecha'], Practicos: ['fecha', 'fechaFeedback'], Archivos: ['fecha'], Estudio: ['fecha'], Planificador: ['semana'], Objetivos: ['semana'], Recursos: ['fecha'], Cuadernos: ['fecha'], Examenes: ['fecha'], Notas: ['fechaRegistro', 'fechaActualizacion'] };
 const TIME_FIELDS = { Calendario: ['hora'] };
 
 function normalizeRow_(sheetName, obj) {
@@ -104,6 +106,9 @@ function appendObject_(name, obj) {
   const row = headers.map(h => obj[h] !== undefined ? obj[h] : '');
   sh.appendRow(row);
 }
+
+// Evita que un texto escrito por un alumno se interprete como fórmula de la hoja (empieza por = + - @)
+function safeText_(t) { t = String(t); return /^[=+\-@]/.test(t) ? "'" + t : t; }
 
 function updateObjectById_(name, idField, id, updates) {
   const sh = getSheet_(name);
@@ -554,7 +559,9 @@ function buildAlumnoScoped_(id) {
     ajustes: full.ajustes,
     cuadernos: full.cuadernos,
     examenes: full.examenes,
-    notas: full.notas.filter(function(n){ return String(n.alumnoId) === String(id); })
+    notas: full.notas.filter(function(n){ return String(n.alumnoId) === String(id); }),
+    // Privado: solo las filas de este alumno; no forma parte de getAll (panel del profesor)
+    planificador: sheetToObjects_('Planificador').filter(function(x){ return String(x.alumnoId) === String(id); })
   };
 }
 
@@ -642,6 +649,55 @@ function doPost(e) {
       case 'setProgreso':
         upsertProgreso_(p.tipo === 'cg' ? 'CGProgreso' : 'TemasProgreso', p.alumnoId, p.temaId, p.estado, p.pct);
         break;
+      case 'addPlan': {
+        var texto = String(p.texto || '').trim();
+        if (!p.alumnoId || !p.id) throw new Error('Datos incompletos.');
+        if (!texto) throw new Error('Escribe la tarea.');
+        if (texto.length > 500) throw new Error('La tarea es demasiado larga (máximo 500 caracteres).');
+        var dia = Number(p.dia);
+        if (!(dia >= 0 && dia <= 7)) throw new Error('Día no válido.');
+        appendObject_('Planificador', { id: p.id, alumnoId: p.alumnoId, semana: p.semana, dia: dia, tipo: 'tarea', texto: safeText_(texto), hecho: false });
+        break;
+      }
+      case 'updatePlan': {
+        var fila = sheetToObjects_('Planificador').find(function (x) { return String(x.id) === String(p.id); });
+        if (!fila || String(fila.alumnoId) !== String(p.alumnoId)) throw new Error('No se encuentra la tarea.');
+        var cambios = {};
+        if (p.hecho !== undefined) cambios.hecho = (p.hecho === true || p.hecho === 'true');
+        if (p.texto !== undefined) {
+          var t = String(p.texto).trim();
+          if (!t) throw new Error('La tarea no puede quedar vacía.');
+          if (t.length > 500) throw new Error('La tarea es demasiado larga (máximo 500 caracteres).');
+          cambios.texto = safeText_(t);
+        }
+        if (p.dia !== undefined) {
+          var d2 = Number(p.dia);
+          if (!(d2 >= 0 && d2 <= 7)) throw new Error('Día no válido.');
+          cambios.dia = d2;
+        }
+        updateObjectById_('Planificador', 'id', p.id, cambios);
+        break;
+      }
+      case 'deletePlan': {
+        var f2 = sheetToObjects_('Planificador').find(function (x) { return String(x.id) === String(p.id); });
+        if (f2 && String(f2.alumnoId) === String(p.alumnoId)) deleteObjectById_('Planificador', 'id', p.id);
+        break;
+      }
+      case 'saveNotaSemana': {
+        var txtN = String(p.texto || '');
+        if (!p.alumnoId || !p.semana) throw new Error('Datos incompletos.');
+        if (txtN.length > 5000) throw new Error('La nota es demasiado larga (máximo 5000 caracteres).');
+        var lockN = LockService.getScriptLock();
+        lockN.waitLock(20000);
+        try {
+          var ex = sheetToObjects_('Planificador').find(function (x) {
+            return x.tipo === 'nota' && String(x.alumnoId) === String(p.alumnoId) && String(x.semana) === String(p.semana);
+          });
+          if (ex) updateObjectById_('Planificador', 'id', ex.id, { texto: safeText_(txtN) });
+          else appendObject_('Planificador', { id: p.id, alumnoId: p.alumnoId, semana: p.semana, dia: '', tipo: 'nota', texto: safeText_(txtN), hecho: false });
+        } finally { lockN.releaseLock(); }
+        break;
+      }
       case 'addEstudio':
         appendObject_('Estudio', p);
         break;

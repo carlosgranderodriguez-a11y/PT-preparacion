@@ -32,6 +32,36 @@
   button{font-family:inherit;}
   .hidden{display:none !important;}
 
+  /* ---------- Mi planificador ---------- */
+  .plan-bar{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:16px;}
+  .plan-nav{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+  .plan-nav .btn{padding:8px 12px;}
+  .plan-titulo{font-family:var(--serif);font-weight:600;font-size:19px;min-width:200px;text-align:center;}
+  .plan-prog{font-size:13px;color:var(--ink-soft);font-weight:600;display:flex;align-items:center;gap:10px;}
+  .plan-prog .meter-bg{width:140px;flex:none;}
+  .plan-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(235px,1fr));gap:14px;margin-bottom:16px;}
+  .plan-dia{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:14px 14px 12px;box-shadow:var(--shadow);display:flex;flex-direction:column;}
+  .plan-dia.hoy{border-color:var(--forest);box-shadow:0 0 0 2px rgba(31,77,58,.12),var(--shadow);}
+  .plan-dia.cualquiera{background:var(--card-alt);}
+  .plan-dh{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:8px;}
+  .plan-dn{font-family:var(--serif);font-weight:600;font-size:17px;}
+  .plan-df{font-size:12px;color:var(--gray);}
+  .plan-t{display:flex;align-items:flex-start;gap:9px;padding:7px 0;border-top:1px solid var(--line);font-size:14px;}
+  .plan-t:first-of-type{border-top:none;}
+  .plan-t input[type=checkbox]{margin-top:3px;width:17px;height:17px;accent-color:var(--forest);flex-shrink:0;cursor:pointer;}
+  .plan-tx{flex:1;min-width:0;word-break:break-word;cursor:text;}
+  .plan-t.done .plan-tx{text-decoration:line-through;color:var(--gray);}
+  .plan-tx-edit{flex:1;min-width:0;font:inherit;padding:4px 8px;border:1.5px solid var(--forest);border-radius:7px;}
+  .plan-x{background:none;border:none;color:var(--gray);cursor:pointer;font-size:16px;line-height:1;padding:2px 4px;border-radius:6px;}
+  .plan-x:hover{color:var(--red);background:var(--red-soft);}
+  .plan-add{display:flex;gap:6px;margin-top:auto;padding-top:10px;}
+  .plan-add input{flex:1;min-width:0;font:inherit;font-size:13.5px;padding:8px 10px;border:1.5px solid var(--line);border-radius:9px;background:#fff;}
+  .plan-add input:focus{outline:none;border-color:var(--forest);}
+  .plan-add button{border:none;background:var(--forest);color:#fff;border-radius:9px;width:36px;cursor:pointer;font-size:18px;}
+  .plan-add button:hover{background:var(--forest-3);}
+  .plan-vacio{font-size:12.5px;color:var(--gray);font-style:italic;padding:2px 0 6px;}
+  .plan-notas textarea{width:100%;min-height:130px;resize:vertical;font:inherit;font-size:14.5px;padding:12px 14px;border:1.5px solid var(--line);border-radius:var(--radius-sm);background:var(--card-alt);color:var(--ink);}
+  .plan-notas textarea:focus{outline:none;border-color:var(--forest);background:#fff;}
   /* ---------- Layout ---------- */
   .app{display:grid;grid-template-columns:248px minmax(0,1fr);min-height:100vh;}
   .sidebar{background:linear-gradient(180deg,var(--forest) 0%,var(--forest-2) 100%);color:#E9F1EB;display:flex;flex-direction:column;padding:22px 14px 18px;position:sticky;top:0;height:100vh;overflow-y:auto;z-index:40;}
@@ -434,6 +464,7 @@
       <button class="nav-item" data-tab="programacion"><i class="ti ti-presentation" aria-hidden="true"></i> Programación y defensa</button>
       <button class="nav-item" data-tab="cultura"><i class="ti ti-school" aria-hidden="true"></i> Cultura general</button>
       <button class="nav-item" data-tab="recursos"><i class="ti ti-folder" aria-hidden="true"></i> Recursos</button>
+      <button class="nav-item" data-tab="planificador"><i class="ti ti-pencil-check" aria-hidden="true"></i> Mi planificador</button>
       <button class="nav-item" data-tab="progreso"><i class="ti ti-chart-bar" aria-hidden="true"></i> Mi progreso</button>
     </nav>
     <div class="side-foot">
@@ -559,6 +590,23 @@
         <div class="grid-res" id="gridRecursos"></div>
       </section>
 
+      <!-- MI PLANIFICADOR (privado de cada alumno) -->
+      <section class="panel" id="panel-planificador">
+        <div class="page-head"><div><h1>Mi planificador</h1><p class="lead">Organiza tu estudio a tu manera. Lo que escribes aquí es solo tuyo.</p></div></div>
+        <div class="plan-bar">
+          <div class="plan-nav"><button class="btn btn-ghost" id="planPrev" aria-label="Semana anterior">‹</button>
+            <div class="plan-titulo" id="planTitulo"></div>
+            <button class="btn btn-ghost" id="planNext" aria-label="Semana siguiente">›</button>
+            <button class="btn btn-ghost" id="planHoy">Hoy</button></div>
+          <div class="plan-prog" id="planProg"></div>
+        </div>
+        <div class="plan-grid" id="planGrid"></div>
+        <div class="card plan-notas">
+          <div class="card-head"><h3><i class="ti ti-notes"></i> Notas de la semana</h3><span class="status" id="planNotaStatus" style="margin:0;"></span></div>
+          <textarea id="planNota" maxlength="5000" placeholder="Escribe aquí lo que quieras: ideas, dudas, qué repasar, cómo te ha ido la semana…"></textarea>
+        </div>
+      </section>
+
       <!-- MI PROGRESO -->
       <section class="panel" id="panel-progreso">
         <div class="page-head"><div><h1>Así avanza tu preparación</h1><p class="lead">Un resumen de tu trabajo, para que sigas viendo tu evolución.</p></div></div>
@@ -599,7 +647,7 @@ const BLOQUES_ESTUDIO = ['Temas','Cultura General','Prácticos','Programación y
 const MESES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
 const MESES_C = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
 const FRASES = ['Disciplina hoy, la plaza mañana','Tu esfuerzo de hoy construye tu plaza','Cada tema también suma','Paso a paso, también se avanza mucho'];
-const TABS = ['semana','temario','practicos','programacion','cultura','recursos','progreso'];
+const TABS = ['semana','temario','practicos','programacion','cultura','recursos','planificador','progreso'];
 
 let data = { alumnos:[], calendario:[], practicos:[], temas:[], temasProgreso:[], cg:[], cgProgreso:[], ajustes:[], cuadernos:[], examenes:[], notas:[] };
 let alumnoId = null, alumno = null;
@@ -658,7 +706,8 @@ function normHora(v){
   return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
 }
 function normalizarDatos(){
-  ['calendario','practicos','temas','temasProgreso','cg','cgProgreso','archivos','estudio','recursos','objetivos','ajustes','cuadernos','examenes','notas'].forEach(k=>{ if(!data[k]) data[k]=[]; });
+  ['calendario','practicos','temas','temasProgreso','cg','cgProgreso','archivos','estudio','recursos','objetivos','ajustes','cuadernos','examenes','notas','planificador'].forEach(k=>{ if(!data[k]) data[k]=[]; });
+  data.planificador.forEach(x=>{ x.semana = normFecha(x.semana); x.dia = x.dia===''||x.dia==null ? null : Number(x.dia); x.hecho = (x.hecho===true || String(x.hecho)==='true'); x.texto = String(x.texto==null?'':x.texto); });
   data.calendario.forEach(ev=>{ ev.fecha = normFecha(ev.fecha); ev.hora = normHora(ev.hora); });
   data.practicos.forEach(p=>{ p.fecha = normFecha(p.fecha); p.fechaFeedback = normFecha(p.fechaFeedback); });
   data.archivos.forEach(a=>{ a.fecha = normFecha(a.fecha); });
@@ -847,7 +896,7 @@ function mostrarContenido(){
 }
 function renderAll(){
   renderSemana(); renderCatalog('temas'); renderCultura(); renderPracticos();
-  renderProgramacion(); renderRecursos(); renderProgreso(); renderBell();
+  renderProgramacion(); renderRecursos(); renderPlanificador(); renderProgreso(); renderBell();
 }
 
 /* ---------- MI SEMANA ---------- */
@@ -1662,6 +1711,125 @@ function renderEvolucion(){
     </tbody></table></div>
   </div>`;
 }
+
+
+/* ---------- MI PLANIFICADOR (privado; se guarda en la cuenta del alumno) ---------- */
+let planOffset = 0;
+const PLAN_DIAS = ['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'];
+function planLunes(){ return addDays(lunesDe(todayISO()), planOffset*7); }
+function planItems(lunes, dia){ return (data.planificador||[]).filter(x=>x.tipo==='tarea' && x.semana===lunes && x.dia===dia); }
+function planNotaReg(lunes){ return (data.planificador||[]).find(x=>x.tipo==='nota' && x.semana===lunes) || null; }
+function planError(e){ toast('No se ha podido guardar. Revisa tu conexión e inténtalo de nuevo.', true); console.warn(e); }
+
+function renderPlanificador(){
+  const lunes = planLunes();
+  const f1 = lunes.split('-').map(Number), f2 = addDays(lunes,6).split('-').map(Number);
+  document.getElementById('planTitulo').textContent = f1[2]+(f1[1]!==f2[1]?(' '+MESES_C[f1[1]-1]):'')+' – '+f2[2]+' '+MESES_C[f2[1]-1]+' '+f2[0];
+  document.getElementById('planHoy').style.visibility = planOffset===0 ? 'hidden' : 'visible';
+  renderPlanDias();
+  const reg = planNotaReg(lunes);
+  const ta = document.getElementById('planNota');
+  ta.value = reg ? reg.texto : '';
+  document.getElementById('planNotaStatus').textContent = '';
+}
+function renderPlanDias(){
+  const lunes = planLunes(), hoy = todayISO();
+  const grid = document.getElementById('planGrid');
+  // conservar lo que se esté escribiendo en los campos de "añadir"
+  const escritos = {}; grid.querySelectorAll('[data-plan-add]').forEach(i=>{ escritos[i.dataset.planAdd] = i.value; });
+  const enfocado = document.activeElement && document.activeElement.dataset ? document.activeElement.dataset.planAdd : undefined;
+  let total = 0, hechas = 0, html = '';
+  for(let d=0; d<=7; d++){
+    const iso = d<7 ? addDays(lunes,d) : null;
+    const items = planItems(lunes, d);
+    total += items.length; hechas += items.filter(x=>x.hecho).length;
+    const cab = d<7 ? `<div class="plan-dn">${PLAN_DIAS[d]}</div><div class="plan-df">${parseInt(iso.slice(8),10)} ${MESES_C[parseInt(iso.slice(5,7),10)-1]}</div>` : `<div class="plan-dn">Cualquier día</div><div class="plan-df">sin día fijo</div>`;
+    const lista = items.length ? items.map(x=>`<div class="plan-t ${x.hecho?'done':''}" data-pid="${escapeHtml(x.id)}">
+        <input type="checkbox" data-plan-chk="${escapeHtml(x.id)}" ${x.hecho?'checked':''} aria-label="Marcar como hecha">
+        <span class="plan-tx" data-plan-edit="${escapeHtml(x.id)}" title="Toca para editar">${escapeHtml(x.texto)}</span>
+        <button class="plan-x" data-plan-del="${escapeHtml(x.id)}" aria-label="Eliminar tarea">×</button></div>`).join('') : '<div class="plan-vacio">Sin tareas</div>';
+    html += `<div class="plan-dia ${iso===hoy?'hoy':''} ${d===7?'cualquiera':''}"><div class="plan-dh">${cab}</div>${lista}
+      <div class="plan-add"><input type="text" maxlength="500" data-plan-add="${d}" placeholder="Añadir tarea…" value="${escapeHtml(escritos[d]||'')}"><button data-plan-addbtn="${d}" aria-label="Añadir tarea">+</button></div></div>`;
+  }
+  grid.innerHTML = html;
+  if(enfocado!==undefined){ const i = grid.querySelector('[data-plan-add="'+enfocado+'"]'); if(i){ i.focus(); const l=i.value.length; i.setSelectionRange(l,l); } }
+  const pct = total ? Math.round(hechas/total*100) : 0;
+  document.getElementById('planProg').innerHTML = total ? `<span>${hechas} de ${total} tareas hechas</span><div class="meter-bg"><div class="meter-fill" style="width:${pct}%"></div></div>` : '<span>Aún no has añadido tareas esta semana</span>';
+}
+async function planAdd(dia){
+  const input = document.querySelector('[data-plan-add="'+dia+'"]');
+  const texto = input ? input.value.trim() : '';
+  if(!texto) return;
+  const lunes = planLunes();
+  const item = { id: uid('pl'), alumnoId, semana: lunes, dia, tipo:'tarea', texto, hecho:false };
+  data.planificador.push(item);
+  input.value = '';
+  renderPlanDias();
+  try{ await apiPost('addPlan', { id:item.id, alumnoId, semana:lunes, dia, texto }); }
+  catch(e){ data.planificador = data.planificador.filter(x=>x.id!==item.id); renderPlanDias(); planError(e); }
+}
+async function planToggle(id, hecho){
+  const it = data.planificador.find(x=>x.id===id); if(!it) return;
+  it.hecho = hecho; renderPlanDias();
+  try{ await apiPost('updatePlan', { id, alumnoId, hecho }); }
+  catch(e){ it.hecho = !hecho; renderPlanDias(); planError(e); }
+}
+async function planDelete(id){
+  const it = data.planificador.find(x=>x.id===id); if(!it) return;
+  data.planificador = data.planificador.filter(x=>x.id!==id); renderPlanDias();
+  try{ await apiPost('deletePlan', { id, alumnoId }); }
+  catch(e){ data.planificador.push(it); renderPlanDias(); planError(e); }
+}
+function planEditar(id, span){
+  const it = data.planificador.find(x=>x.id===id); if(!it) return;
+  const inp = document.createElement('input'); inp.type='text'; inp.maxLength=500; inp.value = it.texto; inp.className='plan-tx-edit';
+  span.replaceWith(inp); inp.focus(); inp.select();
+  let hecho = false;
+  const fin = async (guardar)=>{
+    if(hecho) return; hecho = true;
+    const nuevo = inp.value.trim();
+    if(!guardar || !nuevo || nuevo===it.texto){ renderPlanDias(); return; }
+    const antes = it.texto; it.texto = nuevo; renderPlanDias();
+    try{ await apiPost('updatePlan', { id, alumnoId, texto:nuevo }); }
+    catch(e){ it.texto = antes; renderPlanDias(); planError(e); }
+  };
+  inp.addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); fin(true); } else if(e.key==='Escape'){ fin(false); } });
+  inp.addEventListener('blur', ()=>fin(true));
+}
+const planGrid = document.getElementById('planGrid');
+planGrid.addEventListener('click', e=>{
+  const add = e.target.closest('[data-plan-addbtn]'); if(add){ planAdd(parseInt(add.dataset.planAddbtn,10)); return; }
+  const del = e.target.closest('[data-plan-del]'); if(del){ planDelete(del.dataset.planDel); return; }
+  const ed = e.target.closest('[data-plan-edit]'); if(ed){ planEditar(ed.dataset.planEdit, ed); }
+});
+planGrid.addEventListener('change', e=>{ const c = e.target.closest('[data-plan-chk]'); if(c) planToggle(c.dataset.planChk, c.checked); });
+planGrid.addEventListener('keydown', e=>{ if(e.key==='Enter' && e.target.matches('[data-plan-add]')){ e.preventDefault(); planAdd(parseInt(e.target.dataset.planAdd,10)); } });
+document.getElementById('planPrev').addEventListener('click', ()=>{ planFlush(); planOffset--; renderPlanificador(); });
+document.getElementById('planNext').addEventListener('click', ()=>{ planFlush(); planOffset++; renderPlanificador(); });
+document.getElementById('planHoy').addEventListener('click', ()=>{ planFlush(); planOffset=0; renderPlanificador(); });
+
+/* notas libres de la semana: se guardan solas al dejar de escribir */
+let planNotaTimer = null, planNotaSemana = null;
+function planGuardarNota(){
+  clearTimeout(planNotaTimer); planNotaTimer = null;
+  const lunes = planNotaSemana; if(!lunes) return Promise.resolve();
+  const texto = document.getElementById('planNota').value;
+  let reg = planNotaReg(lunes);
+  if(!reg){ reg = { id: uid('pn'), alumnoId, semana: lunes, dia:null, tipo:'nota', texto:'', hecho:false }; data.planificador.push(reg); }
+  reg.texto = texto;
+  const st = document.getElementById('planNotaStatus'); st.textContent = 'Guardando…'; st.className = 'status';
+  return apiPost('saveNotaSemana', { id:reg.id, alumnoId, semana:lunes, texto })
+    .then(()=>{ st.textContent = 'Guardado'; st.className = 'status ok'; })
+    .catch(e=>{ st.textContent = 'No se ha podido guardar'; st.className = 'status err'; console.warn(e); });
+}
+function planFlush(){ if(planNotaTimer){ planGuardarNota(); } }
+document.getElementById('planNota').addEventListener('input', ()=>{
+  planNotaSemana = planLunes();
+  const st = document.getElementById('planNotaStatus'); st.textContent = 'Escribiendo…'; st.className = 'status';
+  clearTimeout(planNotaTimer); planNotaTimer = setTimeout(planGuardarNota, 900);
+});
+document.getElementById('planNota').addEventListener('blur', planFlush);
+window.addEventListener('pagehide', planFlush);
 
 
 init();
