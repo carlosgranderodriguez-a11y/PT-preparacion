@@ -6,40 +6,57 @@
 <title>Oposición PT2028 — Profesor</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,500;8..60,600;8..60,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.47.0/tabler-icons.min.css">
 <style>
   :root{
-    --bg:#F1F3F0; --card:#FFFFFF; --card-alt:#F6F8F5;
-    --ink:#16281F; --ink-soft:#48594E;
-    --accent:#2F7A63; --accent-dark:#1D5A45; --accent-soft:#E1EEE8;
-    --green:#227A4E; --green-soft:#DCF0E3;
-    --amber:#B5811C; --amber-soft:#F7ECD4;
-    --red:#B23A3A; --red-soft:#F3DCDC;
-    --blue:#3E8873; --blue-soft:#DFEEEA;
-    --line:#DEE2DC; --gray:#788077;
-    --radius:14px; --radius-sm:9px;
-    --shadow:0 1px 2px rgba(22,40,31,.05), 0 8px 24px rgba(22,40,31,.06);
+    --bg:#F6F5EF; --card:#FFFFFF; --card-alt:#F7F8F4;
+    --ink:#17281F; --ink-soft:#4F6157; --gray:#7B877F; --line:#E3E6DE;
+    --forest:#1F4D3A; --forest-2:#173D2D; --forest-3:#2B6049;
+    --sage:#B5CBB3; --sage-soft:#E8F0E7;
+    --accent:#1F4D3A; --accent-dark:#173D2D; --accent-soft:#E8F0E7;
+    --green:#2D7A4F; --green-soft:#DDF0E2;
+    --amber:#A8741A; --amber-soft:#FAEFD3;
+    --red:#B04545; --red-soft:#F8E0DD;
+    --blue:#3C7D8C; --blue-soft:#DEEDF0;
+    --radius:14px; --radius-sm:10px;
+    --shadow:0 1px 2px rgba(23,40,31,.04), 0 6px 20px rgba(23,40,31,.05);
+    --serif:'Source Serif 4',Georgia,'Times New Roman',serif;
   }
   *{box-sizing:border-box;} html,body{overflow-x:hidden;max-width:100%;}
-  body{margin:0;background:var(--bg);color:var(--ink);font-family:'Inter',-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;font-size:15px;line-height:1.55;}
-  .wrap{max-width:1040px;margin:0 auto;padding:26px 18px 60px;}
-  header{display:flex;align-items:center;justify-content:space-between;padding-bottom:16px;margin-bottom:20px;flex-wrap:wrap;gap:8px;position:relative;}
-  header::after{content:'';position:absolute;left:0;right:0;bottom:0;height:4px;border-radius:4px;background:linear-gradient(90deg,var(--accent),var(--blue) 60%,var(--green));}
-  header h1{font-family:'Poppins',sans-serif;font-weight:800;font-size:25px;margin:0;letter-spacing:-0.01em;}
-  header .sub{font-size:12.5px;color:var(--gray);font-weight:600;}
-
-  .tabs{display:flex;gap:6px;margin-bottom:20px;flex-wrap:wrap;background:var(--card);padding:6px;border-radius:999px;box-shadow:var(--shadow);width:fit-content;max-width:100%;}
-  .tab{display:inline-flex;align-items:center;gap:6px;padding:9px 16px;cursor:pointer;font-size:13px;font-weight:700;color:var(--ink-soft);border-radius:999px;white-space:nowrap;transition:background .15s,color .15s,border-color .15s;border:1px solid transparent;}
-  .tab:not(.active){border-color:var(--line);}
-  .tab i{font-size:15px;}
-  .tab:hover{background:var(--card-alt);}
-  .tab.active{color:#fff;background:var(--ink);border-color:var(--ink);}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:'Inter',-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;font-size:15px;line-height:1.5;}
+  h1,h2,h3{font-family:var(--serif);}
+  /* ---------- Layout (mismo estilo que la página del alumno) ---------- */
+  .shell{display:grid;grid-template-columns:248px minmax(0,1fr);min-height:100vh;}
+  .sidebar{background:linear-gradient(180deg,var(--forest) 0%,var(--forest-2) 100%);color:#E9F1EB;display:flex;flex-direction:column;padding:22px 14px 18px;position:sticky;top:0;height:100vh;overflow-y:auto;z-index:40;}
+  .brand{display:flex;align-items:center;gap:10px;padding:2px 8px 22px;}
+  .brand svg{width:34px;height:34px;flex-shrink:0;}
+  .brand-name{font-family:var(--serif);font-weight:600;font-size:21px;line-height:1.1;color:#fff;}
+  .brand-sub{font-size:10.5px;color:#B9CDBF;margin-top:4px;letter-spacing:.02em;}
+  .tabs{display:flex;flex-direction:column;gap:3px;}
+  .tab{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:10px;cursor:pointer;font-size:14.5px;font-weight:500;color:#DCE8DF;transition:background .15s;user-select:none;}
+  .tab i{font-size:19px;opacity:.9;}
+  .tab:hover{background:rgba(255,255,255,.08);}
+  .tab.active{background:var(--sage);color:var(--forest-2);font-weight:600;}
+  .side-foot{margin-top:auto;padding:22px 10px 0;font-family:var(--serif);font-style:italic;font-size:14px;color:#B9CDBF;opacity:.9;}
+  .scrim{display:none;}
+  .main{min-width:0;display:flex;flex-direction:column;}
+  .topbar{display:flex;align-items:center;gap:14px;padding:14px 32px;background:rgba(246,245,239,.92);backdrop-filter:blur(6px);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:30;}
+  .burger{display:none;background:none;border:1px solid var(--line);border-radius:10px;width:38px;height:38px;font-size:20px;cursor:pointer;color:var(--ink);}
+  .topbar .sub{font-size:12.5px;color:var(--gray);font-weight:500;}
+  .topbar .spacer{flex:1;}
+  .topbar .who{display:flex;align-items:center;gap:8px;font-size:13.5px;font-weight:500;}
+  .avatar{width:32px;height:32px;border-radius:50%;background:var(--forest);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:14px;}
+  .content{padding:28px 32px 70px;max-width:1240px;width:100%;}
+  .page-head{margin-bottom:20px;}
+  .page-head h1{font-size:38px;line-height:1.1;font-weight:600;letter-spacing:-.01em;margin:0;}
+  .page-head .lead{font-family:var(--serif);color:var(--gray);font-size:18px;margin:6px 0 0;}
   .panel{display:none;} .panel.active{display:block;animation:fadein .25s ease;}
   @keyframes fadein{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:translateY(0);}}
 
-  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:20px 22px;margin-bottom:16px;box-shadow:var(--shadow);}
-  .card h3{font-family:'Poppins',sans-serif;font-weight:700;font-size:16.5px;margin:0 0 12px;color:var(--ink);}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px;margin-bottom:16px;box-shadow:var(--shadow);}
+  .card h3{font-family:var(--serif);font-weight:600;font-size:19px;margin:0 0 12px;color:var(--ink);display:flex;align-items:center;gap:9px;}
+  .card h3 i{font-size:20px;color:var(--ink-soft);}
   .row{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;margin-bottom:14px;}
   .field{flex:1;min-width:170px;display:flex;flex-direction:column;gap:5px;}
   label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-soft);}
@@ -48,29 +65,34 @@
   }
   input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent);}
   textarea{resize:vertical;min-height:90px;}
+  input[type=file]{font-family:inherit;font-size:13px;color:var(--ink-soft);width:100%;padding:6px;border:1.5px dashed var(--line);border-radius:var(--radius-sm);background:var(--card-alt);}
+  input[type=file]::file-selector-button{font-family:inherit;font-size:13px;font-weight:600;padding:7px 14px;margin-right:10px;border-radius:8px;border:1.5px solid var(--forest);background:#fff;color:var(--forest);cursor:pointer;}
+  input[type=file]::file-selector-button:hover{background:var(--sage-soft);}
   .hint{font-size:12.5px;color:var(--gray);margin-top:-8px;margin-bottom:12px;}
-  .btn{font-family:'Inter',sans-serif;font-size:13px;font-weight:700;padding:10px 18px;border-radius:999px;border:none;cursor:pointer;transition:transform .1s, box-shadow .15s;}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;font-family:'Inter',sans-serif;font-size:13.5px;font-weight:600;padding:10px 18px;border-radius:9px;border:1.5px solid transparent;cursor:pointer;transition:background .15s, transform .1s;}
   .btn:active{transform:scale(.97);}
-  .btn-primary{background:var(--accent);color:#fff;box-shadow:0 4px 12px rgba(255,107,74,.35);}
-  .btn-primary:hover{background:var(--accent-dark);}
-  .btn-secondary{background:var(--card-alt);color:var(--ink);border:1.5px solid var(--line);}
-  .btn-secondary:hover{border-color:var(--ink-soft);}
+  .btn-primary{background:var(--forest);color:#fff;}
+  .btn-primary:hover{background:var(--forest-3);}
+  .btn[disabled]{opacity:.55;cursor:default;}
+  .btn-secondary{background:#fff;color:var(--forest);border:1.5px solid var(--forest);}
+  .btn-secondary:hover{background:var(--sage-soft);}
   .btn-danger{background:var(--red-soft);color:var(--red);}
-  .btn-sm{padding:6px 12px;font-size:12px;}
+  .btn-danger:hover{background:#F2CFCB;}
+  .btn-sm{padding:6px 12px;font-size:12.5px;}
   .status{font-size:12.5px;color:var(--gray);margin-top:8px;display:block;font-weight:600;}
   .status.ok{color:var(--green);} .status.err{color:var(--red);}
   table{width:100%;border-collapse:collapse;font-size:13.5px;}
   th{text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--gray);border-bottom:2px solid var(--line);padding:8px;}
   td{padding:10px 8px;border-bottom:1px solid var(--line);vertical-align:top;}
   tr:last-child td{border-bottom:none;}
-  .pill{display:inline-block;font-size:11px;font-weight:700;padding:3px 11px;border-radius:999px;}
+  .pill{display:inline-block;font-size:11.5px;font-weight:600;padding:3px 11px;border-radius:999px;}
   .pill.pendiente{background:var(--amber-soft);color:var(--amber);}
   .pill.corregido{background:var(--green-soft);color:var(--green);}
   .icon-btn{background:none;border:none;cursor:pointer;color:var(--gray);font-size:12.5px;font-weight:600;}
   .icon-btn:hover{color:var(--accent);}
   .empty{color:var(--gray);font-style:italic;padding:24px 0;text-align:center;}
   .cal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
-  .cal-header h3{font-family:'Poppins',sans-serif;}
+  .cal-header h3{font-family:var(--serif);}
   .cal-nav button{background:var(--card-alt);border:1.5px solid var(--line);border-radius:999px;width:32px;height:32px;cursor:pointer;font-size:15px;color:var(--ink);}
   .cal-nav button:hover{border-color:var(--accent);color:var(--accent);}
   .cal-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;width:100%;}
@@ -91,8 +113,8 @@
   .evento{border-left:4px solid var(--blue);padding:10px 12px;margin-bottom:8px;background:var(--card-alt);border-radius:0 var(--radius-sm) var(--radius-sm) 0;font-size:13px;}
   .link-box{display:flex;gap:8px;align-items:center;background:var(--card-alt);border:1.5px solid var(--line);border-radius:var(--radius-sm);padding:8px 10px;font-size:12px;font-family:monospace;word-break:break-all;}
   .practico-photo{max-width:280px;border:1.5px solid var(--line);border-radius:var(--radius-sm);margin:8px 0;display:block;}
-  .lock-screen{max-width:340px;margin:100px auto;text-align:center;background:var(--card);padding:32px 28px;border-radius:var(--radius);box-shadow:var(--shadow);}
-  .lock-screen h2{font-family:'Poppins',sans-serif;}
+  .lock-screen{max-width:340px;margin:100px auto;border:1px solid var(--line);text-align:center;background:var(--card);padding:32px 28px;border-radius:var(--radius);box-shadow:var(--shadow);}
+  .lock-screen h2{font-family:var(--serif);}
   .lock-screen input{margin-bottom:10px;}
   .spinner{display:inline-block;width:13px;height:13px;border:2px solid var(--line);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px;}
   @keyframes spin{to{transform:rotate(360deg);}}
@@ -121,16 +143,25 @@
   .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;}
   .stat-card{border-radius:var(--radius-sm);padding:16px 14px;text-align:center;}
   .stat-card .emoji{font-size:26px;}
-  .stat-card .num{font-family:'Poppins',sans-serif;font-weight:800;font-size:30px;line-height:1.1;}
+  .stat-card .num{font-family:var(--serif);font-weight:800;font-size:30px;line-height:1.1;}
   .stat-card .lbl{font-size:12px;font-weight:700;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.04em;}
   .stat-tema{background:var(--blue-soft);} .stat-tema .num{color:var(--blue);}
   .stat-practico{background:var(--accent-soft);} .stat-practico .num{color:var(--accent-dark);}
   .stat-simulacro{background:var(--red-soft);} .stat-simulacro .num{color:var(--red);}
   .stat-repaso{background:var(--green-soft);} .stat-repaso .num{color:var(--green);}
+  @media (max-width:900px){
+    .shell{grid-template-columns:1fr;}
+    .sidebar{position:fixed;left:0;top:0;bottom:0;width:272px;transform:translateX(-100%);transition:transform .25s;box-shadow:0 0 40px rgba(0,0,0,.3);}
+    .sidebar.open{transform:none;}
+    .scrim.show{display:block;position:fixed;inset:0;background:rgba(23,40,31,.45);z-index:35;}
+    .burger{display:block;}
+    .topbar{padding:10px 16px;}
+    .topbar .sub{display:none;}
+    .content{padding:20px 16px 60px;}
+  }
   @media (max-width:640px){
     .dafo-grid{grid-template-columns:1fr;}
-    .tabs{border-radius:var(--radius);width:100%;}
-    header h1{font-size:21px;}
+    .page-head h1{font-size:30px;}
     .cal-day{min-height:60px;padding:3px 3px;font-size:10px;}
     .cal-ev{font-size:9px;padding:1px 3px;}
     .cal-dow{font-size:9px;}
@@ -138,8 +169,9 @@
 
   /* ---------- Cultura General (cuadernos, exámenes, resultados) ---------- */
   .subtabs{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap;}
-  .subtab{display:inline-flex;align-items:center;gap:6px;font-family:'Inter',sans-serif;font-size:13px;font-weight:700;padding:8px 16px;border-radius:999px;border:1.5px solid var(--line);background:var(--card);color:var(--ink-soft);cursor:pointer;}
-  .subtab.active{background:var(--accent-dark);border-color:var(--accent-dark);color:#fff;}
+  .subtab{display:inline-flex;align-items:center;gap:6px;font-family:'Inter',sans-serif;font-size:13.5px;font-weight:600;padding:8px 16px;border-radius:999px;border:1.5px solid var(--line);background:var(--card);color:var(--ink-soft);cursor:pointer;}
+  .subtab:hover{background:var(--sage-soft);}
+  .subtab.active{background:var(--forest);border-color:var(--forest);color:#fff;}
   .subpanel{display:none;} .subpanel.active{display:block;}
   .cg-item{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:12px;align-items:center;padding:10px 12px;border:1.5px solid var(--line);border-radius:var(--radius-sm);background:var(--card-alt);margin-bottom:8px;}
   .cg-ord{display:flex;flex-direction:column;gap:3px;}
@@ -178,24 +210,33 @@
   <div class="status err" id="lockStatus"></div>
 </div>
 
-<div class="wrap" id="app" style="display:none;">
-  <div id="errorBanner" style="display:none;background:#fdf6f5;border:1px solid var(--red-soft);color:var(--red);padding:12px 16px;border-radius:4px;margin-bottom:14px;font-size:13px;white-space:pre-wrap;"></div>
-  <header>
-    <h1 id="academiaNombre">Oposición PT2028</h1>
-    <div class="sub">Panel del profesor</div>
-  </header>
-
-  <div class="tabs">
-    <div class="tab active" data-tab="panel"><i class="ti ti-compass" aria-hidden="true"></i> Panel</div>
-    <div class="tab" data-tab="alumnos"><i class="ti ti-users" aria-hidden="true"></i> Alumnos</div>
-    <div class="tab" data-tab="calendario"><i class="ti ti-calendar" aria-hidden="true"></i> Calendario</div>
-    <div class="tab" data-tab="practicos"><i class="ti ti-file-text" aria-hidden="true"></i> Prácticos</div>
-    <div class="tab" data-tab="temas"><i class="ti ti-book-2" aria-hidden="true"></i> Temas</div>
-    <div class="tab" data-tab="cultura"><i class="ti ti-world" aria-hidden="true"></i> Cultura General</div>
-    <div class="tab" data-tab="recursos"><i class="ti ti-news" aria-hidden="true"></i> Recursos</div>
-    <div class="tab" data-tab="estadisticas"><i class="ti ti-chart-bar" aria-hidden="true"></i> Estadísticas</div>
-    <div class="tab" data-tab="ajustes"><i class="ti ti-settings" aria-hidden="true"></i> Ajustes</div>
-  </div>
+<div class="shell" id="app" style="display:none;">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand"><svg viewBox="0 0 48 48" fill="none" aria-hidden="true"><path d="M24 44V22" stroke="#DCE8DF" stroke-width="2.4" stroke-linecap="round"/><path d="M24 30c-8 0-13-5-13-14 8 0 13 5 13 14Z" fill="#B5CBB3"/><path d="M24 24c0-8 5-13 13-13 0 8-5 13-13 13Z" fill="#DCE8DF"/></svg><div><div class="brand-name">PT Madrid</div><div class="brand-sub">Panel de la preparadora</div></div></div>
+    <nav class="tabs">
+          <div class="tab active" data-tab="panel" data-titulo="Panel" data-sub="Resumen de la semana, objetivos y análisis DAFO."><i class="ti ti-compass" aria-hidden="true"></i> Panel</div>
+      <div class="tab" data-tab="alumnos" data-titulo="Alumnos" data-sub="Añade alumnos y consulta la ficha de cada uno."><i class="ti ti-users" aria-hidden="true"></i> Alumnos</div>
+      <div class="tab" data-tab="calendario" data-titulo="Calendario" data-sub="Planifica sesiones y eventos."><i class="ti ti-calendar" aria-hidden="true"></i> Calendario</div>
+      <div class="tab" data-tab="practicos" data-titulo="Supuestos prácticos" data-sub="Materiales, envíos de los alumnos y correcciones."><i class="ti ti-file-text" aria-hidden="true"></i> Supuestos prácticos</div>
+      <div class="tab" data-tab="temas" data-titulo="Temas" data-sub="Temario y progreso de estudio."><i class="ti ti-book-2" aria-hidden="true"></i> Temas</div>
+      <div class="tab" data-tab="cultura" data-titulo="Cultura general" data-sub="Cuadernos, exámenes y notas de los alumnos."><i class="ti ti-school" aria-hidden="true"></i> Cultura general</div>
+      <div class="tab" data-tab="recursos" data-titulo="Recursos" data-sub="Material de apoyo para los alumnos."><i class="ti ti-folder" aria-hidden="true"></i> Recursos</div>
+      <div class="tab" data-tab="estadisticas" data-titulo="Estadísticas" data-sub="Seguimiento del estudio de tus alumnos."><i class="ti ti-chart-bar" aria-hidden="true"></i> Estadísticas</div>
+      <div class="tab" data-tab="ajustes" data-titulo="Ajustes" data-sub="Configuración general de la plataforma."><i class="ti ti-settings" aria-hidden="true"></i> Ajustes</div>
+    </nav>
+    <div class="side-foot">Personas que enseñan a personas</div>
+  </aside>
+  <div class="scrim" id="scrim"></div>
+  <div class="main">
+    <div class="topbar">
+      <button class="burger" id="btnMenu" aria-label="Abrir menú"><i class="ti ti-menu-2"></i></button>
+      <div class="sub">Panel del profesor</div>
+      <div class="spacer"></div>
+      <div class="who"><span id="academiaNombre">Oposición PT2028</span><span class="avatar">P</span></div>
+    </div>
+    <div class="content">
+  <div id="errorBanner" style="display:none;background:#fdf6f5;border:1px solid var(--red-soft);color:var(--red);padding:12px 16px;border-radius:8px;margin-bottom:14px;font-size:13px;white-space:pre-wrap;"></div>
+  <div class="page-head"><h1 id="pageTitle">Panel</h1><p class="lead" id="pageLead">Resumen de la semana, objetivos y análisis DAFO.</p></div>
 
   <!-- PANEL -->
   <div class="panel active" id="panel-panel">
@@ -422,7 +463,9 @@
       <button class="btn btn-primary" id="btnGuardarUrlAlumno">Guardar</button>
     </div>
   </div>
-</div>
+    </div><!-- /content -->
+  </div><!-- /main -->
+</div><!-- /shell -->
 
 <script>
 const API_URL = 'https://script.google.com/macros/s/AKfycbzrEozXfHf41s3QPZTZelrfIuxQ48xs4LAABID3Tmk4JqV0Ys0e_UCGOHlsV5aAAm-w/exec';
@@ -492,7 +535,10 @@ async function apiPost(action,payload){
   let json;
   try{ json = JSON.parse(text); }
   catch(e){ throw new Error('El backend no devolvió JSON al ejecutar "'+action+'". Respuesta recibida: ' + text.slice(0,300)); }
-  if(json.error) throw new Error('Error del backend en "'+action+'": ' + json.error);
+  if(json.error){
+    if(/acci[oó]n desconocida/i.test(json.error)) throw new Error('El servidor (Apps Script) no está actualizado: pega el Code.gs nuevo y pulsa Implementar → Gestionar implementaciones → Nueva versión.');
+    throw new Error(json.error);
+  }
   return json;
 }
 function ajusteVal(clave, fallback){
@@ -580,7 +626,7 @@ document.getElementById('lockBtn').addEventListener('click', tryUnlock);
 document.getElementById('lockInput').addEventListener('keydown', e=>{ if(e.key==='Enter') tryUnlock(); });
 function unlock(){
   document.getElementById('lockScreen').style.display='none';
-  document.getElementById('app').style.display='block';
+  document.getElementById('app').style.display='';
   loadAll();
 }
 function tryUnlock(){
@@ -611,8 +657,14 @@ document.querySelectorAll('.tab').forEach(t=>{
     document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));
     t.classList.add('active');
     document.getElementById('panel-'+t.dataset.tab).classList.add('active');
+    document.getElementById('pageTitle').textContent = t.dataset.titulo || t.textContent.trim();
+    document.getElementById('pageLead').textContent = t.dataset.sub || '';
+    closeSidebar(); window.scrollTo(0,0);
   });
 });
+function closeSidebar(){ document.getElementById('sidebar').classList.remove('open'); document.getElementById('scrim').classList.remove('show'); }
+document.getElementById('btnMenu').addEventListener('click', ()=>{ document.getElementById('sidebar').classList.add('open'); document.getElementById('scrim').classList.add('show'); });
+document.getElementById('scrim').addEventListener('click', closeSidebar);
 
 /* PANEL */
 function renderPanel(){
@@ -800,7 +852,7 @@ function renderFichaAlumno(id){
     ${recientes.length? '<table><thead><tr><th>Fecha</th><th>Estado</th></tr></thead><tbody>'+recientes.map(p=>`<tr><td>${escapeHtml(p.fecha)}</td><td><span class="pill ${p.estado}">${p.estado==='pendiente'?'Pendiente':'Corregido'}</span></td></tr>`).join('')+'</tbody></table>' : '<div class="empty">Todavía no ha enviado ningún práctico.</div>'}
 
     <h3 style="font-size:14.5px;margin-top:18px;"><i class="ti ti-clock" aria-hidden="true"></i> Horas de estudio registradas</h3>
-    <div style="font-family:'Poppins',sans-serif;font-weight:800;font-size:26px;color:var(--accent-dark);">${horasTot.toFixed(1)}h</div>
+    <div style="font-family:var(--serif);font-weight:800;font-size:26px;color:var(--accent-dark);">${horasTot.toFixed(1)}h</div>
     ${Object.keys(horasBloque).length ? Object.keys(horasBloque).sort((x,y)=>horasBloque[y]-horasBloque[x]).map(b=>{
       const max = Math.max(1, ...Object.values(horasBloque));
       return '<div class="bloque-row"><span class="bloque-lbl">'+escapeHtml(b)+'</span><div class="bloque-bar-bg"><div class="bloque-bar" style="width:'+(horasBloque[b]/max*100)+'%;"></div></div><span class="bloque-val">'+horasBloque[b].toFixed(1)+'h</span></div>';
@@ -981,7 +1033,7 @@ function renderPracticos(){
     const box = document.createElement('div'); box.className='card'; box.style.marginBottom='10px';
     let html = `<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;">
       <div><strong>${escapeHtml(alumno?alumno.nombre:'(alumno eliminado)')}</strong> — ${escapeHtml(p.fecha)} <span class="pill ${p.estado}">${p.estado==='pendiente'?'Pendiente':'Corregido'}</span></div>
-      <button class="btn btn-secondary btn-sm" data-toggle>Ver</button>
+      <span style="display:flex;gap:6px;"><button class="btn btn-secondary btn-sm" data-toggle>Ver</button><button class="btn btn-danger btn-sm" data-delpractico title="Eliminar este envío"><i class="ti ti-trash" aria-hidden="true"></i> Eliminar</button></span>
     </div>
     <div data-body style="display:none;margin-top:10px;">`;
     if(p.texto) html += `<textarea readonly style="min-height:120px;">${escapeHtml(p.texto)}</textarea>`;
@@ -998,6 +1050,12 @@ function renderPracticos(){
     box.querySelector('[data-toggle]').addEventListener('click', ()=>{
       const b = box.querySelector('[data-body]');
       b.style.display = b.style.display==='none'?'block':'none';
+    });
+    box.querySelector('[data-delpractico]').addEventListener('click', ()=>{
+      if(!confirm('¿Eliminar este práctico'+(p.fotoUrl?' y su archivo adjunto':'')+'? Esta acción no se puede deshacer.')) return;
+      data.practicos = data.practicos.filter(x=>x.id!==p.id);
+      renderPracticos();
+      syncBg('deletePractico', { id:p.id });
     });
     const btnEnviar = box.querySelector('[data-enviar]');
     if(btnEnviar){
@@ -1139,11 +1197,11 @@ function renderArchivosLista(categoria, contId){
     <a href="${escapeHtml(f.url)}" target="_blank" rel="noopener"><i class="ti ti-paperclip" aria-hidden="true"></i> ${escapeHtml(f.titulo || f.nombre)}</a>
     ${f.titulo ? `<span style="color:var(--gray);font-size:11px;">(${escapeHtml(f.nombre)})</span>` : ''}
     <span style="color:var(--gray);font-size:11.5px;">${escapeHtml(f.fecha||'')}</span>
-    <button class="icon-btn" data-delarch="${f.id}">Eliminar</button>
+    <button class="btn btn-danger btn-sm" data-delarch="${f.id}"><i class="ti ti-trash" aria-hidden="true"></i> Eliminar</button>
   </div>`).join('');
   cont.querySelectorAll('[data-delarch]').forEach(btn=>{
     btn.addEventListener('click', ()=>{
-      if(!confirm('¿Eliminar este archivo de la lista?')) return;
+      if(!confirm('¿Eliminar este archivo? Los alumnos dejarán de verlo y se moverá a la papelera de Drive.')) return;
       data.archivos = data.archivos.filter(x=>x.id!==btn.dataset.delarch);
       renderArchivosLista(categoria, contId);
       syncBg('deleteArchivo',{id:btn.dataset.delarch});

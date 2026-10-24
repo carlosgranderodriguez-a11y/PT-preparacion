@@ -663,7 +663,12 @@ function doPost(e) {
         result = { ok: true, url: urlArchivo };
         break;
       case 'deleteArchivo':
+        sheetToObjects_('Archivos').filter(function (x) { return String(x.id) === String(p.id); }).forEach(function (x) { papeleraDrive_(x.url); });
         deleteObjectById_('Archivos', 'id', p.id);
+        break;
+      case 'deletePractico':
+        sheetToObjects_('Practicos').filter(function (x) { return String(x.id) === String(p.id); }).forEach(function (x) { papeleraDrive_(x.fotoUrl); });
+        deleteObjectById_('Practicos', 'id', p.id);
         break;
       case 'addRecurso':
         if (p.base64) {
