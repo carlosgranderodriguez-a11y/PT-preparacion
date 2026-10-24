@@ -29,7 +29,15 @@ const HEADERS = {
   Dafo: ['alumnoId', 'fortalezas', 'debilidades', 'oportunidades', 'amenazas'],
   Archivos: ['id', 'categoria', 'nombre', 'titulo', 'url', 'fecha'],
   Recursos: ['id', 'fecha', 'titulo', 'texto', 'url', 'archivoUrl'],
-  Ajustes: ['clave', 'valor']
+  Ajustes: ['clave', 'valor'],
+  // Cultura General: cuadernos de teoría (bloque = 'lengua' | 'matematicas')
+  Cuadernos: ['id', 'bloque', 'titulo', 'descripcion', 'archivoUrl', 'archivoNombre', 'orden', 'fecha'],
+  // Cultura General: exámenes con solucionario y puntuación máxima
+  // notaMax es una columna heredada que ya no se usa. maxLengua / maxMates / maxCG: puntuación máxima de cada parte (vacío = el examen no incluye esa parte)
+  Examenes: ['id', 'titulo', 'descripcion', 'examenUrl', 'examenNombre', 'solucionarioUrl', 'solucionarioNombre', 'notaMax', 'orden', 'fecha', 'maxLengua', 'maxMates', 'maxCG'],
+  // Notas que registra cada alumno (un único registro por alumno y examen)
+  // nota es una columna heredada que ya no se usa. notaLengua / notaMates / notaCG: nota del alumno en cada parte
+  Notas: ['id', 'alumnoId', 'examenId', 'nota', 'fechaRegistro', 'fechaActualizacion', 'notaLengua', 'notaMates', 'notaCG']
 };
 
 let _ss_ = null;
@@ -47,7 +55,7 @@ function getSheet_(name) {
 
 function ensureHeaders_() {
   const cache = CacheService.getScriptCache();
-  if (cache.get('headers_ok_v1')) return;
+  if (cache.get('headers_ok_v3')) return;
   Object.keys(HEADERS).forEach(name => {
     const sh = getSheet_(name);
     if (sh.getLastRow() === 0) {
@@ -59,10 +67,10 @@ function ensureHeaders_() {
       }
     }
   });
-  try { cache.put('headers_ok_v1', '1', 21600); } catch (err) { /* no pasa nada si falla */ }
+  try { cache.put('headers_ok_v3', '1', 21600); } catch (err) { /* no pasa nada si falla */ }
 }
 
-const DATE_FIELDS = { Calendario: ['fecha'], Practicos: ['fecha', 'fechaFeedback'], Archivos: ['fecha'], Estudio: ['fecha'], Objetivos: ['semana'], Recursos: ['fecha'] };
+const DATE_FIELDS = { Calendario: ['fecha'], Practicos: ['fecha', 'fechaFeedback'], Archivos: ['fecha'], Estudio: ['fecha'], Objetivos: ['semana'], Recursos: ['fecha'], Cuadernos: ['fecha'], Examenes: ['fecha'], Notas: ['fechaRegistro', 'fechaActualizacion'] };
 const TIME_FIELDS = { Calendario: ['hora'] };
 
 function normalizeRow_(sheetName, obj) {
@@ -196,6 +204,254 @@ function guardarFoto_(base64Data, nombre) {
   return 'https://drive.google.com/file/d/' + file.getId() + '/view';
 }
 
+/* ============================================================
+ * CULTURA GENERAL: cuadernos (Lengua / Matemáticas), exámenes con
+ * solucionario y notas autoevaluadas por los alumnos.
+ * ============================================================ */
+const CG_BLOQUES = ['lengua', 'matematicas'];
+const NOTA_MAX_LIMITE = 100;
+
+function hoyISO_() { return Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd'); }
+function fmtFecha_(v) { return v instanceof Date ? Utilities.formatDate(v, Session.getScriptTimeZone(), 'yyyy-MM-dd') : String(v || ''); }
+function porOrden_(a, b) { return (Number(a.orden) || 0) - (Number(b.orden) || 0); }
+function siguienteOrden_(items) { return items.reduce(function (m, x) { return Math.max(m, Number(x.orden) || 0); }, 0) + 1; }
+function esPdf_(base64) { return /^data:application\/pdf;base64,/.test(String(base64 || '')); }
+
+function guardarPdf_(base64Data, nombre) {
+  if (!esPdf_(base64Data)) throw new Error('Solo se admiten archivos PDF.');
+  return guardarEnDrive_(base64Data, nombre || 'documento.pdf', 'PT_Materiales');
+}
+
+function papeleraDrive_(url) {
+  try {
+    const s = String(url || '');
+    const m = s.match(/\/d\/([A-Za-z0-9_-]+)/) || s.match(/[?&]id=([A-Za-z0-9_-]+)/);
+    if (m) DriveApp.getFileById(m[1]).setTrashed(true);
+  } catch (err) { /* si el archivo ya no existe, seguimos */ }
+}
+
+// Partes puntuables de un examen: [nombre, columna del máximo, columna de la nota, clave en la petición]
+const PARTES = [
+  ['Lengua', 'maxLengua', 'notaLengua', 'lengua'],
+  ['Matemáticas', 'maxMates', 'notaMates', 'mates'],
+  ['Cultura General', 'maxCG', 'notaCG', 'cg']
+];
+function vacio_(v) { return v === '' || v === null || v === undefined; }
+
+// Devuelve el máximo validado, o '' si la parte no se puntúa (vacío o 0).
+function parseMaxParte_(v, nombre) {
+  if (vacio_(v)) return '';
+  const n = Number(String(v).replace(',', '.'));
+  if (!isFinite(n) || n < 0 || n > NOTA_MAX_LIMITE) {
+    throw new Error('La puntuación máxima de ' + nombre + ' debe ser un número entre 0 y ' + NOTA_MAX_LIMITE + '.');
+  }
+  return n === 0 ? '' : Math.round(n * 100) / 100;
+}
+
+function reordenar_(nombreHoja, ids) {
+  const sh = getSheet_(nombreHoja);
+  const values = sh.getDataRange().getValues();
+  const headers = values[0];
+  const iId = headers.indexOf('id'), iOrden = headers.indexOf('orden');
+  (ids || []).forEach(function (id, pos) {
+    for (let r = 1; r < values.length; r++) {
+      if (String(values[r][iId]) === String(id)) { sh.getRange(r + 1, iOrden + 1).setValue(pos + 1); break; }
+    }
+  });
+}
+
+function addCuaderno_(p) {
+  if (CG_BLOQUES.indexOf(p.bloque) < 0) throw new Error('El cuaderno debe asignarse a Lengua o Matemáticas.');
+  if (!p.titulo || !String(p.titulo).trim()) throw new Error('El cuaderno necesita un título.');
+  if (!esPdf_(p.base64)) throw new Error('Sube el cuaderno en formato PDF.');
+  const url = guardarPdf_(p.base64, p.nombre);
+  const mismos = sheetToObjects_('Cuadernos').filter(function (c) { return c.bloque === p.bloque; });
+  const fila = { id: p.id, bloque: p.bloque, titulo: String(p.titulo).trim(), descripcion: String(p.descripcion || '').trim(), archivoUrl: url, archivoNombre: p.nombre || '', orden: siguienteOrden_(mismos), fecha: hoyISO_() };
+  appendObject_('Cuadernos', fila);
+  return { ok: true, cuaderno: fila };
+}
+
+function updateCuaderno_(p) {
+  const actual = sheetToObjects_('Cuadernos').find(function (c) { return String(c.id) === String(p.id); });
+  if (!actual) throw new Error('No se encuentra el cuaderno.');
+  const upd = {};
+  if (p.titulo !== undefined) {
+    if (!String(p.titulo).trim()) throw new Error('El cuaderno necesita un título.');
+    upd.titulo = String(p.titulo).trim();
+  }
+  if (p.descripcion !== undefined) upd.descripcion = String(p.descripcion).trim();
+  if (p.bloque !== undefined && p.bloque !== actual.bloque) {
+    if (CG_BLOQUES.indexOf(p.bloque) < 0) throw new Error('El cuaderno debe asignarse a Lengua o Matemáticas.');
+    upd.bloque = p.bloque;
+    upd.orden = siguienteOrden_(sheetToObjects_('Cuadernos').filter(function (c) { return c.bloque === p.bloque; }));
+  }
+  if (p.base64) {
+    if (!esPdf_(p.base64)) throw new Error('Sube el cuaderno en formato PDF.');
+    upd.archivoUrl = guardarPdf_(p.base64, p.nombre);
+    upd.archivoNombre = p.nombre || '';
+  }
+  updateObjectById_('Cuadernos', 'id', p.id, upd);
+  if (upd.archivoUrl) papeleraDrive_(actual.archivoUrl);
+  return { ok: true, cuaderno: Object.assign({}, actual, upd) };
+}
+
+function deleteCuaderno_(id) {
+  const actual = sheetToObjects_('Cuadernos').find(function (c) { return String(c.id) === String(id); });
+  if (!actual) return;
+  deleteObjectById_('Cuadernos', 'id', id);
+  papeleraDrive_(actual.archivoUrl);
+}
+
+function maximosDeExamen_(p, actual) {
+  const out = {};
+  let alguna = false;
+  PARTES.forEach(function (pt) {
+    const origen = (actual && p[pt[1]] === undefined) ? actual[pt[1]] : p[pt[1]];
+    out[pt[1]] = parseMaxParte_(origen, pt[0]);
+    if (out[pt[1]] !== '') alguna = true;
+  });
+  if (!alguna) throw new Error('Activa al menos una parte (Lengua, Matemáticas o Cultura General) indicando su puntuación máxima.');
+  return out;
+}
+
+function addExamen_(p) {
+  if (!p.titulo || !String(p.titulo).trim()) throw new Error('El examen necesita un título.');
+  const maximos = maximosDeExamen_(p, null);
+  if (!esPdf_(p.examenBase64) || !esPdf_(p.solucionarioBase64)) throw new Error('Sube el PDF del examen y el PDF del solucionario.');
+  const examenUrl = guardarPdf_(p.examenBase64, p.examenNombre);
+  let solUrl;
+  try { solUrl = guardarPdf_(p.solucionarioBase64, p.solucionarioNombre); }
+  catch (err) { papeleraDrive_(examenUrl); throw err; }
+  const fila = {
+    id: p.id, titulo: String(p.titulo).trim(), descripcion: String(p.descripcion || '').trim(),
+    examenUrl: examenUrl, examenNombre: p.examenNombre || '',
+    solucionarioUrl: solUrl, solucionarioNombre: p.solucionarioNombre || '',
+    orden: siguienteOrden_(sheetToObjects_('Examenes')), fecha: hoyISO_()
+  };
+  Object.keys(maximos).forEach(function (k) { fila[k] = maximos[k]; });
+  appendObject_('Examenes', fila);
+  return { ok: true, examen: fila };
+}
+
+function updateExamen_(p) {
+  const actual = sheetToObjects_('Examenes').find(function (e) { return String(e.id) === String(p.id); });
+  if (!actual) throw new Error('No se encuentra el examen.');
+  const upd = {};
+  if (p.titulo !== undefined) {
+    if (!String(p.titulo).trim()) throw new Error('El examen necesita un título.');
+    upd.titulo = String(p.titulo).trim();
+  }
+  if (p.descripcion !== undefined) upd.descripcion = String(p.descripcion).trim();
+
+  const hayMax = PARTES.some(function (pt) { return p[pt[1]] !== undefined; });
+  if (hayMax) {
+    const maximos = maximosDeExamen_(p, actual);
+    const notas = sheetToObjects_('Notas').filter(function (n) { return String(n.examenId) === String(p.id); });
+    PARTES.forEach(function (pt) {
+      const nuevo = maximos[pt[1]];
+      notas.forEach(function (n) {
+        if (vacio_(n[pt[2]])) return;
+        if (nuevo === '') throw new Error('No se puede quitar ' + pt[0] + ': hay alumnos con nota registrada en esa parte.');
+        if (Number(n[pt[2]]) > nuevo) throw new Error('No se puede bajar el máximo de ' + pt[0] + ' a ' + nuevo + ': hay alumnos con una nota superior.');
+      });
+      upd[pt[1]] = nuevo;
+    });
+  }
+  if (p.examenBase64) {
+    if (!esPdf_(p.examenBase64)) throw new Error('El examen debe ser un PDF.');
+    upd.examenUrl = guardarPdf_(p.examenBase64, p.examenNombre);
+    upd.examenNombre = p.examenNombre || '';
+  }
+  if (p.solucionarioBase64) {
+    if (!esPdf_(p.solucionarioBase64)) throw new Error('El solucionario debe ser un PDF.');
+    upd.solucionarioUrl = guardarPdf_(p.solucionarioBase64, p.solucionarioNombre);
+    upd.solucionarioNombre = p.solucionarioNombre || '';
+  }
+  // updateObjectById_ ignora los valores undefined pero sí escribe '' (parte desactivada)
+  updateObjectById_('Examenes', 'id', p.id, upd);
+  if (upd.examenUrl) papeleraDrive_(actual.examenUrl);
+  if (upd.solucionarioUrl) papeleraDrive_(actual.solucionarioUrl);
+  return { ok: true, examen: Object.assign({}, actual, upd) };
+}
+
+function deleteExamen_(id) {
+  const actual = sheetToObjects_('Examenes').find(function (e) { return String(e.id) === String(id); });
+  if (!actual) return;
+  // Borra también las notas registradas de ese examen para no dejar datos huérfanos.
+  const sh = getSheet_('Notas');
+  const values = sh.getDataRange().getValues();
+  const iE = values[0].indexOf('examenId');
+  for (let r = values.length - 1; r >= 1; r--) {
+    if (String(values[r][iE]) === String(id)) sh.deleteRow(r + 1);
+  }
+  deleteObjectById_('Examenes', 'id', id);
+  papeleraDrive_(actual.examenUrl);
+  papeleraDrive_(actual.solucionarioUrl);
+}
+
+/**
+ * Guarda (o actualiza) las notas de un alumno en un examen: Lengua, Matemáticas y Cultura General.
+ * Cada parte es opcional, pero hace falta al menos una. Un único registro por alumno y examen.
+ * Valida en el servidor que cada nota esté entre 0 y el máximo de esa parte del examen.
+ */
+function guardarNota_(p) {
+  const lock = LockService.getScriptLock();
+  lock.waitLock(20000);
+  try {
+    const alumno = sheetToObjects_('Alumnos').find(function (a) { return String(a.id) === String(p.alumnoId); });
+    if (!alumno) throw new Error('Alumno no encontrado.');
+    const examen = sheetToObjects_('Examenes').find(function (e) { return String(e.id) === String(p.examenId); });
+    if (!examen) throw new Error('Este examen ya no está disponible.');
+
+    const vals = {};
+    let alguna = false;
+    PARTES.forEach(function (pt) {
+      const max = examen[pt[1]];
+      const raw = p[pt[3]];
+      if (vacio_(max) || !(Number(max) > 0)) {
+        if (!vacio_(raw)) throw new Error(pt[0] + ' no se puntúa en este examen.');
+        vals[pt[2]] = '';
+        return;
+      }
+      if (vacio_(raw)) { vals[pt[2]] = ''; return; }
+      const n = Number(String(raw).replace(',', '.'));
+      if (!isFinite(n)) throw new Error('Introduce una nota válida en ' + pt[0] + '.');
+      if (n < 0 || n > Number(max)) throw new Error('La nota de ' + pt[0] + ' debe estar entre 0 y ' + Number(max) + '.');
+      vals[pt[2]] = Math.round(n * 100) / 100;
+      alguna = true;
+    });
+    if (!alguna) throw new Error('Introduce al menos una nota.');
+
+    const hoy = hoyISO_();
+    const sh = getSheet_('Notas');
+    const values = sh.getDataRange().getValues();
+    const h = values[0];
+    const col = function (name) { return h.indexOf(name); };
+    const iA = col('alumnoId'), iE = col('examenId'), iFR = col('fechaRegistro'), iFA = col('fechaActualizacion');
+    for (let r = values.length - 1; r >= 1; r--) {
+      if (String(values[r][iA]) === String(p.alumnoId) && String(values[r][iE]) === String(p.examenId)) {
+        let cambio = false;
+        PARTES.forEach(function (pt) {
+          const c = col(pt[2]);
+          const antes = vacio_(values[r][c]) ? '' : Number(values[r][c]);
+          if (antes !== vals[pt[2]]) { sh.getRange(r + 1, c + 1).setValue(vals[pt[2]]); cambio = true; }
+        });
+        let fa = fmtFecha_(values[r][iFA]);
+        if (cambio) { sh.getRange(r + 1, iFA + 1).setValue(hoy); fa = hoy; }
+        const reg = { id: values[r][col('id')], alumnoId: p.alumnoId, examenId: p.examenId, fechaRegistro: fmtFecha_(values[r][iFR]), fechaActualizacion: fa };
+        Object.keys(vals).forEach(function (k) { reg[k] = vals[k]; });
+        return { ok: true, registro: reg };
+      }
+    }
+    const registro = { id: 'nt_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7), alumnoId: p.alumnoId, examenId: p.examenId, fechaRegistro: hoy, fechaActualizacion: '' };
+    Object.keys(vals).forEach(function (k) { registro[k] = vals[k]; });
+    appendObject_('Notas', registro);
+    return { ok: true, registro: registro };
+  } finally {
+    lock.releaseLock();
+  }
+}
+
 /**
  * RECORDATORIOS AUTOMÁTICOS POR EMAIL.
  * Para activarlos: en el editor de Apps Script, icono del reloj (Activadores) >
@@ -249,7 +505,7 @@ function enviarBienvenida_(alumno) {
 
 function buildFullData_() {
   const cache = CacheService.getScriptCache();
-  const cached = cache.get('getAll_v1');
+  const cached = cache.get('getAll_v2');
   if (cached) {
     try { return JSON.parse(cached); } catch (err) { /* si el caché está corrupto, recalculamos */ }
   }
@@ -271,9 +527,12 @@ function buildFullData_() {
     recursos: sheetToObjects_('Recursos'),
     estudio: sheetToObjects_('Estudio'),
     objetivos: sheetToObjects_('Objetivos'),
-    ajustes: sheetToObjects_('Ajustes')
+    ajustes: sheetToObjects_('Ajustes'),
+    cuadernos: sheetToObjects_('Cuadernos').sort(porOrden_),
+    examenes: sheetToObjects_('Examenes').sort(porOrden_),
+    notas: sheetToObjects_('Notas')
   };
-  try { cache.put('getAll_v1', JSON.stringify(result), 300); } catch (err) { /* si supera 100KB, seguimos sin caché */ }
+  try { cache.put('getAll_v2', JSON.stringify(result), 300); } catch (err) { /* si supera 100KB, seguimos sin caché */ }
   return result;
 }
 
@@ -292,7 +551,10 @@ function buildAlumnoScoped_(id) {
     recursos: full.recursos,
     estudio: full.estudio.filter(function(x){ return x.alumnoId === id; }),
     objetivos: full.objetivos.filter(function(o){ return o.alumnoId === id || o.alumnoId === 'ALL'; }),
-    ajustes: full.ajustes
+    ajustes: full.ajustes,
+    cuadernos: full.cuadernos,
+    examenes: full.examenes,
+    notas: full.notas.filter(function(n){ return String(n.alumnoId) === String(id); })
   };
 }
 
@@ -321,7 +583,7 @@ function doPost(e) {
     const p = body.payload || {};
 
     if (action !== 'loginAlumno') {
-      try { CacheService.getScriptCache().remove('getAll_v1'); } catch (err) { /* no pasa nada si falla */ }
+      try { CacheService.getScriptCache().remove('getAll_v2'); } catch (err) { /* no pasa nada si falla */ }
     }
 
     switch (action) {
@@ -424,7 +686,7 @@ function doPost(e) {
         if (!al1) { result = { error: 'No hay ningún alumno registrado con ese correo. Habla con tu preparador.' }; break; }
         if (al1.clave) { result = { error: 'Este correo ya tiene una clave creada. Si la has olvidado, pide a tu preparador que la restablezca.' }; break; }
         updateObjectById_('Alumnos', 'id', al1.id, { clave: p.clave });
-        try { CacheService.getScriptCache().remove('getAll_v1'); } catch (errc) {}
+        try { CacheService.getScriptCache().remove('getAll_v2'); } catch (errc) {}
         result = { ok: true, alumnoId: al1.id, nombre: al1.nombre, data: buildAlumnoScoped_(al1.id) };
         break;
       }
@@ -439,6 +701,33 @@ function doPost(e) {
       }
       case 'resetClaveAlumno':
         updateObjectById_('Alumnos', 'id', p.id, { clave: '' });
+        break;
+      case 'addCuaderno':
+        result = addCuaderno_(p);
+        break;
+      case 'updateCuaderno':
+        result = updateCuaderno_(p);
+        break;
+      case 'deleteCuaderno':
+        deleteCuaderno_(p.id);
+        break;
+      case 'reorderCuadernos':
+        reordenar_('Cuadernos', p.ids);
+        break;
+      case 'addExamen':
+        result = addExamen_(p);
+        break;
+      case 'updateExamen':
+        result = updateExamen_(p);
+        break;
+      case 'deleteExamen':
+        deleteExamen_(p.id);
+        break;
+      case 'reorderExamenes':
+        reordenar_('Examenes', p.ids);
+        break;
+      case 'guardarNota':
+        result = guardarNota_(p);
         break;
       case 'saveAjuste':
         setKeyValue_('Ajustes', [0], [p.clave], 1, p.valor);

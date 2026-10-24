@@ -100,6 +100,7 @@
   .pill.wait{background:var(--amber-soft);color:var(--amber);}
   .pill.todo{background:var(--red-soft);color:var(--red);}
   .pill.info{background:var(--blue-soft);color:var(--blue);}
+  .pill.media{background:#ECEEF1;color:#4B5563;}
   .pill.rev{background:#FBE9DC;color:#B2602B;}
   .chips{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 16px;}
   .chip{font-size:13px;font-weight:500;padding:7px 16px;border-radius:9px;border:1px solid var(--line);background:#fff;color:var(--ink-soft);cursor:pointer;}
@@ -288,6 +289,54 @@
   .brow .bl{font-size:13px;font-weight:500;width:120px;flex-shrink:0;}
   .brow .bv{font-size:12.5px;font-weight:600;color:var(--ink-soft);width:46px;text-align:right;flex-shrink:0;}
 
+  /* ---------- Cultura general ---------- */
+  .cg-jump{position:sticky;top:60px;z-index:20;background:var(--bg);padding:8px 0;margin:0 0 6px;}
+  .cg-block{margin-bottom:34px;scroll-margin-top:120px;}
+  .cg-head{display:flex;align-items:center;gap:14px;margin-bottom:14px;padding-bottom:12px;border-bottom:2px solid var(--line);}
+  .cg-head .ico-circle{width:46px;height:46px;font-size:23px;}
+  .cg-head h2{font-size:26px;font-weight:600;line-height:1.15;}
+  .cg-head p{margin:2px 0 0;font-size:13px;color:var(--gray);}
+  .cg-count{margin-left:auto;font-size:12px;font-weight:600;color:var(--ink-soft);background:var(--sage-soft);padding:4px 12px;border-radius:999px;white-space:nowrap;}
+  .grid-cg{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;}
+  .cuad{display:flex;flex-direction:column;gap:12px;}
+  .cuad-top{display:flex;gap:14px;}
+  .cuad-top .ico-circle{border-radius:12px;width:50px;height:50px;font-size:25px;}
+  .cuad-t{font-family:var(--serif);font-weight:600;font-size:18px;line-height:1.25;}
+  .cuad-d{font-size:13.5px;color:var(--ink-soft);margin-top:4px;}
+  .cuad-btns{display:flex;gap:10px;flex-wrap:wrap;margin-top:auto;}
+  .cuad-btns .btn{flex:1;min-width:130px;}
+  .cg-vacio{grid-column:1/-1;text-align:center;color:var(--gray);padding:26px 16px;background:#fff;border:1px dashed #CBD3C8;border-radius:var(--radius);font-size:14px;}
+  .grid-ex{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px;}
+  .ex{display:flex;flex-direction:column;gap:12px;}
+  .ex-t{font-family:var(--serif);font-weight:600;font-size:19px;line-height:1.25;}
+  .ex-max{font-size:11.5px;font-weight:600;padding:3px 10px;border-radius:999px;background:var(--sage-soft);color:var(--forest);white-space:nowrap;align-self:flex-start;}
+  .ex-docs{display:grid;gap:8px;}
+  .ex-doc{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--card-alt);}
+  .ex-doc b{font-size:13.5px;flex:1;min-width:92px;display:flex;align-items:center;gap:7px;}
+  .ex-doc .btn{padding:7px 12px;font-size:12.5px;}
+  .nota-box{border-top:1px solid var(--line);padding-top:12px;}
+  .nota-estado{font-size:13.5px;font-weight:600;margin-bottom:8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+  .nota-estado.sin{color:var(--gray);font-weight:500;}
+  .nota-estado .pill{font-size:13px;}
+  .nota-form{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;}
+  .nota-form .field{margin:0;flex:1;min-width:120px;}
+  .nota-form input{font-size:16px;}
+  .evo-card{margin-top:22px;}
+  .evo-card svg{width:100%;height:auto;display:block;}
+  .evo-card text{font-family:var(--sans);font-size:11px;fill:var(--gray);}
+  .evo-card .val{fill:var(--forest);font-weight:700;}
+  .hist-wrap{overflow-x:auto;}
+  .hist{width:100%;border-collapse:collapse;font-size:13.5px;margin-top:14px;}
+  .hist th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--gray);border-bottom:2px solid var(--line);padding:6px 8px;}
+  .hist td{padding:9px 8px;border-bottom:1px solid var(--line);}
+  .hist tr:last-child td{border-bottom:none;}
+  .pasos{display:flex;gap:8px 18px;flex-wrap:wrap;font-size:13px;color:var(--ink-soft);margin:-4px 0 14px;}
+  .pasos span{display:flex;align-items:center;gap:7px;}
+  .pasos b{width:22px;height:22px;border-radius:50%;background:var(--forest);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:12px;}
+  @media (max-width:900px){ .cg-jump{top:58px;} .cg-head h2{font-size:22px;} }
+  @media (max-width:420px){ .grid-cg,.grid-ex{grid-template-columns:1fr;} .hist .col-fecha{display:none;} }
+  @media (max-width:600px){ .evo-card text{font-size:20px;} }
+
   /* ---------- Diálogo ---------- */
   dialog.dlg{border:none;border-radius:16px;padding:22px 24px;width:min(460px,92vw);box-shadow:0 20px 60px rgba(0,0,0,.25);}
   dialog.dlg::backdrop{background:rgba(23,40,31,.45);}
@@ -465,7 +514,31 @@
       <section class="panel" id="panel-programacion"></section>
 
       <!-- CULTURA GENERAL -->
-      <section class="panel" id="panel-cultura"></section>
+      <section class="panel" id="panel-cultura">
+        <div class="page-head"><div><h1>Cultura general</h1><p class="lead">Tus cuadernos de teoría y exámenes con solucionario.</p></div></div>
+        <div class="chips cg-jump" id="cgJump">
+          <button class="chip" data-jump="cg-lengua"><i class="ti ti-book-2"></i> Lengua</button>
+          <button class="chip" data-jump="cg-mate"><i class="ti ti-math-function"></i> Matemáticas</button>
+          <button class="chip" data-jump="cg-examenes"><i class="ti ti-file-check"></i> Exámenes</button>
+        </div>
+
+        <section class="cg-block" id="cg-lengua">
+          <div class="cg-head"><div class="ico-circle"><i class="ti ti-book-2"></i></div><div><h2>Lengua</h2><p>Cuadernos de teoría</p></div><span class="cg-count" id="cntLengua"></span></div>
+          <div class="grid-cg" id="gridLengua"></div>
+        </section>
+
+        <section class="cg-block" id="cg-mate">
+          <div class="cg-head"><div class="ico-circle tone-blue"><i class="ti ti-math-function"></i></div><div><h2>Matemáticas</h2><p>Cuadernos de teoría por contenidos</p></div><span class="cg-count" id="cntMate"></span></div>
+          <div class="grid-cg" id="gridMate"></div>
+        </section>
+
+        <section class="cg-block" id="cg-examenes">
+          <div class="cg-head"><div class="ico-circle tone-amber"><i class="ti ti-file-check"></i></div><div><h2>Exámenes de Cultura General</h2><p>Examen y solucionario, con registro de tu nota</p></div><span class="cg-count" id="cntExamenes"></span></div>
+          <div class="pasos" id="pasosExamen"><span><b>1</b> Haz el examen por tu cuenta</span><span><b>2</b> Corrígete con el solucionario</span><span><b>3</b> Anota tus notas</span></div>
+          <div class="grid-ex" id="gridExamenes"></div>
+          <div id="cgEvolucion"></div>
+        </section>
+      </section>
 
       <!-- RECURSOS -->
       <section class="panel" id="panel-recursos">
@@ -517,7 +590,7 @@ const MESES_C = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','no
 const FRASES = ['Disciplina hoy, la plaza mañana','Tu esfuerzo de hoy construye tu plaza','Cada tema también suma','Paso a paso, también se avanza mucho'];
 const TABS = ['semana','temario','practicos','programacion','cultura','recursos','progreso'];
 
-let data = { alumnos:[], calendario:[], practicos:[], temas:[], temasProgreso:[], cg:[], cgProgreso:[], ajustes:[] };
+let data = { alumnos:[], calendario:[], practicos:[], temas:[], temasProgreso:[], cg:[], cgProgreso:[], ajustes:[], cuadernos:[], examenes:[], notas:[] };
 let alumnoId = null, alumno = null;
 let calYear, calMonth, weekOffset = 0;
 let practicosFiltro = 'todos', practicosAbiertos = new Set();
@@ -574,7 +647,7 @@ function normHora(v){
   return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
 }
 function normalizarDatos(){
-  ['calendario','practicos','temas','temasProgreso','cg','cgProgreso','archivos','estudio','recursos','objetivos','ajustes'].forEach(k=>{ if(!data[k]) data[k]=[]; });
+  ['calendario','practicos','temas','temasProgreso','cg','cgProgreso','archivos','estudio','recursos','objetivos','ajustes','cuadernos','examenes','notas'].forEach(k=>{ if(!data[k]) data[k]=[]; });
   data.calendario.forEach(ev=>{ ev.fecha = normFecha(ev.fecha); ev.hora = normHora(ev.hora); });
   data.practicos.forEach(p=>{ p.fecha = normFecha(p.fecha); p.fechaFeedback = normFecha(p.fechaFeedback); });
   data.archivos.forEach(a=>{ a.fecha = normFecha(a.fecha); });
@@ -583,6 +656,9 @@ function normalizarDatos(){
   data.objetivos.forEach(o=>{ o.semana = normFecha(o.semana); });
   data.temasProgreso.forEach(x=>{ x.estado = estadoNorm(x.estado); });
   data.cgProgreso.forEach(x=>{ x.estado = estadoNorm(x.estado); });
+  data.cuadernos.forEach(c=>{ c.orden = Number(c.orden)||0; });
+  data.examenes.forEach(e=>{ e.orden = Number(e.orden)||0; PARTES.forEach(pt=>{ e[pt.max] = (e[pt.max]===''||e[pt.max]==null) ? 0 : (Number(e[pt.max])||0); }); });
+  data.notas.forEach(n=>{ PARTES.forEach(pt=>{ n[pt.nota] = (n[pt.nota]===''||n[pt.nota]==null) ? null : Number(n[pt.nota]); }); n.fechaRegistro = normFecha(n.fechaRegistro); n.fechaActualizacion = normFecha(n.fechaActualizacion); });
 }
 
 function misEventos(){ return (data.calendario||[]).filter(ev=>ev.alumnoId===alumnoId || ev.alumnoId==='ALL'); }
@@ -755,12 +831,11 @@ function mostrarContenido(){
   const now = new Date(); calYear = now.getFullYear(); calMonth = now.getMonth();
   document.getElementById('estBloque').innerHTML = BLOQUES_ESTUDIO.map(b=>'<option>'+b+'</option>').join('');
   buildCatalogShell('temas','Tu temario, bien organizado','Todo lo que necesitas para tu preparación, en un solo lugar.');
-  buildCatalogShell('cg','Cultura general','Un poco cada día, con un objetivo claro.');
   renderAll();
   const tab = ls('pt_alumno_tab'); if(tab) activarTab(tab);
 }
 function renderAll(){
-  renderSemana(); renderCatalog('temas'); renderCatalog('cg'); renderPracticos();
+  renderSemana(); renderCatalog('temas'); renderCultura(); renderPracticos();
   renderProgramacion(); renderRecursos(); renderProgreso(); renderBell();
 }
 
@@ -917,8 +992,7 @@ function renderEstudio(){
 
 /* ---------- TEMARIO / CULTURA GENERAL ---------- */
 const CATS = {
-  temas:{ cat:()=>data.temas, prog:()=>data.temasProgreso, tipo:'temas', archivos:'temas', filtro:'todos', q:'', panel:'panel-temario' },
-  cg:{ cat:()=>data.cg, prog:()=>data.cgProgreso, tipo:'cg', archivos:'cg', filtro:'todos', q:'', panel:'panel-cultura' }
+  temas:{ cat:()=>data.temas, prog:()=>data.temasProgreso, tipo:'temas', archivos:'temas', filtro:'todos', q:'', panel:'panel-temario' }
 };
 function buildCatalogShell(key, titulo, lead){
   const cfg = CATS[key];
@@ -1286,7 +1360,6 @@ function renderProgreso(){
   const enviados = mp.filter(p=>enRango(p.fecha)).length;
   const corr = mp.filter(p=>p.estado==='corregido').length;
   const tp = progresoDe(data.temas||[], data.temasProgreso||[]);
-  const cp = progresoDe(data.cg||[], data.cgProgreso||[]);
 
   const buckets = bucketsEstudio(rg, misEstudio());
   const max = Math.max(0.5, ...buckets.map(b=>b.v));
@@ -1324,10 +1397,210 @@ function renderProgreso(){
       </div>
       <div class="stack">
         ${donutCard('Temario', tp, 'book-2')}
-        ${donutCard('Cultura general', cp, 'school')}
       </div>
     </div>`;
 }
+
+/* ---------- CULTURA GENERAL: cuadernos, exámenes y notas ---------- */
+const PARTES = [
+  { key:'lengua', label:'Lengua',          corto:'Lengua', max:'maxLengua', nota:'notaLengua', color:'#1F4D3A' },
+  { key:'mates',  label:'Matemáticas',     corto:'Mates',  max:'maxMates',  nota:'notaMates',  color:'#2F6F9F' },
+  { key:'cg',     label:'Cultura General', corto:'C. General', max:'maxCG', nota:'notaCG',     color:'#C77B1E' }
+];
+function fmtNum(n){ return String(Math.round(Number(n)*100)/100).replace('.',','); }
+function sobre10(nota, max){ return Math.round(Number(nota)/Number(max)*10*100)/100; }
+function urlDescarga(url){
+  const s = String(url||'');
+  const m = s.match(/\/d\/([A-Za-z0-9_-]+)/) || s.match(/[?&]id=([A-Za-z0-9_-]+)/);
+  return m ? 'https://drive.google.com/uc?export=download&id='+m[1] : s;
+}
+function cuadernosDe(bloque){ return (data.cuadernos||[]).filter(c=>c.bloque===bloque).sort((a,b)=>a.orden-b.orden); }
+function examenesOrdenados(){ return (data.examenes||[]).slice().sort((a,b)=>a.orden-b.orden); }
+function notaDe(examenId){ return (data.notas||[]).find(n=>String(n.alumnoId)===String(alumnoId) && String(n.examenId)===String(examenId)) || null; }
+
+function renderCultura(){
+  const escritos = {};
+  document.querySelectorAll('#gridExamenes [data-nota-input]').forEach(i=>{ escritos[i.dataset.notaInput+'|'+i.dataset.parte] = i.value; });
+  renderCuadernosBloque('lengua','gridLengua','cntLengua');
+  renderCuadernosBloque('matematicas','gridMate','cntMate');
+  renderExamenes(escritos);
+  renderEvolucion();
+}
+function renderCuadernosBloque(bloque, gridId, cntId){
+  const lista = cuadernosDe(bloque);
+  const cnt = document.getElementById(cntId);
+  cnt.textContent = lista.length ? lista.length+(lista.length===1?' cuaderno':' cuadernos') : '';
+  cnt.style.display = lista.length ? '' : 'none';
+  const grid = document.getElementById(gridId);
+  if(!lista.length){ grid.innerHTML = '<div class="cg-vacio">Próximamente tendrás materiales disponibles</div>'; return; }
+  grid.innerHTML = lista.map(c=>`<div class="card cuad">
+    <div class="cuad-top"><div class="ico-circle"><i class="ti ti-notebook"></i></div>
+      <div><div class="cuad-t">${escapeHtml(c.titulo)}</div>${c.descripcion?`<div class="cuad-d">${escapeHtml(c.descripcion)}</div>`:''}</div></div>
+    <div class="cuad-btns">
+      <a class="btn" href="${escapeHtml(c.archivoUrl)}" target="_blank" rel="noopener"><i class="ti ti-eye"></i> Ver cuaderno</a>
+      <a class="btn btn-ghost" href="${escapeHtml(urlDescarga(c.archivoUrl))}" target="_blank" rel="noopener"><i class="ti ti-download"></i> Descargar</a>
+    </div></div>`).join('');
+}
+/* Partes puntuables de cada examen. Cada una tiene su propia puntuación máxima. */
+function partesDe(e){ return PARTES.filter(pt=>e[pt.max]>0); }
+/* Media de Lengua y Matemáticas (solo si el examen tiene ambas y el alumno ha puesto las dos notas).
+   Mismo máximo → media en esa escala; máximos distintos → media de las notas sobre 10. */
+function mediaLM(e, reg){
+  if(!reg || !(e.maxLengua>0) || !(e.maxMates>0) || reg.notaLengua==null || reg.notaMates==null) return null;
+  if(e.maxLengua===e.maxMates) return { valor:(reg.notaLengua+reg.notaMates)/2, max:e.maxLengua };
+  return { valor:(sobre10(reg.notaLengua,e.maxLengua)+sobre10(reg.notaMates,e.maxMates))/2, max:10 };
+}
+function renderExamenes(escritos){
+  const lista = examenesOrdenados();
+  const cnt = document.getElementById('cntExamenes');
+  cnt.textContent = lista.length ? lista.length+(lista.length===1?' examen':' exámenes') : '';
+  cnt.style.display = lista.length ? '' : 'none';
+  document.getElementById('pasosExamen').style.display = lista.length ? '' : 'none';
+  const grid = document.getElementById('gridExamenes');
+  if(!lista.length){ grid.innerHTML = '<div class="cg-vacio">Próximamente tendrás materiales disponibles</div>'; return; }
+  grid.innerHTML = lista.map(e=>{
+    const reg = notaDe(e.id);
+    const id = escapeHtml(e.id);
+    const partes = partesDe(e);
+    const media = mediaLM(e, reg);
+    let estado = 'Sin nota registrada';
+    if(reg){
+      const pills = partes.filter(pt=>reg[pt.nota]!=null).map(pt=>`<span class="pill ok"><i class="ti ti-circle-check"></i> ${pt.label}: ${fmtNum(reg[pt.nota])} / ${fmtNum(e[pt.max])}</span>`).join('');
+      const med = media ? `<span class="pill media"><i class="ti ti-sum"></i> Media Lengua + Mates: ${fmtNum(media.valor)} / ${fmtNum(media.max)}</span>` : '';
+      estado = `${pills}${med}<span class="sup-d">Registrada el ${escapeHtml(fechaCorta(reg.fechaRegistro))}${reg.fechaActualizacion?(' · editada el '+escapeHtml(fechaCorta(reg.fechaActualizacion))):''}</span>`;
+    }
+    const campos = partes.map(pt=>{
+      const valor = (escritos && escritos[e.id+'|'+pt.key]!==undefined) ? escritos[e.id+'|'+pt.key] : (reg && reg[pt.nota]!=null ? fmtNum(reg[pt.nota]) : '');
+      return `<div class="field"><label class="lbl" for="nota-${id}-${pt.key}">${pt.label} (de 0 a ${fmtNum(e[pt.max])})</label><input type="text" inputmode="decimal" autocomplete="off" id="nota-${id}-${pt.key}" data-nota-input="${id}" data-parte="${pt.key}" placeholder="Ej: ${fmtNum(e[pt.max]*0.75)}" value="${escapeHtml(valor)}"></div>`;
+    }).join('');
+    return `<div class="card ex">
+      <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;">
+        <div><div class="ex-t">${escapeHtml(e.titulo)}</div>${e.descripcion?`<div class="cuad-d">${escapeHtml(e.descripcion)}</div>`:''}</div>
+        <span class="ex-max">${partes.map(pt=>pt.corto+' '+fmtNum(e[pt.max])).join(' · ')}</span>
+      </div>
+      <div class="ex-docs">
+        <div class="ex-doc"><b><i class="ti ti-file-text"></i> Examen</b>
+          <a class="btn btn-ghost" href="${escapeHtml(e.examenUrl)}" target="_blank" rel="noopener">Consultar</a>
+          <a class="btn btn-ghost" href="${escapeHtml(urlDescarga(e.examenUrl))}" target="_blank" rel="noopener"><i class="ti ti-download"></i> Descargar</a></div>
+        <div class="ex-doc"><b><i class="ti ti-checklist"></i> Solucionario</b>
+          <a class="btn btn-ghost" href="${escapeHtml(e.solucionarioUrl)}" target="_blank" rel="noopener">Consultar</a>
+          <a class="btn btn-ghost" href="${escapeHtml(urlDescarga(e.solucionarioUrl))}" target="_blank" rel="noopener"><i class="ti ti-download"></i> Descargar</a></div>
+      </div>
+      <div class="nota-box">
+        <div class="nota-estado ${reg?'':'sin'}">${estado}</div>
+        <div class="nota-form">
+          ${campos}
+          <button class="btn" data-guardar-nota="${id}">Guardar mis notas</button>
+        </div>
+        <span class="status" id="st-ex-${id}"></span>
+      </div>
+    </div>`;
+  }).join('');
+}
+function setNotaStatus(id, html, cls){ const el = document.getElementById('st-ex-'+id); if(el){ el.innerHTML = html; el.className = 'status'+(cls?' '+cls:''); } }
+async function guardarNotaExamen(id){
+  const ex = (data.examenes||[]).find(e=>String(e.id)===String(id));
+  if(!ex) return;
+  const envio = { alumnoId, examenId:id };
+  let alguna = false;
+  for(const pt of partesDe(ex)){
+    const input = document.getElementById('nota-'+id+'-'+pt.key);
+    if(!input) continue;
+    const txt = input.value.trim().replace(',','.');
+    if(!txt){ envio[pt.key] = ''; continue; }
+    const n = Number(txt);
+    if(!isFinite(n)){ setNotaStatus(id,'Introduce una nota válida en '+pt.label+' (por ejemplo '+fmtNum(ex[pt.max]*0.75)+').','err'); return; }
+    if(n<0 || n>ex[pt.max]){ setNotaStatus(id,'La nota de '+pt.label+' debe estar entre 0 y '+fmtNum(ex[pt.max])+'.','err'); return; }
+    envio[pt.key] = Math.round(n*100)/100; alguna = true;
+  }
+  if(!alguna){ setNotaStatus(id,'Introduce al menos una nota.','err'); return; }
+  const btn = document.querySelector('[data-guardar-nota="'+CSS.escape(id)+'"]');
+  if(btn) btn.disabled = true;
+  setNotaStatus(id,'<span class="spinner"></span> Guardando...');
+  try{
+    const res = await apiPost('guardarNota', envio);
+    const r = res.registro;
+    PARTES.forEach(pt=>{ r[pt.nota] = (r[pt.nota]===''||r[pt.nota]==null) ? null : Number(r[pt.nota]); });
+    r.fechaRegistro = normFecha(r.fechaRegistro); r.fechaActualizacion = normFecha(r.fechaActualizacion);
+    data.notas = (data.notas||[]).filter(x=>!(String(x.alumnoId)===String(alumnoId) && String(x.examenId)===String(id)));
+    data.notas.push(r);
+    renderCultura();
+    toast('Notas guardadas');
+  }catch(e){
+    if(btn) btn.disabled = false;
+    setNotaStatus(id, escapeHtml(e.message), 'err');
+  }
+}
+document.getElementById('gridExamenes').addEventListener('click', e=>{
+  const b = e.target.closest('[data-guardar-nota]'); if(b) guardarNotaExamen(b.dataset.guardarNota);
+});
+document.getElementById('gridExamenes').addEventListener('keydown', e=>{
+  if(e.key==='Enter' && e.target.matches('[data-nota-input]')){ e.preventDefault(); guardarNotaExamen(e.target.dataset.notaInput); }
+});
+document.getElementById('cgJump').addEventListener('click', e=>{
+  const b = e.target.closest('[data-jump]'); if(!b) return;
+  document.getElementById(b.dataset.jump).scrollIntoView({behavior:'smooth', block:'start'});
+});
+
+function chartEvolucion(series, totalN){
+  const W=640,H=316,pl=36,pr=16,pt=24,pb=62, iw=W-pl-pr, ih=H-pt-pb;
+  const X = n => totalN===1 ? pl+iw/2 : pl+iw*(n-1)/(totalN-1);
+  const Y = v => pt+ih*(1-v/10);
+  let g='';
+  for(let v=0; v<=10; v+=2){ g += `<line x1="${pl}" x2="${W-pr}" y1="${Y(v)}" y2="${Y(v)}" stroke="#E3E6DE" stroke-width="1"/><text x="${pl-8}" y="${Y(v)+4}" text-anchor="end">${v}</text>`; }
+  let ejeX='';
+  for(let n=1;n<=totalN;n++){ ejeX += `<text x="${X(n)}" y="${H-pb+18}" text-anchor="middle">${n}</text>`; }
+  const dibujo = series.map(sr=>{
+    const dash = sr.dash ? ' stroke-dasharray="6 5"' : '';
+    const linea = sr.puntos.length>1 ? `<polyline fill="none" stroke="${sr.color}" stroke-width="2.5"${dash} stroke-linejoin="round" stroke-linecap="round" points="${sr.puntos.map(p=>X(p.n)+','+Y(p.y)).join(' ')}"/>` : '';
+    const pts = sr.puntos.map(p=>`<circle cx="${X(p.n)}" cy="${Y(p.y)}" r="4.5" fill="#fff" stroke="${sr.color}" stroke-width="2.5"><title>${escapeHtml(p.tip)}</title></circle>`).join('');
+    return linea+pts;
+  }).join('');
+  const leyenda = series.map((sr,i)=>{
+    const x = pl + i*150;
+    return `<g><line x1="${x}" x2="${x+22}" y1="${H-10}" y2="${H-10}" stroke="${sr.color}" stroke-width="2.5"${sr.dash?' stroke-dasharray="6 5"':''}/><text x="${x+28}" y="${H-6}">${escapeHtml(sr.nombre)}</text></g>`;
+  }).join('');
+  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Evolución de tus notas sobre 10">${g}${ejeX}${dibujo}<text x="${pl+iw/2}" y="${H-pb+38}" text-anchor="middle">Nº de examen · notas sobre 10</text>${leyenda}</svg>`;
+}
+function renderEvolucion(){
+  const cont = document.getElementById('cgEvolucion');
+  const exs = examenesOrdenados();
+  if(!exs.length){ cont.innerHTML = ''; return; }
+  const filas = exs.map((e,i)=>({e, n:i+1, reg:notaDe(e.id)})).filter(x=>x.reg && partesDe(x.e).some(pt=>x.reg[pt.nota]!=null));
+  if(!filas.length){
+    cont.innerHTML = `<div class="card evo-card"><div class="card-head"><h3><i class="ti ti-chart-line"></i> Mi evolución</h3></div><div class="empty" style="padding:10px 0;">Cuando registres tu primera nota, podrás ver aquí tu evolución.</div></div>`;
+    return;
+  }
+  const series = PARTES.map(pt=>({ nombre:pt.label, color:pt.color, puntos:[] }));
+  const serieMedia = { nombre:'Media Lengua + Mates', color:'#6B7280', dash:true, puntos:[] };
+  let distintas = false;
+  filas.forEach(x=>{
+    PARTES.forEach((pt,k)=>{
+      if(x.e[pt.max]>0 && x.reg[pt.nota]!=null){
+        series[k].puntos.push({ n:x.n, y:sobre10(x.reg[pt.nota], x.e[pt.max]), tip:x.e.titulo+' · '+pt.label+': '+fmtNum(x.reg[pt.nota])+' / '+fmtNum(x.e[pt.max])+' (sobre 10: '+fmtNum(sobre10(x.reg[pt.nota], x.e[pt.max]))+')' });
+        if(x.e[pt.max]!==10) distintas = true;
+      }
+    });
+    const m = mediaLM(x.e, x.reg);
+    if(m) serieMedia.puntos.push({ n:x.n, y:sobre10(m.valor, m.max), tip:x.e.titulo+' · Media Lengua + Mates: '+fmtNum(m.valor)+' / '+fmtNum(m.max)+' (sobre 10: '+fmtNum(sobre10(m.valor, m.max))+')' });
+  });
+  const visibles = series.concat([serieMedia]).filter(sr=>sr.puntos.length);
+  const celda = (e, v, max)=> v==null ? '<span class="sup-d">—</span>' : `<b>${fmtNum(v)}</b> / ${fmtNum(max)}`;
+  cont.innerHTML = `<div class="card evo-card">
+    <div class="card-head"><h3><i class="ti ti-chart-line"></i> Mi evolución</h3></div>
+    ${distintas?'<p class="hint">Como las partes tienen distinta puntuación máxima, el gráfico muestra tus notas convertidas a una escala de 0 a 10. Pasa el cursor (o toca un punto) para ver la nota original.</p>':''}
+    ${chartEvolucion(visibles, exs.length)}
+    <div class="hist-wrap"><table class="hist"><thead><tr><th>Nº</th><th>Examen</th><th>Lengua</th><th>Matemáticas</th><th>Media L+M</th><th>Cultura General</th><th class="col-fecha">Registro</th></tr></thead><tbody>
+      ${filas.map(x=>{ const m = mediaLM(x.e, x.reg); return `<tr><td>${x.n}</td><td>${escapeHtml(x.e.titulo)}</td>
+        <td>${celda(x.e, x.e.maxLengua>0?x.reg.notaLengua:null, x.e.maxLengua)}</td>
+        <td>${celda(x.e, x.e.maxMates>0?x.reg.notaMates:null, x.e.maxMates)}</td>
+        <td>${m?celda(x.e, m.valor, m.max):'<span class="sup-d">—</span>'}</td>
+        <td>${celda(x.e, x.e.maxCG>0?x.reg.notaCG:null, x.e.maxCG)}</td>
+        <td class="col-fecha">${escapeHtml(fechaCorta(x.reg.fechaRegistro))}</td></tr>`; }).join('')}
+    </tbody></table></div>
+  </div>`;
+}
+
 
 init();
 </script>
