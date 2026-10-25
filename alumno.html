@@ -479,6 +479,15 @@
   .wsin h4{margin:0 0 6px;font-size:13px;font-family:var(--serif);}
   .wsin .wtask{margin-top:4px;}
   .plan-sel{font:inherit;font-size:13px;padding:7px 10px;border:1.5px solid var(--line);border-radius:9px;background:#fff;}
+  /* ---------- Supuestos publicados: enunciado + resolución + corrección ---------- */
+  .sup2{margin-bottom:16px;}
+  .sup2-h{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap;margin-bottom:12px;}
+  .sup2-cols{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  .sup2-col{border:1px solid var(--line);border-radius:var(--radius-sm,12px);padding:14px;background:var(--card-alt);min-width:0;}
+  .sup2-t{font-family:var(--serif);font-weight:600;font-size:16px;margin-bottom:10px;}
+  .sup2-lbl{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-soft);margin-bottom:4px;}
+  .sup2 .sim-box.corr{margin-top:14px;}
+  @media (max-width:760px){ .sup2-cols{grid-template-columns:1fr;} }
 </style>
 </head>
 <body>
@@ -594,24 +603,11 @@
 
       <!-- SUPUESTOS PRÁCTICOS -->
       <section class="panel" id="panel-practicos">
-        <div class="page-head"><div><h1>Supuestos prácticos</h1><p class="lead">Practica, entrega y aprende con tus correcciones.</p></div></div>
-        <div class="split">
-          <div>
-            <div class="chips" id="chipsPracticos"></div>
-            <div class="card sup-wrap" id="listaPracticos"></div>
-          </div>
-          <div class="stack">
-            <div class="card">
-              <div class="card-head" style="margin-bottom:6px;"><h3><i class="ti ti-upload"></i> Entregar un supuesto</h3></div>
-              <p class="hint">Escribe tu respuesta o sube una foto o PDF y tu preparador la corregirá.</p>
-              <div class="field"><label class="lbl">Texto (opcional si subes archivo)</label><textarea id="practicoTexto" placeholder="Pega aquí tu supuesto práctico resuelto..."></textarea></div>
-              <div class="field"><label class="lbl">Foto o PDF (opcional)</label><input type="file" id="practicoFoto" accept="image/*,application/pdf"></div>
-              <button class="btn btn-block" id="btnEnviarPractico"><i class="ti ti-upload"></i> Entregar supuesto</button>
-              <span class="status" id="submitStatus"></span>
-            </div>
-            <div id="archivosPracticos"></div>
-          </div>
-        </div>
+        <div class="page-head"><div><h1>Supuestos prácticos</h1><p class="lead">Descarga el enunciado, sube tu resolución en PDF y consulta la corrección de tu preparadora.</p></div></div>
+        <div class="chips" id="chipsPracticos"></div>
+        <div id="listaSupuestos"></div>
+        <div id="legacyPracticos"></div>
+        <div id="archivosPracticos"></div>
       </section>
 
       <!-- PROGRAMACIÓN Y DEFENSA -->
@@ -777,12 +773,13 @@ function normHora(v){
   return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
 }
 function normalizarDatos(){
-  ['calendario','practicos','temas','temasProgreso','cg','cgProgreso','archivos','estudio','recursos','objetivos','ajustes','cuadernos','examenes','notas','planificador','simulacros'].forEach(k=>{ if(!data[k]) data[k]=[]; });
+  ['calendario','practicos','temas','temasProgreso','cg','cgProgreso','archivos','estudio','recursos','objetivos','ajustes','cuadernos','examenes','notas','planificador','simulacros','supuestos'].forEach(k=>{ if(!data[k]) data[k]=[]; });
   data.simulacros.forEach(x=>{ x.fechaRealizacion = normFecha(x.fechaRealizacion); x.fechaEntrega = normFecha(x.fechaEntrega); x.fechaCorreccion = normFecha(x.fechaCorreccion); x.vistoAlumno = (x.vistoAlumno===true || String(x.vistoAlumno)==='true'); x.tiempoMin = (x.tiempoMin===''||x.tiempoMin==null) ? null : Number(x.tiempoMin); x.correccionNota = (x.correccionNota===''||x.correccionNota==null) ? null : Number(x.correccionNota); });
   data.planificador.forEach(x=>{ x.semana = normFecha(x.semana); x.dia = x.dia===''||x.dia==null ? null : Number(x.dia); x.hecho = (x.hecho===true || String(x.hecho)==='true'); x.texto = String(x.texto==null?'':x.texto); });
   data.calendario.forEach(ev=>{ ev.fecha = normFecha(ev.fecha); ev.hora = normHora(ev.hora); });
   data.practicos.forEach(p=>{ p.fecha = normFecha(p.fecha); p.fechaFeedback = normFecha(p.fechaFeedback); });
   data.archivos.forEach(a=>{ a.fecha = normFecha(a.fecha); });
+  data.supuestos.forEach(s=>{ s.fechaLimite = normFecha(s.fechaLimite); s.fechaPublicacion = normFecha(s.fechaPublicacion); });
   data.estudio.forEach(x=>{ x.fecha = normFecha(x.fecha); });
   data.recursos.forEach(r=>{ r.fecha = normFecha(r.fecha); });
   data.objetivos.forEach(o=>{ o.semana = normFecha(o.semana); });
@@ -1243,51 +1240,89 @@ function renderCatalogSide(key){
 }
 
 /* ---------- SUPUESTOS PRÁCTICOS ---------- */
+function supEntrega(supId){ return misPracticos().find(p=>p.supuestoId===supId) || null; }
+function supEstado(p){ return !p ? 'sin' : (p.estado==='corregido' ? 'corregido' : (p.estado==='en_correccion' ? 'en_correccion' : 'pendiente')); }
+function supPill(est){
+  const m = { sin:['media','ti-file-off','Sin entregar'], pendiente:['wait','ti-clock','Entregado · Pendiente de corrección'], en_correccion:['info','ti-pencil','En corrección'], corregido:['ok','ti-circle-check','Corregido'] }[est];
+  return `<span class="pill ${m[0]}"><i class="ti ${m[1]}"></i> ${m[2]}</span>`;
+}
+function botonesPdf(url){
+  return `<a class="btn btn-ghost" href="${escapeHtml(url)}" target="_blank" rel="noopener"><i class="ti ti-eye"></i> Ver</a> <a class="btn btn-ghost" href="${escapeHtml(urlDescarga(url))}" target="_blank" rel="noopener"><i class="ti ti-download"></i> Descargar</a>`;
+}
+function miCorreccionHtml(p){
+  const nota = (p.correccionNota!==''&&p.correccionNota!=null) ? Number(p.correccionNota) : null;
+  return `<div class="sim-box corr"><h4><i class="ti ti-circle-check"></i> Mi corrección</h4>
+    <div class="sim-m" style="margin-bottom:8px;"><span><i class="ti ti-calendar-check"></i> Corregido el ${escapeHtml(fechaCorta(p.fechaFeedback||p.fecha))}</span></div>
+    ${nota!=null?`<div style="margin-bottom:8px;">Nota<br><span class="sim-nota">${escapeHtml(fmtNum(nota))}</span> <span style="color:var(--ink-soft);">/ 10</span></div>`:''}
+    ${p.feedback?`<div class="sup2-lbl">Comentarios y recomendaciones</div><div class="fb" style="margin-bottom:8px;white-space:pre-wrap;">${escapeHtml(p.feedback)}</div>`:''}
+    ${p.correccionArchivoUrl?`<div class="sup2-lbl">PDF corregido</div><div>${botonesPdf(p.correccionArchivoUrl)}</div>`:''}</div>`;
+}
 function renderPracticos(){
-  const mios = misPracticos().sort((a,b)=>String(b.fecha).localeCompare(String(a.fecha)));
-  const nRev = mios.filter(p=>p.estado!=='corregido').length;
-  const nCor = mios.filter(p=>p.estado==='corregido').length;
-  const filtros = [['todos','Todos ('+mios.length+')'],['rev','En revisión ('+nRev+')'],['cor','Corregidos ('+nCor+')']];
+  const sups = (data.supuestos||[]).slice().sort((a,b)=>String(b.fechaPublicacion).localeCompare(String(a.fechaPublicacion)));
+  const hoy = todayISO();
+  const cnt = { todos:sups.length, sin:0, pend:0, cor:0 };
+  sups.forEach(s=>{ const e = supEstado(supEntrega(s.id)); if(e==='sin') cnt.sin++; else if(e==='corregido') cnt.cor++; else cnt.pend++; });
+  const filtros = [['todos','Todos ('+cnt.todos+')'],['sin','Sin entregar ('+cnt.sin+')'],['rev','Pendientes de corrección ('+cnt.pend+')'],['cor','Corregidos ('+cnt.cor+')']];
   document.getElementById('chipsPracticos').innerHTML = filtros.map(f=>`<button class="chip ${practicosFiltro===f[0]?'active':''}" data-pf="${f[0]}">${f[1]}</button>`).join('');
-  const lista = mios.filter(p=> practicosFiltro==='todos' || (practicosFiltro==='rev' ? p.estado!=='corregido' : p.estado==='corregido'));
-  const cont = document.getElementById('listaPracticos');
+  const lista = sups.filter(s=>{ const e = supEstado(supEntrega(s.id)); return practicosFiltro==='todos' || (practicosFiltro==='sin' ? e==='sin' : practicosFiltro==='rev' ? (e==='pendiente'||e==='en_correccion') : e==='corregido'); });
+  const cont = document.getElementById('listaSupuestos');
+  // conservar lo que se esté escribiendo
+  const escritos = {}; cont.querySelectorAll('[data-sup-com]').forEach(t=>{ escritos[t.dataset.supCom] = t.value; });
   if(!lista.length){
-    cont.innerHTML = `<div class="empty">${mios.length?'No hay supuestos con ese filtro.':'Todavía no has entregado ningún supuesto. Usa el formulario para enviar el primero.'}</div>`;
+    cont.innerHTML = `<div class="card"><div class="empty">${sups.length?'No hay supuestos con ese filtro.':'Tu preparadora todavía no ha publicado ningún supuesto práctico.'}</div></div>`;
   } else {
-    cont.innerHTML = lista.map(p=>{
-      const cor = p.estado==='corregido';
-      const abierto = practicosAbiertos.has(p.id);
-      const resumen = p.texto ? String(p.texto).replace(/\s+/g,' ').slice(0,140) : (p.fotoUrl ? 'Entrega con archivo adjunto.' : '');
-      let extra = '';
-      if(abierto){
-        extra = `<div class="sup-extra">`;
-        if(p.texto) extra += `<div class="hint" style="margin:0;">Tu entrega:</div><div class="fb" style="margin-bottom:8px;">${escapeHtml(p.texto)}</div>`;
-        if(p.fotoUrl) extra += htmlArchivoAdjunto(p.fotoUrl, 'practico-photo');
-        if(cor){
-          if(p.correccionNota!==''&&p.correccionNota!=null) extra += `<div class="hint" style="margin:8px 0 0;">Nota: <b>${fmtNum(p.correccionNota)} / 10</b></div>`;
-          if(p.feedback) extra += `<div class="hint" style="margin:8px 0 0;">Feedback de tu preparador:</div><div class="fb">${escapeHtml(p.feedback)}</div>`;
-          if(p.correccionArchivoUrl) extra += `<div style="margin-top:8px;"><a class="btn btn-secondary" href="${escapeHtml(p.correccionArchivoUrl)}" target="_blank" rel="noopener"><i class="ti ti-file-type-pdf"></i> Ver PDF corregido</a> <a class="btn btn-secondary" href="${escapeHtml(urlDescarga(p.correccionArchivoUrl))}" target="_blank" rel="noopener">Descargar</a></div>`;
-        }
-        extra += `</div>`;
+    cont.innerHTML = lista.map(s=>{
+      const p = supEntrega(s.id), est = supEstado(p);
+      const vencido = s.fechaLimite && s.fechaLimite<hoy && !p;
+      let res;
+      if(!p){
+        res = `<div class="field"><label class="lbl">Tu resolución (PDF)</label><input type="file" accept="application/pdf,.pdf" data-sup-file="${escapeHtml(s.id)}"></div>
+          <div class="field"><label class="lbl">Comentario (opcional)</label><textarea maxlength="2000" data-sup-com="${escapeHtml(s.id)}" placeholder="Algo que quieras comentarle a tu preparadora…">${escapeHtml(escritos[s.id]||'')}</textarea></div>
+          <button class="btn btn-block" data-sup-send="${escapeHtml(s.id)}"><i class="ti ti-upload"></i> Enviar a corregir</button>
+          <span class="status" data-sup-st="${escapeHtml(s.id)}"></span>`;
+      } else {
+        res = `<div class="sim-m" style="margin-bottom:8px;"><span><i class="ti ti-send"></i> Entregado el ${escapeHtml(fechaCorta(p.fecha))}</span></div>
+          <div class="sup2-lbl">Tu archivo</div><div style="margin-bottom:8px;"><i class="ti ti-file-type-pdf"></i> ${escapeHtml(p.fotoNombre||'Resolución.pdf')}</div><div>${botonesPdf(p.fotoUrl)}</div>
+          ${p.texto?`<div class="sup2-lbl" style="margin-top:10px;">Tu comentario</div><div class="fb" style="white-space:pre-wrap;">${escapeHtml(p.texto)}</div>`:''}`;
       }
-      return `<div class="sup-block"><div class="sup">
-        <div class="ico-circle"><i class="ti ti-file-text"></i></div>
-        <div><div class="sup-t">Supuesto · ${escapeHtml(fechaCorta(p.fecha))}</div><div class="sup-s">${escapeHtml(resumen)}</div></div>
-        <div class="sup-pill"><span class="pill ${cor?'ok':'rev'}">${cor?'Corregido':'En revisión'}</span><div class="sup-d" style="margin-top:4px;">${cor?('Corregido el '+escapeHtml(fechaCorta(p.fechaFeedback||p.fecha))):('Entregado el '+escapeHtml(fechaCorta(p.fecha)))}</div></div>
-        <div class="sup-act"><button class="btn btn-ghost" data-pab="${escapeHtml(p.id)}">${cor?'Ver corrección':'Ver entrega'} <i class="ti ti-chevron-${abierto?'up':'right'}"></i></button></div>
-      </div>${extra}</div>`;
+      return `<div class="card sup2">
+        <div class="sup2-h"><div><h3 style="margin:0;">${escapeHtml(s.titulo)}</h3>
+          <div class="sim-m"><span>Publicado el ${escapeHtml(fechaCorta(s.fechaPublicacion))}</span>${s.fechaLimite?`<span><i class="ti ti-calendar-due"></i> Fecha límite: ${escapeHtml(fechaCorta(s.fechaLimite))}${vencido?' · <b style="color:var(--red);">plazo vencido</b>':''}</span>`:''}</div></div>
+          <div>${supPill(est)}</div></div>
+        <div class="sup2-cols">
+          <div class="sup2-col"><div class="sup2-t"><i class="ti ti-file-text"></i> Enunciado</div>
+            ${s.descripcion?`<div class="fb" style="margin-bottom:10px;white-space:pre-wrap;">${escapeHtml(s.descripcion)}</div>`:''}
+            ${s.enunciadoUrl?`<div class="sup2-lbl">${escapeHtml(s.enunciadoNombre||'Enunciado.pdf')}</div><div>${botonesPdf(s.enunciadoUrl)}</div>`:'<div class="hint">Sin archivo.</div>'}</div>
+          <div class="sup2-col"><div class="sup2-t"><i class="ti ti-pencil"></i> Mi resolución</div>${res}</div>
+        </div>
+        ${est==='corregido'?miCorreccionHtml(p):''}
+      </div>`;
     }).join('');
-    cont.querySelectorAll('[data-pab]').forEach(b=>b.addEventListener('click', ()=>{
-      const id = b.dataset.pab;
-      if(practicosAbiertos.has(id)) practicosAbiertos.delete(id); else practicosAbiertos.add(id);
-      renderPracticos();
-    }));
   }
+  // entregas anteriores, hechas antes de que existieran los supuestos publicados
+  const viejas = misPracticos().filter(p=>!p.supuestoId).sort((a,b)=>String(b.fecha).localeCompare(String(a.fecha)));
+  document.getElementById('legacyPracticos').innerHTML = viejas.length ? `<div class="card"><div class="card-head"><h3><i class="ti ti-history"></i> Mis entregas anteriores</h3></div>` + viejas.map(p=>{
+    const cor = p.estado==='corregido', abierto = practicosAbiertos.has(p.id);
+    const resumen = p.texto ? String(p.texto).replace(/\s+/g,' ').slice(0,140) : (p.fotoUrl ? 'Entrega con archivo adjunto.' : '');
+    let extra = '';
+    if(abierto){
+      extra = `<div class="sup-extra">`;
+      if(p.texto) extra += `<div class="hint" style="margin:0;">Tu entrega:</div><div class="fb" style="margin-bottom:8px;">${escapeHtml(p.texto)}</div>`;
+      if(p.fotoUrl) extra += htmlArchivoAdjunto(p.fotoUrl, 'practico-photo');
+      if(cor) extra += miCorreccionHtml(p);
+      extra += `</div>`;
+    }
+    return `<div class="sup-block"><div class="sup"><div class="ico-circle"><i class="ti ti-file-text"></i></div>
+      <div><div class="sup-t">Supuesto · ${escapeHtml(fechaCorta(p.fecha))}</div><div class="sup-s">${escapeHtml(resumen)}</div></div>
+      <div class="sup-pill"><span class="pill ${cor?'ok':'rev'}">${cor?'Corregido':'En revisión'}</span></div>
+      <div class="sup-act"><button class="btn btn-ghost" data-pab="${escapeHtml(p.id)}">${cor?'Ver corrección':'Ver entrega'} <i class="ti ti-chevron-${abierto?'up':'right'}"></i></button></div></div>${extra}</div>`;
+  }).join('') + '</div>' : '';
   document.getElementById('archivosPracticos').innerHTML = htmlArchivos('practicos','Materiales de tu preparador');
 }
-document.getElementById('chipsPracticos').addEventListener('click', e=>{
-  const c = e.target.closest('[data-pf]'); if(!c) return;
-  practicosFiltro = c.dataset.pf; renderPracticos();
+document.getElementById('panel-practicos').addEventListener('click', e=>{
+  const c = e.target.closest('[data-pf]'); if(c){ practicosFiltro = c.dataset.pf; renderPracticos(); return; }
+  const b = e.target.closest('[data-pab]'); if(b){ const id = b.dataset.pab; if(practicosAbiertos.has(id)) practicosAbiertos.delete(id); else practicosAbiertos.add(id); renderPracticos(); return; }
+  const s = e.target.closest('[data-sup-send]'); if(s) enviarResolucion(s.dataset.supSend);
 });
 function fileToBase64(file){
   return new Promise((resolve,reject)=>{
@@ -1297,31 +1332,29 @@ function fileToBase64(file){
     r.readAsDataURL(file);
   });
 }
-document.getElementById('btnEnviarPractico').addEventListener('click', async ()=>{
-  const st = document.getElementById('submitStatus');
-  const texto = document.getElementById('practicoTexto').value.trim();
-  const fotoInput = document.getElementById('practicoFoto');
-  const file = fotoInput.files[0];
-  if(!texto && !file){ st.textContent='Escribe el texto o sube una foto/PDF de tu práctico.'; st.className='status err'; return; }
-  if(file && file.size > 15*1024*1024){ st.textContent='El archivo supera los 15 MB. Súbelo más pequeño.'; st.className='status err'; return; }
-  st.innerHTML = '<span class="spinner"></span> Enviando...'; st.className='status';
-  const payload = { id: uid('pr'), alumnoId, fecha: todayISO(), texto };
-  if(file){
-    payload.fotoBase64 = await fileToBase64(file);
-    payload.fotoNombre = file.name;
-  }
-  data.practicos.push({ id: payload.id, alumnoId, fecha: payload.fecha, texto, estado:'pendiente' });
-  renderPracticos(); renderSemana(); renderProgreso();
-  document.getElementById('practicoTexto').value=''; fotoInput.value='';
+async function enviarResolucion(supId){
+  const q = sel => document.querySelector('[data-'+sel+'="'+supId+'"]');
+  const st = q('sup-st'), btn = q('sup-send');
+  const err = (m)=>{ st.innerHTML = m; st.className = 'status err'; };
+  const file = q('sup-file').files[0];
+  const comentario = q('sup-com').value.trim();
+  if(!file){ err('Adjunta tu resolución en PDF.'); return; }
+  if(!(file.type==='application/pdf' || /\.pdf$/i.test(file.name))){ err('El archivo debe ser un PDF.'); return; }
+  if(file.size > 12*1024*1024){ err('El archivo supera los 12 MB. Reduce su tamaño y vuelve a intentarlo.'); return; }
+  btn.disabled = true; st.innerHTML = '<span class="spinner"></span> Subiendo tu resolución… no cierres esta ventana.'; st.className = 'status';
   try{
-    await apiPost('addPractico', payload);
-    st.textContent='Práctico enviado. Tu preparador lo revisará pronto.'; st.className='status ok';
-  }catch(e){
-    st.textContent='Error al enviar: '+e.message+'. Vuelve a intentarlo.'; st.className='status err';
-    data.practicos = data.practicos.filter(x=>x.id!==payload.id);
+    const base64 = await fileToBase64(file);
+    const res = await apiPost('entregarSupuesto', { id: uid('pr'), alumnoId, supuestoId: supId, comentario, base64, nombre: file.name });
+    if(!res.practico || !res.practico.id) throw new Error('El servidor no confirmó la entrega.');
+    data.practicos.push(res.practico); normalizarDatos();
     renderPracticos(); renderSemana(); renderProgreso();
+    toast('Resolución enviada. Quedará pendiente de corrección.');
+  }catch(e){
+    btn.disabled = false;
+    err('No se ha podido enviar: '+escapeHtml(e.message)+' Tu entrega NO se ha registrado; inténtalo de nuevo.');
   }
-});
+}
+
 
 /* ---------- PROGRAMACIÓN Y DEFENSA (se guarda en este dispositivo) ---------- */
 /* Índice de la programación: n = nivel de sangría, c = numeración, t = título. Las UPD llevan solo su código. */

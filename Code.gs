@@ -19,7 +19,9 @@ const DRIVE_FOLDER_NAME = 'PT_Practicos_Fotos';
 const HEADERS = {
   Alumnos: ['id', 'nombre', 'email', 'clave', 'etapa', 'discapacidad', 'notas'],
   Calendario: ['id', 'fecha', 'hora', 'alumnoId', 'tipo', 'tema', 'notas'],
-  Practicos: ['id', 'alumnoId', 'fecha', 'texto', 'fotoUrl', 'estado', 'feedback', 'fechaFeedback', 'borradorComentario', 'borradorNota', 'borradorArchivoUrl', 'borradorArchivoNombre', 'correccionNota', 'correccionArchivoUrl', 'correccionArchivoNombre'],
+  Practicos: ['id', 'alumnoId', 'fecha', 'texto', 'fotoUrl', 'estado', 'feedback', 'fechaFeedback', 'borradorComentario', 'borradorNota', 'borradorArchivoUrl', 'borradorArchivoNombre', 'correccionNota', 'correccionArchivoUrl', 'correccionArchivoNombre', 'supuestoId', 'fotoNombre'],
+  // Supuestos prácticos publicados por la preparadora (enunciado en PDF). Las entregas de los alumnos están en Practicos (supuestoId)
+  Supuestos: ['id', 'titulo', 'descripcion', 'enunciadoUrl', 'enunciadoNombre', 'fechaLimite', 'fechaPublicacion'],
   Temas: ['id', 'numero', 'titulo', 'archivoUrl'],
   TemasProgreso: ['alumnoId', 'temaId', 'estado', 'pct'],
   CG: ['id', 'numero', 'titulo', 'archivoUrl'],
@@ -62,7 +64,7 @@ function getSheet_(name) {
 
 function ensureHeaders_() {
   const cache = CacheService.getScriptCache();
-  if (cache.get('headers_ok_v7')) return;
+  if (cache.get('headers_ok_v8')) return;
   Object.keys(HEADERS).forEach(name => {
     const sh = getSheet_(name);
     if (sh.getLastRow() === 0) {
@@ -74,10 +76,10 @@ function ensureHeaders_() {
       }
     }
   });
-  try { cache.put('headers_ok_v7', '1', 21600); } catch (err) { /* no pasa nada si falla */ }
+  try { cache.put('headers_ok_v8', '1', 21600); } catch (err) { /* no pasa nada si falla */ }
 }
 
-const DATE_FIELDS = { Calendario: ['fecha'], Practicos: ['fecha', 'fechaFeedback'], Archivos: ['fecha'], Estudio: ['fecha'], Planificador: ['semana'], Simulacros: ['fechaRealizacion', 'fechaEntrega', 'fechaCorreccion'], Objetivos: ['semana'], Recursos: ['fecha'], Cuadernos: ['fecha'], Examenes: ['fecha'], Notas: ['fechaRegistro', 'fechaActualizacion'] };
+const DATE_FIELDS = { Calendario: ['fecha'], Practicos: ['fecha', 'fechaFeedback'], Supuestos: ['fechaLimite', 'fechaPublicacion'], Archivos: ['fecha'], Estudio: ['fecha'], Planificador: ['semana'], Simulacros: ['fechaRealizacion', 'fechaEntrega', 'fechaCorreccion'], Objetivos: ['semana'], Recursos: ['fecha'], Cuadernos: ['fecha'], Examenes: ['fecha'], Notas: ['fechaRegistro', 'fechaActualizacion'] };
 const TIME_FIELDS = { Calendario: ['hora'] };
 
 function normalizeRow_(sheetName, obj) {
@@ -541,7 +543,8 @@ function buildFullData_() {
     cuadernos: sheetToObjects_('Cuadernos').sort(porOrden_),
     examenes: sheetToObjects_('Examenes').sort(porOrden_),
     notas: sheetToObjects_('Notas'),
-    simulacros: sheetToObjects_('Simulacros')
+    simulacros: sheetToObjects_('Simulacros'),
+    supuestos: sheetToObjects_('Supuestos')
   };
   try { cache.put('getAll_v2', JSON.stringify(result), 300); } catch (err) { /* si supera 100KB, seguimos sin caché */ }
   return result;
@@ -595,7 +598,9 @@ function buildAlumnoScoped_(id) {
     // Privado: solo las filas de este alumno; no forma parte de getAll (panel del profesor)
     planificador: sheetToObjects_('Planificador').filter(function(x){ return String(x.alumnoId) === String(id); }),
     // Solo los simulacros de este alumno, sin los borradores de corrección (privados de la preparadora)
-    simulacros: full.simulacros.filter(function(x){ return String(x.alumnoId) === String(id); }).map(simulacroParaAlumno_)
+    simulacros: full.simulacros.filter(function(x){ return String(x.alumnoId) === String(id); }).map(simulacroParaAlumno_),
+    // Los enunciados son visibles para todos los alumnos
+    supuestos: full.supuestos
   };
 }
 
@@ -644,6 +649,71 @@ function doPost(e) {
       case 'deleteEvento':
         deleteObjectById_('Calendario', 'id', p.id);
         break;
+      case 'addSupuesto':
+      case 'updateSupuesto': {
+        var esNuevo = (action === 'addSupuesto');
+        var titS = String(p.titulo || '').trim();
+        if (!titS) throw new Error('Escribe el título del supuesto.');
+        if (titS.length > 200) throw new Error('El título es demasiado largo (máximo 200 caracteres).');
+        var desS = String(p.descripcion || '').trim();
+        if (desS.length > 3000) throw new Error('La descripción es demasiado larga (máximo 3000 caracteres).');
+        var limS = String(p.fechaLimite || '').trim();
+        if (limS && !/^\d{4}-\d{2}-\d{2}$/.test(limS)) throw new Error('La fecha límite no es válida.');
+        var filaS = null;
+        if (!esNuevo) {
+          filaS = sheetToObjects_('Supuestos').find(function (x) { return String(x.id) === String(p.id); });
+          if (!filaS) throw new Error('No se encuentra el supuesto.');
+        }
+        var urlS = filaS ? filaS.enunciadoUrl : '', nomS = filaS ? filaS.enunciadoNombre : '', urlViejaS = '';
+        if (p.base64) {
+          if (!esPdf_(p.base64)) throw new Error('El enunciado debe ser un PDF.');
+          urlViejaS = urlS;
+          urlS = guardarPdf_(p.base64, p.nombre || 'enunciado.pdf');
+          nomS = p.nombre || 'enunciado.pdf';
+        } else if (esNuevo) {
+          throw new Error('Adjunta el PDF del enunciado.');
+        }
+        if (esNuevo) {
+          if (!p.id) throw new Error('Datos incompletos.');
+          var datosS = { id: p.id, titulo: safeText_(titS), descripcion: safeText_(desS), enunciadoUrl: urlS, enunciadoNombre: safeText_(nomS), fechaLimite: limS, fechaPublicacion: hoyISO_() };
+          try { appendObject_('Supuestos', datosS); } catch (errS) { papeleraDrive_(urlS); throw errS; }
+          result = { ok: true, supuesto: datosS };
+        } else {
+          var camS = { titulo: safeText_(titS), descripcion: safeText_(desS), enunciadoUrl: urlS, enunciadoNombre: safeText_(nomS), fechaLimite: limS };
+          updateObjectById_('Supuestos', 'id', p.id, camS);
+          if (urlViejaS) papeleraDrive_(urlViejaS);
+          result = { ok: true, supuesto: Object.assign({}, filaS, camS) };
+        }
+        break;
+      }
+      case 'deleteSupuesto': {
+        var entS = sheetToObjects_('Practicos').filter(function (x) { return String(x.supuestoId) === String(p.id); });
+        if (entS.length && !(p.confirmarEntregas === true || p.confirmarEntregas === 'true')) throw new Error('Este supuesto tiene ' + entS.length + ' entrega(s). Confirma que quieres eliminarlas también.');
+        entS.forEach(function (x) { papeleraDrive_(x.fotoUrl); papeleraDrive_(x.correccionArchivoUrl); papeleraDrive_(x.borradorArchivoUrl); deleteObjectById_('Practicos', 'id', x.id); });
+        sheetToObjects_('Supuestos').filter(function (x) { return String(x.id) === String(p.id); }).forEach(function (x) { papeleraDrive_(x.enunciadoUrl); });
+        deleteObjectById_('Supuestos', 'id', p.id);
+        break;
+      }
+      case 'entregarSupuesto': {
+        var supE = sheetToObjects_('Supuestos').find(function (x) { return String(x.id) === String(p.supuestoId); });
+        if (!supE) throw new Error('Este supuesto ya no está disponible.');
+        var aluE = sheetToObjects_('Alumnos').find(function (a) { return String(a.id) === String(p.alumnoId); });
+        if (!aluE) throw new Error('Alumno no encontrado.');
+        if (!p.id) throw new Error('Datos incompletos.');
+        var comE = String(p.comentario || '').trim();
+        if (comE.length > 2000) throw new Error('El comentario es demasiado largo (máximo 2000 caracteres).');
+        var previas = sheetToObjects_('Practicos').filter(function (x) { return String(x.supuestoId) === String(p.supuestoId) && String(x.alumnoId) === String(p.alumnoId); });
+        var mismaE = previas.find(function (x) { return String(x.id) === String(p.id); });
+        if (mismaE) { result = { ok: true, practico: practicoParaAlumno_(mismaE) }; break; }
+        if (previas.length) throw new Error('Ya has entregado este supuesto. Si necesitas volver a entregarlo, pídeselo a tu preparadora.');
+        if (!esPdf_(p.base64)) throw new Error('Adjunta tu resolución en formato PDF.');
+        // Primero se guarda el PDF: si falla, no se registra ninguna entrega
+        var urlE = guardarPdf_(p.base64, p.nombre || 'resolucion.pdf');
+        var filaE = { id: p.id, alumnoId: p.alumnoId, fecha: hoyISO_(), texto: safeText_(comE), fotoUrl: urlE, fotoNombre: safeText_(p.nombre || 'resolucion.pdf'), estado: 'pendiente', supuestoId: p.supuestoId };
+        try { appendObject_('Practicos', filaE); } catch (errE) { papeleraDrive_(urlE); throw errE; }
+        result = { ok: true, practico: practicoParaAlumno_(filaE) };
+        break;
+      }
       case 'addPractico':
         if (p.fotoBase64) {
           p.fotoUrl = guardarFoto_(p.fotoBase64, p.fotoNombre || ('practico_' + p.id + '.jpg'));

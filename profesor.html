@@ -219,6 +219,7 @@
   /* ---------- Seguimiento de alumnos y pendientes ---------- */
   .ent-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center;padding:12px 14px;border:1px solid var(--line);border-radius:var(--radius-sm);background:var(--card-alt);margin-bottom:8px;}
   .ent-t{font-weight:700;font-size:14.5px;word-break:break-word;}
+  .sim-m a{color:var(--forest);font-weight:600;}
   .ent-al{color:var(--forest);text-decoration:underline;cursor:pointer;}
   .ent-act{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end;}
   .al-card{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:14px;align-items:center;padding:14px 16px;border:1px solid var(--line);border-radius:var(--radius-sm);background:var(--card-alt);margin-bottom:8px;}
@@ -277,6 +278,7 @@
       <button class="burger" id="btnMenu" aria-label="Abrir menú"><i class="ti ti-menu-2"></i></button>
       <div class="sub">Panel del profesor</div>
       <div class="spacer"></div>
+      <button class="btn btn-secondary btn-sm" id="btnRefrescar" title="Traer las entregas nuevas de los alumnos"><i class="ti ti-refresh" aria-hidden="true"></i> Actualizar</button>
       <div class="who"><span id="academiaNombre">Oposición PT2028</span><span class="avatar">P</span></div>
     </div>
     <div class="content">
@@ -369,8 +371,17 @@
 
   <!-- PRACTICOS -->
   <div class="panel" id="panel-practicos">
+    <div class="card" id="supCard">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;">
+        <h3 style="margin:0;"><i class="ti ti-file-text" aria-hidden="true"></i> Supuestos publicados</h3>
+        <button class="btn btn-primary" id="btnNuevoSupuesto"><i class="ti ti-plus" aria-hidden="true"></i> Publicar nuevo supuesto</button>
+      </div>
+      <div class="hint" style="margin-top:12px;">Cada supuesto lleva su enunciado en PDF. Los alumnos lo descargan y entregan su resolución en PDF desde su página; aquí las recibes y las corriges.</div>
+      <div id="supLista"></div>
+      <div id="supDetalle"></div>
+    </div>
     <div class="card">
-      <h3><i class="ti ti-paperclip" aria-hidden="true"></i> Materiales y supuestos</h3>
+      <h3><i class="ti ti-paperclip" aria-hidden="true"></i> Otros materiales (archivos generales)</h3>
       <div class="hint" style="margin-top:0;">Sube aquí enunciados o materiales; los alumnos los verán en su pestaña de prácticos. Se guardan en tu Google Drive.</div>
       <div class="row">
         <div class="field"><label>Título (opcional, para encontrarlo fácil)</label><input type="text" id="archPracticosTitulo" placeholder="Ej: Supuesto TEA - convocatoria 2024"></div>
@@ -381,7 +392,7 @@
       <div id="archPracticosLista" style="margin-top:10px;"></div>
     </div>
     <div class="card">
-      <h3>Prácticos enviados por los alumnos</h3>
+      <h3>Todas las entregas de supuestos</h3>
       <div class="row">
         <div class="field"><label>Filtrar por alumno</label><select id="filtroAlumnoPracticos"></select></div>
         <div class="field"><label>Filtrar por estado</label>
@@ -543,11 +554,12 @@
 </div><!-- /shell -->
 
 <dialog class="dlg" id="dlgSimCorr"></dialog>
+<dialog class="dlg" id="dlgSupuesto"></dialog>
 <script>
 const API_URL = 'https://script.google.com/macros/s/AKfycbzrEozXfHf41s3QPZTZelrfIuxQ48xs4LAABID3Tmk4JqV0Ys0e_UCGOHlsV5aAAm-w/exec';
 const COACH_KEY = 'cgr-pt-2026'; // cámbiala si quieres
 
-let data = { alumnos:[], calendario:[], practicos:[], temas:[], temasProgreso:[], cg:[], cgProgreso:[], ajustes:[], dafo:[], archivos:[], estudio:[], objetivos:[], recursos:[], cuadernos:[], examenes:[], notas:[], simulacros:[] };
+let data = { alumnos:[], calendario:[], practicos:[], temas:[], temasProgreso:[], cg:[], cgProgreso:[], ajustes:[], dafo:[], archivos:[], estudio:[], objetivos:[], recursos:[], cuadernos:[], examenes:[], notas:[], simulacros:[], supuestos:[] };
 function estadoNorm(e){ return e==='Repasado' ? 'Primera vuelta' : (e||'Pendiente'); }
 function lunesDe(fechaISO){
   const [y,m,d] = fechaISO.split('-').map(Number);
@@ -656,6 +668,8 @@ function normalizarDatos(){
   if(!data.examenes) data.examenes = [];
   if(!data.notas) data.notas = [];
   if(!data.simulacros) data.simulacros = [];
+  if(!data.supuestos) data.supuestos = [];
+  data.supuestos.forEach(x=>{ x.fechaLimite = normFecha(x.fechaLimite); x.fechaPublicacion = normFecha(x.fechaPublicacion); });
   data.simulacros.forEach(x=>{ x.fechaRealizacion = normFecha(x.fechaRealizacion); x.fechaEntrega = normFecha(x.fechaEntrega); x.fechaCorreccion = normFecha(x.fechaCorreccion); x.tiempoMin = (x.tiempoMin===''||x.tiempoMin==null)?null:Number(x.tiempoMin); x.borradorNota = (x.borradorNota===''||x.borradorNota==null)?null:Number(x.borradorNota); x.correccionNota = (x.correccionNota===''||x.correccionNota==null)?null:Number(x.correccionNota); });
   data.cuadernos.forEach(c=>{ c.fecha = normFecha(c.fecha); c.orden = Number(c.orden)||0; });
   data.examenes.forEach(e=>{ e.fecha = normFecha(e.fecha); e.orden = Number(e.orden)||0; normExamen(e); });
@@ -685,6 +699,7 @@ function refreshUI(){
   renderPanel();
   renderCalendar();
   renderPracticos();
+  renderSupuestos();
   renderCatalogTab('temas','Temas',data.temas,data.temasProgreso,'temas');
   renderCultura();
   renderSimulacros();
@@ -856,7 +871,7 @@ function entregas(){
     const txt = String(p.texto||'').replace(/\s+/g,' ').trim();
     const est = estadoEnt(p.estado);
     out.push({ key:'p:'+p.id, tipo:'practico', id:p.id, alumnoId:p.alumnoId,
-      titulo: txt ? (txt.length>60 ? txt.slice(0,60)+'…' : txt) : 'Supuesto práctico del '+fechaCorta(p.fecha),
+      titulo: p.supuestoId ? supTitulo(p.supuestoId) : (txt ? (txt.length>60 ? txt.slice(0,60)+'…' : txt) : 'Supuesto práctico del '+fechaCorta(p.fecha)),
       fechaEntrega:p.fecha||'', estado:est, fechaCorreccion: est==='corregido' ? (p.fechaFeedback||'') : '',
       nota: (est==='corregido' && p.correccionNota!==''&& p.correccionNota!=null) ? Number(p.correccionNota) : null, raw:p });
   });
@@ -868,6 +883,7 @@ function entregas(){
   });
   return out;
 }
+function supTitulo(id){ const x = (data.supuestos||[]).find(y=>y.id===id); return x ? x.titulo : 'Supuesto (eliminado)'; }
 function entregaPorKey(k){ return entregas().find(e=>e.key===k); }
 function porFechaAsc(a,b){ return String(a.fechaEntrega).localeCompare(String(b.fechaEntrega)) || String(a.key).localeCompare(String(b.key)); }
 function statsAlumno(id){
@@ -888,9 +904,104 @@ function filaEntrega(e, conAlumno){
   </div>`;
 }
 
+/* ---------- SUPUESTOS PUBLICADOS: crear, editar y recibir las entregas ---------- */
+let supAbierto = null; const supFiltro = { alumno:'', estado:'' };
+function entregasDe(supId){ return entregas().filter(e=>e.tipo==='practico' && e.raw.supuestoId===supId); }
+function pillEntrega(est){ return est==='sin' ? '<span class="pill neutral"><i class="ti ti-file-off"></i> Sin entregar</span>' : simPill(est); }
+function renderSupuestos(){
+  const lista = document.getElementById('supLista'), det = document.getElementById('supDetalle');
+  if(supAbierto && !data.supuestos.find(x=>x.id===supAbierto)) supAbierto = null;
+  if(supAbierto){ lista.style.display = 'none'; renderSupDetalle(); return; }
+  det.innerHTML = ''; lista.style.display = '';
+  const sups = data.supuestos.slice().sort((a,b)=>String(b.fechaPublicacion).localeCompare(String(a.fechaPublicacion)));
+  if(!sups.length){ lista.innerHTML = '<div class="empty">Todavía no has publicado ningún supuesto. Pulsa «Publicar nuevo supuesto».</div>'; return; }
+  lista.innerHTML = sups.map(x=>{
+    const es = entregasDe(x.id), pend = es.filter(e=>e.estado!=='corregido').length;
+    return `<div class="ent-row">
+      <div class="ent-main"><div class="ent-t">${escapeHtml(x.titulo)}</div>
+        <div class="sim-m"><span>Publicado el ${escapeHtml(fechaCorta(x.fechaPublicacion))}</span>${x.fechaLimite?`<span><i class="ti ti-calendar-due"></i> Fecha límite: ${escapeHtml(fechaCorta(x.fechaLimite))}</span>`:''}<span><b>${es.length}</b> de ${data.alumnos.length} alumno${data.alumnos.length===1?'':'s'} han entregado</span><span>${pend?`<b style="color:var(--amber);">${pend} pendiente${pend===1?'':'s'} de corregir</b>`:'Nada pendiente de corregir'}</span></div></div>
+      <div class="ent-act"><button class="btn btn-primary btn-sm" data-sup-abrir="${escapeHtml(x.id)}">Abrir</button><button class="btn btn-secondary btn-sm" data-sup-edit="${escapeHtml(x.id)}">Editar</button><button class="btn btn-danger btn-sm" data-sup-del="${escapeHtml(x.id)}" title="Eliminar supuesto"><i class="ti ti-trash"></i></button></div>
+    </div>`;
+  }).join('');
+}
+function renderSupDetalle(){
+  const x = data.supuestos.find(y=>y.id===supAbierto); const det = document.getElementById('supDetalle');
+  const es = entregasDe(x.id);
+  const filas = data.alumnos.slice().sort((a,b)=>String(a.nombre).localeCompare(String(b.nombre))).map(a=>{ const e = es.find(y=>y.alumnoId===a.id) || null; return { a, e, est: e ? e.estado : 'sin' }; });
+  const vis = filas.filter(f=>(!supFiltro.alumno||f.a.id===supFiltro.alumno) && (!supFiltro.estado||f.est===supFiltro.estado));
+  const pend = es.filter(e=>e.estado!=='corregido').length;
+  const opt = (v,t,sel)=>`<option value="${v}" ${sel===v?'selected':''}>${t}</option>`;
+  det.innerHTML = `<button class="icon-btn" id="supVolver"><i class="ti ti-arrow-left"></i> Todos los supuestos</button>
+    <h3 style="margin:10px 0 4px;">${escapeHtml(x.titulo)}</h3>
+    <div class="sim-m"><span>Publicado el ${escapeHtml(fechaCorta(x.fechaPublicacion))}</span>${x.fechaLimite?`<span>Fecha límite: ${escapeHtml(fechaCorta(x.fechaLimite))}</span>`:''}</div>
+    ${x.descripcion?`<div class="sim-pre" style="margin:8px 0;">${escapeHtml(x.descripcion)}</div>`:''}
+    <div class="sim-act" style="justify-content:flex-start;margin:6px 0 12px;">${x.enunciadoUrl?`<i class="ti ti-file-type-pdf"></i> ${escapeHtml(x.enunciadoNombre||'Enunciado.pdf')} · <a href="${escapeHtml(x.enunciadoUrl)}" target="_blank" rel="noopener">Ver enunciado</a><a href="${escapeHtml(urlDescarga(x.enunciadoUrl))}" target="_blank" rel="noopener">Descargar</a>`:''}</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;"><span class="pill neutral">${es.length} de ${data.alumnos.length} han entregado</span><span class="pill wait">${pend} pendiente${pend===1?'':'s'} de corregir</span><span class="pill ok">${es.filter(e=>e.estado==='corregido').length} corregidas</span><span class="pill neutral">${data.alumnos.length-es.length} sin entregar</span></div>
+    <div class="row"><div class="field"><label>Alumno</label><select id="supFAlumno">${opt('','Todos los alumnos',supFiltro.alumno)}${data.alumnos.slice().sort((a,b)=>String(a.nombre).localeCompare(String(b.nombre))).map(a=>opt(a.id,escapeHtml(a.nombre),supFiltro.alumno)).join('')}</select></div>
+      <div class="field"><label>Estado</label><select id="supFEstado">${opt('','Todos',supFiltro.estado)}${opt('sin','Sin entregar',supFiltro.estado)}${opt('pendiente','Pendiente de corrección',supFiltro.estado)}${opt('en_correccion','En corrección',supFiltro.estado)}${opt('corregido','Corregido',supFiltro.estado)}</select></div></div>
+    ${!data.alumnos.length ? '<div class="empty">Todavía no tienes alumnos.</div>' : vis.length ? vis.map(({a,e,est})=>`<div class="ent-row">
+      <div class="ent-main"><div class="ent-t"><a href="#" class="ent-al" data-ficha="${escapeHtml(a.id)}">${escapeHtml(a.nombre)}</a></div>
+        <div class="sim-m">${e?`<span>Entregado el ${escapeHtml(fechaCorta(e.fechaEntrega))}</span><span><i class="ti ti-file-type-pdf"></i> ${escapeHtml(e.raw.fotoNombre||'Resolución')} · <a href="${escapeHtml(e.raw.fotoUrl)}" target="_blank" rel="noopener">Ver</a> <a href="${escapeHtml(urlDescarga(e.raw.fotoUrl))}" target="_blank" rel="noopener">Descargar</a></span>${e.fechaCorreccion?`<span>Corregido el ${escapeHtml(fechaCorta(e.fechaCorreccion))}</span>`:''}${e.nota!=null?`<span>Nota: <b>${fmtNum(e.nota)}</b> / 10</span>`:''}`:'<span>Todavía no ha entregado</span>'}</div></div>
+      <div class="ent-act">${pillEntrega(est)}${e?`<button class="btn ${est==='corregido'?'btn-secondary':'btn-primary'} btn-sm" data-corr="${escapeHtml(e.key)}">${est==='corregido'?'Ver / actualizar':'Corregir'}</button>`:''}</div></div>`).join('') : '<div class="empty">No hay alumnos con esos filtros.</div>'}`;
+  document.getElementById('supVolver').addEventListener('click', ()=>{ supAbierto = null; renderSupuestos(); });
+  document.getElementById('supFAlumno').addEventListener('change', ev=>{ supFiltro.alumno = ev.target.value; renderSupDetalle(); });
+  document.getElementById('supFEstado').addEventListener('change', ev=>{ supFiltro.estado = ev.target.value; renderSupDetalle(); });
+}
+document.getElementById('supCard').addEventListener('click', ev=>{
+  const ab = ev.target.closest('[data-sup-abrir]'); if(ab){ supAbierto = ab.dataset.supAbrir; supFiltro.alumno = supFiltro.estado = ''; renderSupuestos(); return; }
+  const ed = ev.target.closest('[data-sup-edit]'); if(ed){ abrirSupuesto(ed.dataset.supEdit); return; }
+  const del = ev.target.closest('[data-sup-del]'); if(del) eliminarSupuesto(del.dataset.supDel);
+});
+document.getElementById('btnNuevoSupuesto').addEventListener('click', ()=>abrirSupuesto(null));
+function abrirSupuesto(id){
+  const x = id ? data.supuestos.find(y=>y.id===id) : null; const d = document.getElementById('dlgSupuesto');
+  d.innerHTML = `<h3>${x?'Editar supuesto':'Publicar nuevo supuesto'}</h3>
+    <div class="field"><label>Título</label><input type="text" id="spTitulo" maxlength="200" placeholder="Ej: Supuesto práctico: síndrome de Down" value="${x?escapeHtml(x.titulo):''}"></div>
+    <div class="field"><label>Descripción o instrucciones (opcional)</label><textarea id="spDesc" maxlength="3000" style="min-height:100px;">${x?escapeHtml(x.descripcion||''):''}</textarea></div>
+    <div class="row"><div class="field"><label>Fecha límite de entrega (opcional)</label><input type="date" id="spLimite" value="${x?escapeHtml(x.fechaLimite||''):''}"></div>
+      <div class="field"><label>PDF del enunciado${x?' (déjalo vacío para conservar el actual)':''}</label><input type="file" id="spArchivo" accept="application/pdf,.pdf"></div></div>
+    ${x&&x.enunciadoUrl?`<div class="hint" style="margin:-4px 0 8px;">Enunciado actual: <a href="${escapeHtml(x.enunciadoUrl)}" target="_blank" rel="noopener">${escapeHtml(x.enunciadoNombre||'Enunciado.pdf')}</a></div>`:''}
+    <span class="status" id="spStatus"></span>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px;"><button class="btn btn-secondary" id="spCerrar" type="button">Cancelar</button><button class="btn btn-primary" id="spGuardar" type="button">${x?'Guardar cambios':'Publicar supuesto'}</button></div>`;
+  d.showModal();
+  document.getElementById('spCerrar').addEventListener('click', ()=>d.close());
+  document.getElementById('spGuardar').addEventListener('click', ()=>guardarSupuesto(id));
+}
+async function guardarSupuesto(id){
+  const st = (h,c)=>{ const el = document.getElementById('spStatus'); el.innerHTML = h; el.className = 'status'+(c?' '+c:''); };
+  const titulo = document.getElementById('spTitulo').value.trim(), descripcion = document.getElementById('spDesc').value.trim();
+  const fechaLimite = document.getElementById('spLimite').value, file = document.getElementById('spArchivo').files[0];
+  if(!titulo){ st('Escribe el título del supuesto.','err'); return; }
+  if(!id && !file){ st('Adjunta el PDF del enunciado.','err'); return; }
+  if(file){ const er = archivoPdfValido(file,'Enunciado'); if(er){ st(escapeHtml(er),'err'); return; } }
+  const btn = document.getElementById('spGuardar'); btn.disabled = true;
+  st('<span class="spinner"></span> '+(file?'Subiendo el PDF y guardando…':'Guardando…'));
+  try{
+    const payload = { id: id || uid('su'), titulo, descripcion, fechaLimite };
+    if(file){ payload.base64 = await fileToBase64(file); payload.nombre = file.name; }
+    const res = await apiPost(id ? 'updateSupuesto' : 'addSupuesto', payload);
+    if(!res.supuesto) throw new Error('El servidor no confirmó el guardado.');
+    const i = data.supuestos.findIndex(y=>y.id===res.supuesto.id);
+    if(i>=0) data.supuestos[i] = res.supuesto; else data.supuestos.push(res.supuesto);
+    normalizarDatos(); refreshEntregasViews();
+    document.getElementById('dlgSupuesto').close();
+  }catch(e){ btn.disabled = false; st(escapeHtml(e.message)+' (No se ha guardado nada.)','err'); }
+}
+async function eliminarSupuesto(id){
+  const x = data.supuestos.find(y=>y.id===id); if(!x) return;
+  const n = entregasDe(id).length;
+  if(!confirm('¿Eliminar el supuesto «'+x.titulo+'»?'+(n?'\n\nSe eliminarán también las '+n+' entrega(s) de los alumnos y sus correcciones. No se puede deshacer.':''))) return;
+  try{
+    await apiPost('deleteSupuesto', { id, confirmarEntregas: true });
+    data.supuestos = data.supuestos.filter(y=>y.id!==id); data.practicos = data.practicos.filter(p=>p.supuestoId!==id);
+    if(supAbierto===id) supAbierto = null;
+    refreshEntregasViews();
+  }catch(e){ mostrarError('No se ha podido eliminar el supuesto.\n\n'+e.message); }
+}
+
 /* Repinta todas las vistas que dependen de las entregas (tras corregir, borrar, etc.) */
 function refreshEntregasViews(){
-  renderSimulacros(); renderPracticos(); renderPendientes(); renderAlumnos();
+  renderSimulacros(); renderPracticos(); renderSupuestos(); renderPendientes(); renderAlumnos();
   if(fichaState.id) renderFicha();
 }
 
@@ -1062,9 +1173,11 @@ function renderFicha(){
   } else if(tab==='practicos'){
     const mats = (data.archivos||[]).filter(x=>x.categoria==='practicos');
     const mine = es.filter(e=>e.tipo==='practico').sort((x,y)=>porFechaAsc(y,x));
-    body = `<div class="hint" style="margin-top:0;">Enunciados y materiales de supuestos que has subido (los ven todos los alumnos): ${mats.length? mats.map(m=>`<a href="${escapeHtml(m.url)}" target="_blank" rel="noopener">${escapeHtml(m.titulo||m.nombre)}</a>`).join(' · ') : 'ninguno todavía'}.</div>
+    const entregados = new Set(mine.map(e=>e.raw.supuestoId).filter(Boolean));
+    const sinEntregar = (data.supuestos||[]).filter(x=>!entregados.has(x.id));
+    body = `<div class="hint" style="margin-top:0;">Supuestos publicados que este alumno todavía no ha entregado: ${sinEntregar.length ? sinEntregar.map(x=>`<b>${escapeHtml(x.titulo)}</b>${x.fechaLimite?' (límite '+escapeHtml(fechaCorta(x.fechaLimite))+')':''}`).join(' · ') : 'ninguno'}.</div>
       ${mine.length ? mine.map(e=>{ const p = e.raw; return `<div class="sim-box">
-        <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:center;"><h4 style="margin:0;">Supuesto del ${escapeHtml(fechaCorta(p.fecha))}</h4><span>${simPill(e.estado)} <button class="btn ${e.estado==='corregido'?'btn-secondary':'btn-primary'} btn-sm" data-corr="${escapeHtml(e.key)}">${e.estado==='corregido'?'Ver / actualizar':'Corregir'}</button></span></div>
+        <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:center;"><h4 style="margin:0;">${p.supuestoId?escapeHtml(e.titulo):'Supuesto del '+escapeHtml(fechaCorta(p.fecha))}</h4><span>${simPill(e.estado)} <button class="btn ${e.estado==='corregido'?'btn-secondary':'btn-primary'} btn-sm" data-corr="${escapeHtml(e.key)}">${e.estado==='corregido'?'Ver / actualizar':'Corregir'}</button></span></div>
         <div class="hint" style="margin:8px 0 4px;">Resolución del alumno:</div>
         ${p.texto?`<div class="sim-pre">${escapeHtml(p.texto)}</div>`:''}${p.fotoUrl?htmlArchivoAdjunto(p.fotoUrl,'practico-photo'):''}${!p.texto&&!p.fotoUrl?'<div class="hint">Sin contenido.</div>':''}
         ${resumenCorreccionHtml(e)}</div>`; }).join('') : '<div class="empty">Este alumno todavía no ha entregado ningún supuesto práctico.</div>'}`;
@@ -1280,7 +1393,7 @@ function renderPracticos(){
     const p = e.raw;
     const box = document.createElement('div'); box.className='card'; box.style.marginBottom='10px';
     let html = `<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;">
-      <div><strong><a href="#" class="ent-al" data-ficha="${escapeHtml(p.alumnoId)}">${escapeHtml(simAlumnoNombre(p.alumnoId))}</a></strong> — ${escapeHtml(p.fecha)} ${simPill(e.estado)}</div>
+      <div><strong><a href="#" class="ent-al" data-ficha="${escapeHtml(p.alumnoId)}">${escapeHtml(simAlumnoNombre(p.alumnoId))}</a></strong>${p.supuestoId?' · '+escapeHtml(e.titulo):''} — ${escapeHtml(p.fecha)} ${simPill(e.estado)}</div>
       <span style="display:flex;gap:6px;flex-wrap:wrap;"><button class="btn btn-secondary btn-sm" data-toggle>Ver</button><button class="btn ${e.estado==='corregido'?'btn-secondary':'btn-primary'} btn-sm" data-corr="${escapeHtml(e.key)}">${e.estado==='corregido'?'Ver / actualizar corrección':'Corregir'}</button><button class="btn btn-danger btn-sm" data-delpractico title="Eliminar este envío"><i class="ti ti-trash" aria-hidden="true"></i> Eliminar</button></span>
     </div>
     <div data-body style="display:none;margin-top:10px;">`;
@@ -1990,7 +2103,7 @@ function abrirCorreccion(key){
     ? `<div class="sim-m" style="margin:0 0 8px;"><span>Realizado el ${escapeHtml(fechaCorta(x.fechaRealizacion))}</span><span>Entregado el ${escapeHtml(fechaCorta(x.fechaEntrega))}</span>${x.tiempoMin?`<span>${x.tiempoMin} min</span>`:''}</div>
        ${x.comentario?`<div class="sim-pre" style="margin-bottom:8px;">${escapeHtml(x.comentario)}</div>`:'<div class="hint" style="margin:0 0 8px;">Sin comentario del alumno.</div>'}`
     : `<div class="sim-m" style="margin:0 0 8px;"><span>Entregado el ${escapeHtml(fechaCorta(x.fecha))}</span></div>
-       ${x.texto?`<div class="sim-pre" style="margin-bottom:8px;max-height:260px;overflow:auto;">${escapeHtml(x.texto)}</div>`:'<div class="hint" style="margin:0 0 8px;">Sin texto escrito.</div>'}`;
+       ${x.texto?`<div class="sim-pre" style="margin-bottom:8px;max-height:260px;overflow:auto;">${escapeHtml(x.texto)}</div>`:'<div class="hint" style="margin:0 0 8px;">'+(x.supuestoId?'Sin comentario del alumno.':'Sin texto escrito.')+'</div>'}`;
   d.dataset.key = key;
   d.innerHTML = `<h3>${escapeHtml(simAlumnoNombre(x.alumnoId))}</h3>
     <div class="hint" style="margin:-6px 0 8px;">${TIPO_ENT[e.tipo].t} · ${escapeHtml(e.titulo)}</div>
@@ -2053,6 +2166,32 @@ async function guardarCorreccion(key, publicar){
   }
 }
 
+
+/* Actualización de entregas: el panel carga los datos al abrirse, así que se vuelve a pedir al servidor
+   al pulsar «Actualizar», al volver a la pestaña y cada 2 minutos. Solo toca alumnos, prácticos, simulacros y notas
+   (no lo que estés escribiendo en otros formularios). */
+let refrescando = false;
+async function refrescarEntregas(manual){
+  if(refrescando || !data || document.getElementById('app').style.display==='none') return;
+  if(!manual && (document.getElementById('dlgSimCorr').open || document.hidden)) return;
+  refrescando = true;
+  const btn = document.getElementById('btnRefrescar');
+  if(manual){ btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Actualizando…'; }
+  try{
+    const nuevo = await apiGet('getAll');
+    ['alumnos','practicos','simulacros','notas','supuestos'].forEach(k=>{ if(Array.isArray(nuevo[k])) data[k] = nuevo[k]; });
+    normalizarDatos();
+    refreshEntregasViews(); renderCultura();
+    if(manual){ btn.innerHTML = '<i class="ti ti-circle-check"></i> Actualizado'; }
+  }catch(e){
+    if(manual) mostrarError('No se han podido traer los datos nuevos.\n\n' + e.message);
+  }
+  refrescando = false;
+  if(manual) setTimeout(()=>{ btn.disabled = false; btn.innerHTML = '<i class="ti ti-refresh"></i> Actualizar'; }, 1500);
+}
+document.getElementById('btnRefrescar').addEventListener('click', ()=>refrescarEntregas(true));
+document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) refrescarEntregas(false); });
+setInterval(()=>refrescarEntregas(false), 120000);
 </script>
 </body>
 </html>
