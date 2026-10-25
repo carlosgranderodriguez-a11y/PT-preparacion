@@ -62,6 +62,37 @@
   .plan-vacio{font-size:12.5px;color:var(--gray);font-style:italic;padding:2px 0 6px;}
   .plan-notas textarea{width:100%;min-height:130px;resize:vertical;font:inherit;font-size:14.5px;padding:12px 14px;border:1.5px solid var(--line);border-radius:var(--radius-sm);background:var(--card-alt);color:var(--ink);}
   .plan-notas textarea:focus{outline:none;border-color:var(--forest);background:#fff;}
+  /* ---------- Simulacros de tema ---------- */
+  .tema-tabs{margin:0 0 14px;}
+  .tema-tabs .chip{display:inline-flex;align-items:center;gap:8px;}
+  .tema-tabs .chip.active{background:var(--forest);border-color:var(--forest);color:#fff;}
+  .tt-badge{background:#D8553F;color:#fff;border-radius:999px;font-size:11px;font-weight:700;padding:1px 7px;}
+  .sim-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px;}
+  .sim-card{display:flex;flex-direction:column;gap:10px;}
+  .sim-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;}
+  .sim-t{font-family:var(--serif);font-weight:600;font-size:17px;line-height:1.25;}
+  .sim-m{font-size:12.5px;color:var(--gray);display:flex;flex-wrap:wrap;gap:4px 12px;}
+  .sim-new{background:#D8553F;color:#fff;border-radius:999px;font-size:11px;font-weight:700;padding:2px 9px;margin-left:6px;}
+  .sim-dlg{border:none;border-radius:var(--radius);padding:0;width:min(580px,94vw);max-height:92vh;box-shadow:0 20px 60px rgba(0,0,0,.3);}
+  .sim-dlg::backdrop{background:rgba(23,40,31,.5);}
+  .sim-dlg .dlg-in{padding:22px 24px;max-height:92vh;overflow-y:auto;}
+  .sim-dlg h3{font-size:22px;margin:0 0 4px;}
+  .sim-dlg .field{margin-bottom:12px;}
+  .sim-dlg label.lbl{display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-soft);margin-bottom:5px;}
+  .sim-dlg input[type=text],.sim-dlg input[type=date],.sim-dlg input[type=number],.sim-dlg select,.sim-dlg textarea{width:100%;font:inherit;font-size:15px;padding:10px 12px;border:1.5px solid var(--line);border-radius:var(--radius-sm);background:var(--card-alt);color:var(--ink);}
+  .sim-dlg textarea{min-height:90px;resize:vertical;}
+  .sim-dlg input:focus,.sim-dlg select:focus,.sim-dlg textarea:focus{outline:none;border-color:var(--forest);background:#fff;}
+  .sim-dlg input[type=file]{width:100%;font-size:13.5px;padding:8px;border:1.5px dashed var(--line);border-radius:var(--radius-sm);background:var(--card-alt);}
+  .sim-row2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .sim-actions{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;margin-top:6px;}
+  .sim-box{border:1px solid var(--line);border-radius:var(--radius-sm);padding:12px 14px;margin:12px 0;background:var(--card-alt);}
+  .sim-box h4{margin:0 0 6px;font-family:var(--serif);font-size:16px;}
+  .sim-box.corr{background:var(--green-soft);border-color:#BFE0CA;}
+  .sim-box.espera{background:var(--amber-soft);border-color:#EBD9A8;}
+  .sim-pre{white-space:pre-wrap;word-break:break-word;font-size:14.5px;}
+  .sim-nota{font-family:var(--serif);font-size:28px;font-weight:600;color:var(--forest);}
+  .sim-links{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;}
+  @media (max-width:520px){ .sim-row2{grid-template-columns:1fr;} .sim-dlg .dlg-in{padding:18px 16px;} }
   /* ---------- Layout ---------- */
   .app{display:grid;grid-template-columns:248px minmax(0,1fr);min-height:100vh;}
   .sidebar{background:linear-gradient(180deg,var(--forest) 0%,var(--forest-2) 100%);color:#E9F1EB;display:flex;flex-direction:column;padding:22px 14px 18px;position:sticky;top:0;height:100vh;overflow-y:auto;z-index:40;}
@@ -528,7 +559,15 @@
       </section>
 
       <!-- TEMARIO -->
-      <section class="panel" id="panel-temario"></section>
+      <section class="panel" id="panel-temario">
+        <div class="chips tema-tabs" id="temaTabs" role="tablist">
+          <button class="chip active" role="tab" data-tt="mis" id="ttMis">Mis temas</button>
+          <button class="chip" role="tab" data-tt="sim" id="ttSim">Simulacros de tema <span class="tt-badge hidden" id="ttBadge"></span></button>
+        </div>
+        <div id="tema-mis"></div>
+        <div id="tema-sim" class="hidden"></div>
+        <dialog class="sim-dlg" id="dlgSim"></dialog>
+      </section>
 
       <!-- SUPUESTOS PRÁCTICOS -->
       <section class="panel" id="panel-practicos">
@@ -706,7 +745,8 @@ function normHora(v){
   return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
 }
 function normalizarDatos(){
-  ['calendario','practicos','temas','temasProgreso','cg','cgProgreso','archivos','estudio','recursos','objetivos','ajustes','cuadernos','examenes','notas','planificador'].forEach(k=>{ if(!data[k]) data[k]=[]; });
+  ['calendario','practicos','temas','temasProgreso','cg','cgProgreso','archivos','estudio','recursos','objetivos','ajustes','cuadernos','examenes','notas','planificador','simulacros'].forEach(k=>{ if(!data[k]) data[k]=[]; });
+  data.simulacros.forEach(x=>{ x.fechaRealizacion = normFecha(x.fechaRealizacion); x.fechaEntrega = normFecha(x.fechaEntrega); x.fechaCorreccion = normFecha(x.fechaCorreccion); x.vistoAlumno = (x.vistoAlumno===true || String(x.vistoAlumno)==='true'); x.tiempoMin = (x.tiempoMin===''||x.tiempoMin==null) ? null : Number(x.tiempoMin); x.correccionNota = (x.correccionNota===''||x.correccionNota==null) ? null : Number(x.correccionNota); });
   data.planificador.forEach(x=>{ x.semana = normFecha(x.semana); x.dia = x.dia===''||x.dia==null ? null : Number(x.dia); x.hecho = (x.hecho===true || String(x.hecho)==='true'); x.texto = String(x.texto==null?'':x.texto); });
   data.calendario.forEach(ev=>{ ev.fecha = normFecha(ev.fecha); ev.hora = normHora(ev.hora); });
   data.practicos.forEach(p=>{ p.fecha = normFecha(p.fecha); p.fechaFeedback = normFecha(p.fechaFeedback); });
@@ -856,7 +896,7 @@ document.getElementById('btnMenu').addEventListener('click', ()=>{ document.getE
 document.getElementById('scrim').addEventListener('click', closeSidebar);
 document.addEventListener('click', e=>{
   const g = e.target.closest('[data-goto]');
-  if(g && !e.target.closest('input,select,button.noGo')){ irA(g.dataset.goto); }
+  if(g && !e.target.closest('input,select,button.noGo')){ irA(g.dataset.goto); if(g.dataset.sim) showTemaTab('sim'); }
   if(!e.target.closest('#userBox')) document.getElementById('userBox').classList.remove('open');
 });
 document.getElementById('userBtn').addEventListener('click', ()=>document.getElementById('userBox').classList.toggle('open'));
@@ -865,13 +905,19 @@ document.getElementById('btnLogout').addEventListener('click', ()=>{
   location.reload();
 });
 document.getElementById('btnBell').addEventListener('click', ()=>{
+  const hayPractico = practicosNuevos()>0;
   ls('pt_seen_corr_'+alumnoId, String(misPracticos().filter(p=>p.estado==='corregido').length));
+  if(!hayPractico && simulacrosNuevos()>0){ renderBell(); irA('temario'); showTemaTab('sim'); return; }
   renderBell(); irA('practicos');
 });
-function renderBell(){
+function practicosNuevos(){
   const n = misPracticos().filter(p=>p.estado==='corregido').length;
   const visto = parseInt(ls('pt_seen_corr_'+alumnoId)||'0',10);
-  document.getElementById('bellDot').classList.toggle('hidden', n<=visto);
+  return Math.max(0, n-visto);
+}
+function simulacrosNuevos(){ return misSimulacros().filter(x=>x.estado==='corregido' && !x.vistoAlumno).length; }
+function renderBell(){
+  document.getElementById('bellDot').classList.toggle('hidden', practicosNuevos()+simulacrosNuevos()===0);
 }
 
 /* ---------- arranque de la vista ---------- */
@@ -892,11 +938,12 @@ function mostrarContenido(){
   document.getElementById('estBloque').innerHTML = BLOQUES_ESTUDIO.map(b=>'<option>'+b+'</option>').join('');
   buildCatalogShell('temas','Tu temario, bien organizado','Todo lo que necesitas para tu preparación, en un solo lugar.');
   renderAll();
+  showTemaTab(ls('pt_tema_tab')==='sim' ? 'sim' : 'mis');
   const tab = ls('pt_alumno_tab'); if(tab) activarTab(tab);
 }
 function renderAll(){
   renderSemana(); renderCatalog('temas'); renderCultura(); renderPracticos();
-  renderProgramacion(); renderRecursos(); renderPlanificador(); renderProgreso(); renderBell();
+  renderProgramacion(); renderRecursos(); renderPlanificador(); renderSimulacros(); renderProgreso(); renderBell();
 }
 
 /* ---------- MI SEMANA ---------- */
@@ -940,6 +987,10 @@ function renderPendientes(objs, pe, mp){
   mp.filter(p=>p.estado==='corregido' && p.fechaFeedback && p.fechaFeedback>=addDays(hoy,-14)).slice(0,2).forEach(()=>{
     n++;
     html += `<div class="pend" data-goto="practicos"><span class="ico-circle tone-red"><i class="ti ti-file-text"></i></span><div><div class="pend-t">Revisar la corrección del práctico</div><div class="pend-s">Tienes una corrección disponible.</div></div><i class="ti ti-chevron-right chev"></i></div>`;
+  });
+  misSimulacros().filter(x=>x.estado==='corregido' && !x.vistoAlumno).slice(0,3).forEach(x=>{
+    n++;
+    html += `<div class="pend" data-goto="temario" data-sim="1"><span class="ico-circle tone-green"><i class="ti ti-writing"></i></span><div><div class="pend-t">Corrección de tu simulacro disponible</div><div class="pend-s">${escapeHtml(simTemaNombre(x.temaId))}</div></div><i class="ti ti-chevron-right chev"></i></div>`;
   });
   objs.forEach(o=>{
     n++;
@@ -1058,7 +1109,7 @@ function renderEstudio(){
 
 /* ---------- TEMARIO / CULTURA GENERAL ---------- */
 const CATS = {
-  temas:{ cat:()=>data.temas, prog:()=>data.temasProgreso, tipo:'temas', archivos:'temas', filtro:'todos', q:'', panel:'panel-temario' }
+  temas:{ cat:()=>data.temas, prog:()=>data.temasProgreso, tipo:'temas', archivos:'temas', filtro:'todos', q:'', panel:'tema-mis' }
 };
 function buildCatalogShell(key, titulo, lead){
   const cfg = CATS[key];
@@ -1712,6 +1763,139 @@ function renderEvolucion(){
   </div>`;
 }
 
+
+
+/* ---------- SIMULACROS DE TEMA ---------- */
+const SIM_ESTADO = {
+  pendiente:     { t:'Pendiente de corrección', cls:'wait', ico:'ti-clock' },
+  en_correccion: { t:'En corrección',           cls:'info', ico:'ti-pencil' },
+  corregido:     { t:'Corregido',               cls:'ok',   ico:'ti-circle-check' }
+};
+const SIM_MAX_MB = 12;
+function simPill(est){ const e = SIM_ESTADO[est] || SIM_ESTADO.pendiente; return `<span class="pill ${e.cls}"><i class="ti ${e.ico}"></i> ${e.t}</span>`; }
+function misSimulacros(){ return (data.simulacros||[]).filter(x=>x.alumnoId===alumnoId); }
+function simTemaNombre(id){
+  const t = (data.temas||[]).find(x=>x.id===id);
+  return t ? ((t.numero?('Tema '+t.numero+' · '):'')+t.titulo) : 'Tema (ya no está en el temario)';
+}
+function simIntento(x){ const mismos = misSimulacros().filter(y=>y.temaId===x.temaId); return mismos.indexOf(x)+1; }
+function showTemaTab(w){
+  document.querySelectorAll('#temaTabs [data-tt]').forEach(b=>b.classList.toggle('active', b.dataset.tt===w));
+  document.getElementById('tema-mis').classList.toggle('hidden', w!=='mis');
+  document.getElementById('tema-sim').classList.toggle('hidden', w!=='sim');
+  ls('pt_tema_tab', w);
+}
+document.getElementById('temaTabs').addEventListener('click', e=>{ const b = e.target.closest('[data-tt]'); if(b) showTemaTab(b.dataset.tt); });
+
+function renderSimulacros(){
+  const cont = document.getElementById('tema-sim');
+  const lista = misSimulacros().slice().reverse();   // más recientes primero; cada intento se conserva por separado
+  const nuevos = simulacrosNuevos();
+  const bd = document.getElementById('ttBadge'); bd.textContent = nuevos; bd.classList.toggle('hidden', !nuevos);
+  let html = `<div class="page-head"><div><h1>Simulacros de tema</h1><p class="lead">Entrega tus simulacros escritos y consulta la corrección de tu preparadora.</p></div>
+    <button class="btn" id="btnSubirSim"><i class="ti ti-upload"></i> Subir simulacro</button></div>`;
+  if(!lista.length){
+    html += `<div class="card"><div class="empty">Todavía no has enviado ningún simulacro de tema</div></div>`;
+  } else {
+    html += '<div class="sim-list">'+lista.map(x=>{
+      const nuevo = x.estado==='corregido' && !x.vistoAlumno;
+      const nTemas = misSimulacros().filter(y=>y.temaId===x.temaId).length;
+      return `<div class="card sim-card">
+        <div class="sim-top"><div class="sim-t">${escapeHtml(simTemaNombre(x.temaId))}${nuevo?'<span class="sim-new">Nueva corrección</span>':''}</div></div>
+        <div>${simPill(x.estado)}</div>
+        <div class="sim-m"><span><i class="ti ti-calendar"></i> Realizado el ${escapeHtml(fechaCorta(x.fechaRealizacion))}</span><span><i class="ti ti-send"></i> Entregado el ${escapeHtml(fechaCorta(x.fechaEntrega))}</span>${x.tiempoMin?`<span><i class="ti ti-clock"></i> ${x.tiempoMin} min</span>`:''}${nTemas>1?`<span>Intento ${simIntento(x)}</span>`:''}</div>
+        <div><button class="btn btn-ghost" data-sim-abrir="${escapeHtml(x.id)}"><i class="ti ti-eye"></i> ${x.estado==='corregido'?'Ver corrección':'Abrir entrega'}</button></div>
+      </div>`;
+    }).join('')+'</div>';
+  }
+  cont.innerHTML = html;
+}
+document.getElementById('tema-sim').addEventListener('click', e=>{
+  if(e.target.closest('#btnSubirSim')){ abrirSubirSim(); return; }
+  const a = e.target.closest('[data-sim-abrir]'); if(a) abrirSim(a.dataset.simAbrir);
+});
+
+function cerrarDlgSim(){ const d = document.getElementById('dlgSim'); if(d.open) d.close(); }
+function abrirSubirSim(){
+  const d = document.getElementById('dlgSim');
+  const temas = (data.temas||[]).slice().sort((a,b)=>String(a.numero||'').localeCompare(String(b.numero||''),undefined,{numeric:true}));
+  const hoy = todayISO();
+  d.innerHTML = `<div class="dlg-in"><h3>Subir simulacro</h3><p class="hint">Adjunta tu simulacro en PDF (también vale el escaneado de la versión manuscrita).</p>
+    ${temas.length ? '' : '<div class="sim-box espera">Tu preparador todavía no ha cargado el temario, así que aún no puedes elegir tema.</div>'}
+    <div class="field"><label class="lbl" for="simTema">Tema *</label><select id="simTema" ${temas.length?'':'disabled'}><option value="">Elige un tema…</option>${temas.map(t=>`<option value="${escapeHtml(t.id)}">${escapeHtml((t.numero?(t.numero+'. '):'')+t.titulo)}</option>`).join('')}</select></div>
+    <div class="sim-row2">
+      <div class="field"><label class="lbl" for="simFecha">Fecha de realización *</label><input type="date" id="simFecha" value="${hoy}" max="${hoy}"></div>
+      <div class="field"><label class="lbl" for="simTiempo">Tiempo empleado (min, opcional)</label><input type="number" id="simTiempo" min="1" max="1440" inputmode="numeric" placeholder="Ej: 60"></div>
+    </div>
+    <div class="field"><label class="lbl" for="simCom">Comentario (opcional)</label><textarea id="simCom" maxlength="2000" placeholder="Algo que quieras decirle a tu preparadora: dudas, cómo te has sentido, qué te ha costado…"></textarea></div>
+    <div class="field"><label class="lbl" for="simArchivo">Simulacro en PDF *</label><input type="file" id="simArchivo" accept="application/pdf,.pdf"></div>
+    <span class="status" id="simStatus"></span>
+    <div class="sim-actions"><button class="btn btn-ghost" id="simCancelar" type="button">Cancelar</button><button class="btn" id="simEnviar" type="button" ${temas.length?'':'disabled'}><i class="ti ti-send"></i> Enviar simulacro</button></div></div>`;
+  d.showModal();
+  document.getElementById('simCancelar').addEventListener('click', cerrarDlgSim);
+  document.getElementById('simEnviar').addEventListener('click', enviarSim);
+}
+function simStatus(html, cls){ const el = document.getElementById('simStatus'); if(el){ el.innerHTML = html; el.className = 'status'+(cls?' '+cls:''); } }
+async function enviarSim(){
+  const temaId = document.getElementById('simTema').value;
+  const fecha = document.getElementById('simFecha').value;
+  const tiempo = document.getElementById('simTiempo').value.trim();
+  const comentario = document.getElementById('simCom').value.trim();
+  const file = document.getElementById('simArchivo').files[0];
+  if(!temaId){ simStatus('Elige el tema del simulacro.','err'); return; }
+  if(!fecha){ simStatus('Indica la fecha de realización.','err'); return; }
+  if(fecha>todayISO()){ simStatus('La fecha de realización no puede ser futura.','err'); return; }
+  if(tiempo && (!(Number(tiempo)>0) || Number(tiempo)>1440)){ simStatus('El tiempo empleado debe ser un número de minutos entre 1 y 1440.','err'); return; }
+  if(!file){ simStatus('Adjunta el simulacro en PDF.','err'); return; }
+  if(!(file.type==='application/pdf' || /\.pdf$/i.test(file.name))){ simStatus('El archivo debe ser un PDF.','err'); return; }
+  if(file.size > SIM_MAX_MB*1024*1024){ simStatus('El archivo supera los '+SIM_MAX_MB+' MB. Reduce su tamaño y vuelve a intentarlo.','err'); return; }
+  const btn = document.getElementById('simEnviar'); btn.disabled = true;
+  simStatus('<span class="spinner"></span> Subiendo tu simulacro… no cierres esta ventana.');
+  try{
+    const base64 = await fileToBase64(file);
+    const id = uid('sm');
+    const res = await apiPost('addSimulacro', { id, alumnoId, temaId, fechaRealizacion:fecha, tiempoMin: tiempo?Number(tiempo):'', comentario, base64, nombre:file.name });
+    const r = res.simulacro;
+    if(!r || !r.id) throw new Error('El servidor no confirmó la entrega.');
+    data.simulacros.push(r); normalizarDatos();
+    renderSimulacros(); renderSemana();
+    cerrarDlgSim();
+    toast('Simulacro enviado. Quedará pendiente de corrección.');
+  }catch(e){
+    btn.disabled = false;
+    simStatus('No se ha podido enviar el simulacro: '+escapeHtml(e.message)+' Tu entrega NO se ha registrado; inténtalo de nuevo.','err');
+  }
+}
+function abrirSim(id){
+  const x = misSimulacros().find(y=>y.id===id); if(!x) return;
+  const d = document.getElementById('dlgSim');
+  let corr;
+  if(x.estado==='corregido'){
+    corr = `<div class="sim-box corr"><h4><i class="ti ti-circle-check"></i> Corrección de tu preparadora</h4>
+      <div class="sim-m" style="margin-bottom:8px;"><span><i class="ti ti-calendar-check"></i> Corregido el ${escapeHtml(fechaCorta(x.fechaCorreccion))}</span></div>
+      ${x.correccionNota!=null?`<div style="margin-bottom:8px;">Nota<br><span class="sim-nota">${escapeHtml(fmtNum(x.correccionNota))}</span> <span style="color:var(--ink-soft);">/ 10</span></div>`:''}
+      ${x.correccionComentario?`<div class="lbl" style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-soft);margin-bottom:4px;">Comentarios y recomendaciones</div><div class="sim-pre">${escapeHtml(x.correccionComentario)}</div>`:''}
+      ${x.correccionArchivoUrl?`<div class="sim-links"><a class="btn btn-ghost" href="${escapeHtml(x.correccionArchivoUrl)}" target="_blank" rel="noopener"><i class="ti ti-eye"></i> Ver archivo corregido</a><a class="btn btn-ghost" href="${escapeHtml(urlDescarga(x.correccionArchivoUrl))}" target="_blank" rel="noopener"><i class="ti ti-download"></i> Descargar</a></div>`:''}
+    </div>`;
+  } else {
+    corr = `<div class="sim-box espera"><h4>${x.estado==='en_correccion'?'Tu preparadora está corrigiendo tu entrega':'Entrega recibida'}</h4><div>${x.estado==='en_correccion'?'Verás la corrección aquí en cuanto la publique.':'Todavía no está corregida. Te avisaremos dentro de la plataforma cuando haya corrección.'}</div></div>`;
+  }
+  d.innerHTML = `<div class="dlg-in"><h3>${escapeHtml(simTemaNombre(x.temaId))}</h3>
+    <div style="margin:6px 0 10px;">${simPill(x.estado)}</div>
+    <div class="sim-m"><span><i class="ti ti-calendar"></i> Realizado el ${escapeHtml(fechaCorta(x.fechaRealizacion))}</span><span><i class="ti ti-send"></i> Entregado el ${escapeHtml(fechaCorta(x.fechaEntrega))}</span>${x.tiempoMin?`<span><i class="ti ti-clock"></i> ${x.tiempoMin} min</span>`:''}</div>
+    <div class="sim-box"><h4>Tu entrega</h4>${x.comentario?`<div class="sim-pre" style="margin-bottom:8px;">${escapeHtml(x.comentario)}</div>`:''}
+      <div class="sim-links"><a class="btn btn-ghost" href="${escapeHtml(x.archivoUrl)}" target="_blank" rel="noopener"><i class="ti ti-eye"></i> Ver simulacro original</a><a class="btn btn-ghost" href="${escapeHtml(urlDescarga(x.archivoUrl))}" target="_blank" rel="noopener"><i class="ti ti-download"></i> Descargar</a></div></div>
+    ${corr}
+    <div class="sim-actions"><button class="btn" id="simCerrar" type="button">Cerrar</button></div></div>`;
+  d.showModal();
+  document.getElementById('simCerrar').addEventListener('click', cerrarDlgSim);
+  if(x.estado==='corregido' && !x.vistoAlumno){
+    x.vistoAlumno = true;
+    apiPost('marcarSimulacroVisto', { id:x.id, alumnoId }).catch(()=>{});
+    renderBell(); renderSimulacros(); renderSemana();
+  }
+}
+document.getElementById('dlgSim').addEventListener('click', e=>{ if(e.target===e.currentTarget) cerrarDlgSim(); });
 
 /* ---------- MI PLANIFICADOR (privado; se guarda en la cuenta del alumno) ---------- */
 let planOffset = 0;

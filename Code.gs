@@ -27,6 +27,11 @@ const HEADERS = {
   Estudio: ['id', 'alumnoId', 'fecha', 'horas', 'bloque', 'notas'],
   // Planificador personal del alumno (privado: solo se envía a su propia cuenta, nunca al panel del profesor). tipo: 'tarea' | 'nota'. dia: 0=lunes … 6=domingo, 7=cualquier día
   Planificador: ['id', 'alumnoId', 'semana', 'dia', 'tipo', 'texto', 'hecho'],
+  // Simulacros de tema entregados por los alumnos y su corrección. estado: 'pendiente' | 'en_correccion' | 'corregido'.
+  // Las columnas borrador* son privadas de la preparadora: nunca se envían al alumno.
+  Simulacros: ['id', 'alumnoId', 'temaId', 'fechaRealizacion', 'tiempoMin', 'comentario', 'archivoUrl', 'archivoNombre', 'fechaEntrega', 'estado',
+    'borradorComentario', 'borradorNota', 'borradorArchivoUrl', 'borradorArchivoNombre',
+    'correccionComentario', 'correccionNota', 'correccionArchivoUrl', 'correccionArchivoNombre', 'fechaCorreccion', 'vistoAlumno'],
   Objetivos: ['id', 'alumnoId', 'semana', 'texto', 'cumplido'],
   Dafo: ['alumnoId', 'fortalezas', 'debilidades', 'oportunidades', 'amenazas'],
   Archivos: ['id', 'categoria', 'nombre', 'titulo', 'url', 'fecha'],
@@ -57,7 +62,7 @@ function getSheet_(name) {
 
 function ensureHeaders_() {
   const cache = CacheService.getScriptCache();
-  if (cache.get('headers_ok_v4')) return;
+  if (cache.get('headers_ok_v5')) return;
   Object.keys(HEADERS).forEach(name => {
     const sh = getSheet_(name);
     if (sh.getLastRow() === 0) {
@@ -69,10 +74,10 @@ function ensureHeaders_() {
       }
     }
   });
-  try { cache.put('headers_ok_v4', '1', 21600); } catch (err) { /* no pasa nada si falla */ }
+  try { cache.put('headers_ok_v5', '1', 21600); } catch (err) { /* no pasa nada si falla */ }
 }
 
-const DATE_FIELDS = { Calendario: ['fecha'], Practicos: ['fecha', 'fechaFeedback'], Archivos: ['fecha'], Estudio: ['fecha'], Planificador: ['semana'], Objetivos: ['semana'], Recursos: ['fecha'], Cuadernos: ['fecha'], Examenes: ['fecha'], Notas: ['fechaRegistro', 'fechaActualizacion'] };
+const DATE_FIELDS = { Calendario: ['fecha'], Practicos: ['fecha', 'fechaFeedback'], Archivos: ['fecha'], Estudio: ['fecha'], Planificador: ['semana'], Simulacros: ['fechaRealizacion', 'fechaEntrega', 'fechaCorreccion'], Objetivos: ['semana'], Recursos: ['fecha'], Cuadernos: ['fecha'], Examenes: ['fecha'], Notas: ['fechaRegistro', 'fechaActualizacion'] };
 const TIME_FIELDS = { Calendario: ['hora'] };
 
 function normalizeRow_(sheetName, obj) {
@@ -535,10 +540,21 @@ function buildFullData_() {
     ajustes: sheetToObjects_('Ajustes'),
     cuadernos: sheetToObjects_('Cuadernos').sort(porOrden_),
     examenes: sheetToObjects_('Examenes').sort(porOrden_),
-    notas: sheetToObjects_('Notas')
+    notas: sheetToObjects_('Notas'),
+    simulacros: sheetToObjects_('Simulacros')
   };
   try { cache.put('getAll_v2', JSON.stringify(result), 300); } catch (err) { /* si supera 100KB, seguimos sin caché */ }
   return result;
+}
+
+function simulacroParaAlumno_(s) {
+  const o = {};
+  Object.keys(s).forEach(function (k) { if (k.indexOf('borrador') !== 0) o[k] = s[k]; });
+  // Mientras no esté publicada, no se envía nada de la corrección
+  if (o.estado !== 'corregido') {
+    ['correccionComentario', 'correccionNota', 'correccionArchivoUrl', 'correccionArchivoNombre', 'fechaCorreccion'].forEach(function (k) { o[k] = ''; });
+  }
+  return o;
 }
 
 function buildAlumnoScoped_(id) {
@@ -561,7 +577,9 @@ function buildAlumnoScoped_(id) {
     examenes: full.examenes,
     notas: full.notas.filter(function(n){ return String(n.alumnoId) === String(id); }),
     // Privado: solo las filas de este alumno; no forma parte de getAll (panel del profesor)
-    planificador: sheetToObjects_('Planificador').filter(function(x){ return String(x.alumnoId) === String(id); })
+    planificador: sheetToObjects_('Planificador').filter(function(x){ return String(x.alumnoId) === String(id); }),
+    // Solo los simulacros de este alumno, sin los borradores de corrección (privados de la preparadora)
+    simulacros: full.simulacros.filter(function(x){ return String(x.alumnoId) === String(id); }).map(simulacroParaAlumno_)
   };
 }
 
@@ -696,6 +714,86 @@ function doPost(e) {
           if (ex) updateObjectById_('Planificador', 'id', ex.id, { texto: safeText_(txtN) });
           else appendObject_('Planificador', { id: p.id, alumnoId: p.alumnoId, semana: p.semana, dia: '', tipo: 'nota', texto: safeText_(txtN), hecho: false });
         } finally { lockN.releaseLock(); }
+        break;
+      }
+      case 'addSimulacro': {
+        var alu = sheetToObjects_('Alumnos').find(function (a) { return String(a.id) === String(p.alumnoId); });
+        if (!alu) throw new Error('Alumno no encontrado.');
+        var tem = sheetToObjects_('Temas').find(function (t) { return String(t.id) === String(p.temaId); });
+        if (!tem) throw new Error('Elige un tema del temario.');
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(String(p.fechaRealizacion || ''))) throw new Error('Indica la fecha de realización.');
+        var tmin = '';
+        if (p.tiempoMin !== undefined && p.tiempoMin !== null && String(p.tiempoMin).trim() !== '') {
+          tmin = Number(String(p.tiempoMin).replace(',', '.'));
+          if (!isFinite(tmin) || tmin <= 0 || tmin > 1440) throw new Error('El tiempo empleado debe ser un número de minutos entre 1 y 1440.');
+          tmin = Math.round(tmin);
+        }
+        var com = String(p.comentario || '').trim();
+        if (com.length > 2000) throw new Error('El comentario es demasiado largo (máximo 2000 caracteres).');
+        if (!esPdf_(p.base64)) throw new Error('Adjunta el simulacro en formato PDF.');
+        if (!p.id) throw new Error('Datos incompletos.');
+        var yaEsta = sheetToObjects_('Simulacros').find(function (x) { return String(x.id) === String(p.id); });
+        if (yaEsta) { result = { ok: true, simulacro: simulacroParaAlumno_(yaEsta) }; break; }
+        // Primero se guarda el archivo: si falla, no se registra ninguna entrega
+        var urlSim = guardarPdf_(p.base64, p.nombre || 'simulacro.pdf');
+        var filaSim = {
+          id: p.id, alumnoId: p.alumnoId, temaId: p.temaId, fechaRealizacion: p.fechaRealizacion, tiempoMin: tmin,
+          comentario: safeText_(com), archivoUrl: urlSim, archivoNombre: safeText_(p.nombre || 'simulacro.pdf'),
+          fechaEntrega: hoyISO_(), estado: 'pendiente', vistoAlumno: false
+        };
+        try { appendObject_('Simulacros', filaSim); }
+        catch (errSim) { papeleraDrive_(urlSim); throw errSim; }
+        result = { ok: true, simulacro: simulacroParaAlumno_(filaSim) };
+        break;
+      }
+      case 'guardarCorreccion': {
+        var sim = sheetToObjects_('Simulacros').find(function (x) { return String(x.id) === String(p.id); });
+        if (!sim) throw new Error('No se encuentra la entrega.');
+        var publicar = (p.publicar === true || p.publicar === 'true');
+        var yaPublicada = sim.estado === 'corregido';
+        if (yaPublicada && !publicar) throw new Error('Esta corrección ya está publicada; usa «Actualizar corrección».');
+        var comC = String(p.comentario || '').trim();
+        if (comC.length > 5000) throw new Error('El comentario de corrección es demasiado largo (máximo 5000 caracteres).');
+        var notaC = '';
+        if (p.nota !== undefined && p.nota !== null && String(p.nota).trim() !== '') {
+          notaC = Number(String(p.nota).replace(',', '.'));
+          if (!isFinite(notaC) || notaC < 0 || notaC > 10) throw new Error('La nota debe estar entre 0 y 10.');
+          notaC = Math.round(notaC * 100) / 100;
+        }
+        // Archivo corregido: el nuevo si se sube; si no, el que ya hubiera (borrador o publicado); o ninguno si se quita
+        var urlC = yaPublicada ? sim.correccionArchivoUrl : sim.borradorArchivoUrl;
+        var nomC = yaPublicada ? sim.correccionArchivoNombre : sim.borradorArchivoNombre;
+        var urlAnterior = '';
+        if (p.archivoBase64) {
+          if (!esPdf_(p.archivoBase64)) throw new Error('El archivo corregido debe ser un PDF.');
+          urlAnterior = urlC;
+          urlC = guardarPdf_(p.archivoBase64, p.archivoNombre || 'correccion.pdf');
+          nomC = p.archivoNombre || 'correccion.pdf';
+        } else if (p.quitarArchivo === true || p.quitarArchivo === 'true') {
+          urlAnterior = urlC; urlC = ''; nomC = '';
+        }
+        if (publicar && !comC && notaC === '' && !urlC) throw new Error('Para publicar, escribe un comentario, añade una nota o adjunta el PDF corregido.');
+        var cambiosC;
+        if (publicar) {
+          cambiosC = {
+            estado: 'corregido', correccionComentario: safeText_(comC), correccionNota: notaC, correccionArchivoUrl: urlC,
+            correccionArchivoNombre: safeText_(nomC || ''), fechaCorreccion: hoyISO_(), vistoAlumno: false,
+            borradorComentario: '', borradorNota: '', borradorArchivoUrl: '', borradorArchivoNombre: ''
+          };
+        } else {
+          cambiosC = {
+            estado: 'en_correccion', borradorComentario: safeText_(comC), borradorNota: notaC, borradorArchivoUrl: urlC,
+            borradorArchivoNombre: safeText_(nomC || '')
+          };
+        }
+        updateObjectById_('Simulacros', 'id', p.id, cambiosC);
+        if (urlAnterior) papeleraDrive_(urlAnterior);
+        result = { ok: true, simulacro: Object.assign({}, sim, cambiosC) };
+        break;
+      }
+      case 'marcarSimulacroVisto': {
+        var sv = sheetToObjects_('Simulacros').find(function (x) { return String(x.id) === String(p.id); });
+        if (sv && String(sv.alumnoId) === String(p.alumnoId)) updateObjectById_('Simulacros', 'id', p.id, { vistoAlumno: true });
         break;
       }
       case 'addEstudio':
