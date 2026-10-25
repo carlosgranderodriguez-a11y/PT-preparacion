@@ -458,6 +458,27 @@
     .kpis{grid-template-columns:1fr 1fr;}
     .kpi .v{font-size:24px;}
   }
+  /* ---------- Colores por tipo de tarea del planificador ---------- */
+  .pc-tema{--pc:#2F6DB5;--pcs:#E3EDF9;} .pc-practico{--pc:#C9773C;--pcs:#FBE9DC;} .pc-simulacro{--pc:#C0453A;--pcs:#FBE3E0;}
+  .pc-programacion{--pc:#7B5EA7;--pcs:#EEE8F7;} .pc-cultura{--pc:#2E8B57;--pcs:#E1F2E7;} .pc-otro{--pc:#6B7280;--pcs:#ECEEF1;}
+  .plan-t[class*=pc-]{border-left:4px solid var(--pc);padding-left:8px;background:var(--pcs);border-radius:0 8px 8px 0;margin-top:4px;border-top:none;}
+  .pc-chip{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;color:var(--pc);background:var(--pcs);border-radius:999px;padding:2px 9px;border:none;cursor:pointer;font-family:inherit;}
+  .pc-chip::before{content:'';width:7px;height:7px;border-radius:50%;background:var(--pc);}
+  .plan-leyenda{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 14px;align-items:center;font-size:12px;color:var(--gray);}
+  .plan-t .pc-chip{margin-top:2px;font-size:10.5px;padding:1px 7px;}
+  .wtask{display:flex;gap:4px;align-items:flex-start;font-size:10.5px;line-height:1.3;padding:4px 4px;border-radius:6px;border-left:3px solid var(--pc);background:var(--pcs);overflow-wrap:break-word;word-break:normal;hyphens:auto;min-width:0;}
+  .wtask span{min-width:0;}
+  .wtask input{width:12px;height:12px;}
+  .wtask input{margin:1px 0 0;accent-color:var(--pc);flex-shrink:0;cursor:pointer;}
+  .wtask.done span{text-decoration:line-through;color:var(--gray);}
+  .wd-add{background:none;border:none;color:var(--forest);font-size:14px;cursor:pointer;padding:0 4px;line-height:1;}
+  .cal-tk{font-size:9.5px;line-height:1.3;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border-radius:4px;padding:1px 4px;background:var(--pcs);color:var(--pc);border-left:2px solid var(--pc);cursor:pointer;font-weight:600;}
+  .cal-tk.done{text-decoration:line-through;opacity:.65;}
+  .cal-day .num{cursor:pointer;} .cal-day .num:hover{color:var(--forest);text-decoration:underline;}
+  .wsin{margin-top:10px;padding:10px 12px;border:1px dashed var(--line);border-radius:10px;}
+  .wsin h4{margin:0 0 6px;font-size:13px;font-family:var(--serif);}
+  .wsin .wtask{margin-top:4px;}
+  .plan-sel{font:inherit;font-size:13px;padding:7px 10px;border:1.5px solid var(--line);border-radius:9px;background:#fff;}
 </style>
 </head>
 <body>
@@ -541,6 +562,8 @@
               <div class="week-nav"><button id="wkPrev" aria-label="Semana anterior">‹</button><span id="wkTitulo"></span><button id="wkNext" aria-label="Semana siguiente">›</button></div>
             </div>
             <div class="week" id="weekGrid"></div>
+            <div id="weekSin"></div>
+            <div style="margin-top:12px;"><button class="btn btn-ghost" id="btnTareaNueva"><i class="ti ti-plus"></i> Añadir tarea</button> <span class="hint" style="margin:0 0 0 6px;">Tus tareas del planificador, con su color. Marca el check y se verá hecho en todas partes.</span></div>
           </div>
         </div>
         <div class="card" id="cardMes" style="margin-bottom:18px;">
@@ -639,6 +662,7 @@
             <button class="btn btn-ghost" id="planHoy">Hoy</button></div>
           <div class="plan-prog" id="planProg"></div>
         </div>
+        <div class="plan-leyenda"><span>Tipo de tarea nueva:</span><select class="plan-sel" id="planCat" aria-label="Tipo de tarea nueva"></select><span id="planLey"></span></div>
         <div class="plan-grid" id="planGrid"></div>
         <div class="card plan-notas">
           <div class="card-head"><h3><i class="ti ti-notes"></i> Notas de la semana</h3><span class="status" id="planNotaStatus" style="margin:0;"></span></div>
@@ -658,6 +682,14 @@
 </div>
 
 <!-- Diálogo registrar estudio -->
+<dialog class="dlg" id="dlgTarea">
+  <h3>Nueva tarea</h3>
+  <div class="field"><label class="lbl">Qué vas a hacer</label><input type="text" id="tkTexto" maxlength="500" placeholder="Ej: Repasar el tema 12"></div>
+  <div class="field"><label class="lbl">Día</label><input type="date" id="tkFecha"></div>
+  <div class="field"><label class="lbl">Tipo</label><select id="tkCat" class="plan-sel" style="width:100%;"></select></div>
+  <span class="status" id="tkStatus"></span>
+  <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px;"><button class="btn btn-ghost" id="tkCancel" type="button">Cancelar</button><button class="btn" id="tkOk" type="button">Añadir tarea</button></div>
+</dialog>
 <dialog class="dlg" id="dlgEstudio">
   <h3>Registrar estudio</h3>
   <p class="hint">Apunta cuánto has estudiado para llevar el control de tus horas.</p>
@@ -1029,11 +1061,15 @@ function renderWeek(){
     const iso = addDays(lunes,i);
     const dia = evs.filter(e=>e.fecha===iso).sort((a,b)=>(a.hora||'').localeCompare(b.hora||''));
     const dnum = parseInt(iso.slice(8),10);
-    html += `<div class="wday ${iso===hoy?'today':''} ${dia.length?'':'vacio'}"><div class="wd-h">${DOW3[i]}<b>${dnum}</b></div><div class="wd-b">` +
+    const tks = tareasDelDia(iso);
+    html += `<div class="wday ${iso===hoy?'today':''} ${(dia.length||tks.length)?'':'vacio'}"><div class="wd-h">${DOW3[i]}<b>${dnum}</b><button class="wd-add" data-wk-add="${iso}" aria-label="Añadir tarea el ${dnum}" title="Añadir tarea">+</button></div><div class="wd-b">` +
+      tks.map(t=>`<label class="wtask pc-${planCat(t)} ${t.hecho?'done':''}" title="${escapeHtml(planCatNombre(planCat(t)))}"><input type="checkbox" data-wk-chk="${escapeHtml(t.id)}" ${t.hecho?'checked':''}><span>${escapeHtml(t.texto)}</span></label>`).join('') +
       dia.map(e=>`<div class="wev ${evClase(e.tipo)}" title="${escapeHtml(e.notas||'')}"><span class="h">${e.hora?escapeHtml(e.hora):''}</span>${escapeHtml(e.tema||tipoNombre(e.tipo))}${e.notas?('<small>'+escapeHtml(e.notas)+'</small>'):''}</div>`).join('') +
       `</div></div>`;
   }
   document.getElementById('weekGrid').innerHTML = html;
+  const sin = (data.planificador||[]).filter(x=>x.tipo==='tarea' && x.semana===lunes && x.dia===7);
+  document.getElementById('weekSin').innerHTML = sin.length ? `<div class="wsin"><h4>Cualquier día de esta semana</h4>${sin.map(t=>`<label class="wtask pc-${planCat(t)} ${t.hecho?'done':''}"><input type="checkbox" data-wk-chk="${escapeHtml(t.id)}" ${t.hecho?'checked':''}><span>${escapeHtml(t.texto)}</span></label>`).join('')}</div>` : '';
 }
 document.getElementById('wkPrev').addEventListener('click', ()=>{ weekOffset--; renderWeek(); });
 document.getElementById('wkNext').addEventListener('click', ()=>{ weekOffset++; renderWeek(); });
@@ -1060,8 +1096,12 @@ function renderCalMes(){
       else { ocultos++; return; }
       if(ev.notas && lineas<3){ h += '<div class="cal-ev cal-nota"><i class="ti ti-note" aria-hidden="true"></i> '+escapeHtml(ev.notas)+'</div>'; lineas++; }
     });
+    tareasDelDia(iso).forEach(t=>{
+      if(lineas<4){ h += '<div class="cal-tk pc-'+planCat(t)+(t.hecho?' done':'')+'" data-cal-tk="'+escapeHtml(t.id)+'" title="'+escapeHtml(t.texto)+' · pulsa para marcar como hecha">'+(t.hecho?'✓ ':'')+escapeHtml(t.texto)+'</div>'; lineas++; }
+      else ocultos++;
+    });
     if(ocultos>0) h += '<div class="cal-ev-mas">+'+ocultos+'</div>';
-    el.innerHTML = '<div class="num">'+d+'</div>'+h;
+    el.innerHTML = '<div class="num" data-cal-add="'+iso+'" title="Añadir tarea este día">'+d+'</div>'+h;
     grid.appendChild(el);
   }
 }
@@ -1223,7 +1263,11 @@ function renderPracticos(){
         extra = `<div class="sup-extra">`;
         if(p.texto) extra += `<div class="hint" style="margin:0;">Tu entrega:</div><div class="fb" style="margin-bottom:8px;">${escapeHtml(p.texto)}</div>`;
         if(p.fotoUrl) extra += htmlArchivoAdjunto(p.fotoUrl, 'practico-photo');
-        if(cor) extra += `<div class="hint" style="margin:8px 0 0;">Feedback de tu preparador:</div><div class="fb">${escapeHtml(p.feedback||'')}</div>`;
+        if(cor){
+          if(p.correccionNota!==''&&p.correccionNota!=null) extra += `<div class="hint" style="margin:8px 0 0;">Nota: <b>${fmtNum(p.correccionNota)} / 10</b></div>`;
+          if(p.feedback) extra += `<div class="hint" style="margin:8px 0 0;">Feedback de tu preparador:</div><div class="fb">${escapeHtml(p.feedback)}</div>`;
+          if(p.correccionArchivoUrl) extra += `<div style="margin-top:8px;"><a class="btn btn-secondary" href="${escapeHtml(p.correccionArchivoUrl)}" target="_blank" rel="noopener"><i class="ti ti-file-type-pdf"></i> Ver PDF corregido</a> <a class="btn btn-secondary" href="${escapeHtml(urlDescarga(p.correccionArchivoUrl))}" target="_blank" rel="noopener">Descargar</a></div>`;
+        }
         extra += `</div>`;
       }
       return `<div class="sup-block"><div class="sup">
@@ -1899,6 +1943,12 @@ document.getElementById('dlgSim').addEventListener('click', e=>{ if(e.target===e
 
 /* ---------- MI PLANIFICADOR (privado; se guarda en la cuenta del alumno) ---------- */
 let planOffset = 0;
+const PLAN_CATS = [['tema','Tema'],['practico','Supuesto práctico'],['simulacro','Simulacro'],['programacion','Programación y defensa'],['cultura','Cultura General'],['otro','Otro']];
+function planCat(x){ return PLAN_CATS.some(c=>c[0]===x.categoria) ? x.categoria : 'otro'; }
+function planCatNombre(c){ const r = PLAN_CATS.find(k=>k[0]===c); return r ? r[1] : 'Otro'; }
+function planCatOpts(sel){ return PLAN_CATS.map(c=>`<option value="${c[0]}" ${sel===c[0]?'selected':''}>${c[1]}</option>`).join(''); }
+function planDe(iso){ const lunes = lunesDe(iso); const d = Math.round((new Date(iso+'T00:00:00') - new Date(lunes+'T00:00:00'))/86400000); return { semana:lunes, dia:d }; }
+function tareasDelDia(iso){ const r = planDe(iso); return (data.planificador||[]).filter(x=>x.tipo==='tarea' && x.semana===r.semana && x.dia===r.dia); }
 const PLAN_DIAS = ['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'];
 function planLunes(){ return addDays(lunesDe(todayISO()), planOffset*7); }
 function planItems(lunes, dia){ return (data.planificador||[]).filter(x=>x.tipo==='tarea' && x.semana===lunes && x.dia===dia); }
@@ -1916,7 +1966,8 @@ function renderPlanificador(){
   ta.value = reg ? reg.texto : '';
   document.getElementById('planNotaStatus').textContent = '';
 }
-function renderPlanDias(){
+function renderPlanDias(){ renderPlanDias_(); renderWeek(); renderCalMes(); }
+function renderPlanDias_(){
   const lunes = planLunes(), hoy = todayISO();
   const grid = document.getElementById('planGrid');
   // conservar lo que se esté escribiendo en los campos de "añadir"
@@ -1928,9 +1979,9 @@ function renderPlanDias(){
     const items = planItems(lunes, d);
     total += items.length; hechas += items.filter(x=>x.hecho).length;
     const cab = d<7 ? `<div class="plan-dn">${PLAN_DIAS[d]}</div><div class="plan-df">${parseInt(iso.slice(8),10)} ${MESES_C[parseInt(iso.slice(5,7),10)-1]}</div>` : `<div class="plan-dn">Cualquier día</div><div class="plan-df">sin día fijo</div>`;
-    const lista = items.length ? items.map(x=>`<div class="plan-t ${x.hecho?'done':''}" data-pid="${escapeHtml(x.id)}">
+    const lista = items.length ? items.map(x=>`<div class="plan-t pc-${planCat(x)} ${x.hecho?'done':''}" data-pid="${escapeHtml(x.id)}">
         <input type="checkbox" data-plan-chk="${escapeHtml(x.id)}" ${x.hecho?'checked':''} aria-label="Marcar como hecha">
-        <span class="plan-tx" data-plan-edit="${escapeHtml(x.id)}" title="Toca para editar">${escapeHtml(x.texto)}</span>
+        <span style="flex:1;min-width:0;"><span class="plan-tx" data-plan-edit="${escapeHtml(x.id)}" title="Toca para editar">${escapeHtml(x.texto)}</span><br><button class="pc-chip" data-plan-cat="${escapeHtml(x.id)}" title="Pulsa para cambiar el tipo">${planCatNombre(planCat(x))}</button></span>
         <button class="plan-x" data-plan-del="${escapeHtml(x.id)}" aria-label="Eliminar tarea">×</button></div>`).join('') : '<div class="plan-vacio">Sin tareas</div>';
     html += `<div class="plan-dia ${iso===hoy?'hoy':''} ${d===7?'cualquiera':''}"><div class="plan-dh">${cab}</div>${lista}
       <div class="plan-add"><input type="text" maxlength="500" data-plan-add="${d}" placeholder="Añadir tarea…" value="${escapeHtml(escritos[d]||'')}"><button data-plan-addbtn="${d}" aria-label="Añadir tarea">+</button></div></div>`;
@@ -1945,11 +1996,12 @@ async function planAdd(dia){
   const texto = input ? input.value.trim() : '';
   if(!texto) return;
   const lunes = planLunes();
-  const item = { id: uid('pl'), alumnoId, semana: lunes, dia, tipo:'tarea', texto, hecho:false };
+  const categoria = document.getElementById('planCat').value || 'otro';
+  const item = { id: uid('pl'), alumnoId, semana: lunes, dia, tipo:'tarea', texto, hecho:false, categoria };
   data.planificador.push(item);
   input.value = '';
   renderPlanDias();
-  try{ await apiPost('addPlan', { id:item.id, alumnoId, semana:lunes, dia, texto }); }
+  try{ await apiPost('addPlan', { id:item.id, alumnoId, semana:lunes, dia, texto, categoria }); }
   catch(e){ data.planificador = data.planificador.filter(x=>x.id!==item.id); renderPlanDias(); planError(e); }
 }
 async function planToggle(id, hecho){
@@ -1984,7 +2036,45 @@ const planGrid = document.getElementById('planGrid');
 planGrid.addEventListener('click', e=>{
   const add = e.target.closest('[data-plan-addbtn]'); if(add){ planAdd(parseInt(add.dataset.planAddbtn,10)); return; }
   const del = e.target.closest('[data-plan-del]'); if(del){ planDelete(del.dataset.planDel); return; }
+  const cc = e.target.closest('[data-plan-cat]'); if(cc){ planCambiarCat(cc.dataset.planCat); return; }
   const ed = e.target.closest('[data-plan-edit]'); if(ed){ planEditar(ed.dataset.planEdit, ed); }
+});
+async function planCambiarCat(id){
+  const it = data.planificador.find(x=>x.id===id); if(!it) return;
+  const i = PLAN_CATS.findIndex(c=>c[0]===planCat(it)); const antes = it.categoria;
+  it.categoria = PLAN_CATS[(i+1)%PLAN_CATS.length][0]; renderPlanDias();
+  try{ await apiPost('updatePlan', { id, alumnoId, categoria: it.categoria }); }
+  catch(e){ it.categoria = antes; renderPlanDias(); planError(e); }
+}
+/* selector de tipo + leyenda + diálogo de nueva tarea */
+document.getElementById('planCat').innerHTML = planCatOpts('tema');
+document.getElementById('planLey').innerHTML = PLAN_CATS.map(c=>`<span class="pc-chip pc-${c[0]}">${c[1]}</span>`).join(' ');
+const dlgTarea = document.getElementById('dlgTarea');
+function abrirTarea(iso){
+  document.getElementById('tkTexto').value=''; document.getElementById('tkFecha').value = iso || todayISO();
+  document.getElementById('tkCat').innerHTML = planCatOpts(document.getElementById('planCat').value||'tema');
+  document.getElementById('tkStatus').textContent=''; dlgTarea.showModal(); document.getElementById('tkTexto').focus();
+}
+document.getElementById('btnTareaNueva').addEventListener('click', ()=>abrirTarea());
+document.getElementById('tkCancel').addEventListener('click', ()=>dlgTarea.close());
+document.getElementById('tkTexto').addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); document.getElementById('tkOk').click(); } });
+document.getElementById('tkOk').addEventListener('click', async ()=>{
+  const texto = document.getElementById('tkTexto').value.trim(), fecha = document.getElementById('tkFecha').value, categoria = document.getElementById('tkCat').value;
+  const st = document.getElementById('tkStatus');
+  if(!texto){ st.textContent='Escribe la tarea.'; st.className='status err'; return; }
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(fecha)){ st.textContent='Elige el día.'; st.className='status err'; return; }
+  const r = planDe(fecha);
+  const item = { id: uid('pl'), alumnoId, semana:r.semana, dia:r.dia, tipo:'tarea', texto, hecho:false, categoria };
+  data.planificador.push(item); dlgTarea.close(); renderPlanDias();
+  try{ await apiPost('addPlan', { id:item.id, alumnoId, semana:r.semana, dia:r.dia, texto, categoria }); }
+  catch(err){ data.planificador = data.planificador.filter(x=>x.id!==item.id); renderPlanDias(); planError(err); }
+});
+/* checks y clics desde «Mi semana» y el calendario del mes */
+document.getElementById('panel-semana').addEventListener('change', e=>{ const c = e.target.closest('[data-wk-chk]'); if(c) planToggle(c.dataset.wkChk, c.checked); });
+document.getElementById('panel-semana').addEventListener('click', e=>{
+  const add = e.target.closest('[data-wk-add]'); if(add){ abrirTarea(add.dataset.wkAdd); return; }
+  const t = e.target.closest('[data-cal-tk]'); if(t){ const it = data.planificador.find(x=>x.id===t.dataset.calTk); if(it) planToggle(it.id, !it.hecho); return; }
+  const n = e.target.closest('[data-cal-add]'); if(n) abrirTarea(n.dataset.calAdd);
 });
 planGrid.addEventListener('change', e=>{ const c = e.target.closest('[data-plan-chk]'); if(c) planToggle(c.dataset.planChk, c.checked); });
 planGrid.addEventListener('keydown', e=>{ if(e.key==='Enter' && e.target.matches('[data-plan-add]')){ e.preventDefault(); planAdd(parseInt(e.target.dataset.planAdd,10)); } });
