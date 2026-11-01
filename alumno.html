@@ -499,6 +499,17 @@
   .sup-chev{color:var(--forest);font-size:20px;flex-shrink:0;}
   .sup-back{margin-bottom:12px;}
   @media (max-width:640px){ .sup-card{flex-direction:column;align-items:stretch;} .sup-card-r{justify-content:flex-start;} .sup-chev{margin-left:auto;} }
+  /* ---------- Mi programación: solo apartados publicados ---------- */
+  .prog-item{border:1px solid var(--line);border-left:4px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:10px;background:var(--card);}
+  .prog-item.e1{border-left-color:var(--amber);} .prog-item.e2{border-left-color:var(--forest-3);}
+  .prog-ctx{font-size:12px;color:var(--gray);margin-bottom:6px;word-break:break-word;}
+  .prog-h{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:center;}
+  .prog-t{font-family:var(--serif);font-weight:600;font-size:16px;word-break:break-word;}
+  .prog-item.e2 .prog-t{color:var(--gray);text-decoration:line-through;}
+  .prog-inst{margin:10px 0 0;white-space:pre-wrap;}
+  .prog-word{margin-top:10px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+  .prog-item.e1 .idx-sel{background:var(--amber-soft);} .prog-item.e2 .idx-sel{background:var(--green-soft);}
+  @media (max-width:600px){ .prog-h{grid-template-columns:auto minmax(0,1fr);} .prog-h .idx-sel{grid-column:1/-1;} }
 </style>
 </head>
 <body>
@@ -784,7 +795,7 @@ function normHora(v){
   return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
 }
 function normalizarDatos(){
-  ['calendario','practicos','temas','temasProgreso','cg','cgProgreso','archivos','estudio','recursos','objetivos','ajustes','cuadernos','examenes','notas','planificador','simulacros','supuestos'].forEach(k=>{ if(!data[k]) data[k]=[]; });
+  ['calendario','practicos','temas','temasProgreso','cg','cgProgreso','archivos','estudio','recursos','objetivos','ajustes','cuadernos','examenes','notas','planificador','simulacros','supuestos','progApartados'].forEach(k=>{ if(!data[k]) data[k]=[]; });
   data.simulacros.forEach(x=>{ x.fechaRealizacion = normFecha(x.fechaRealizacion); x.fechaEntrega = normFecha(x.fechaEntrega); x.fechaCorreccion = normFecha(x.fechaCorreccion); x.vistoAlumno = (x.vistoAlumno===true || String(x.vistoAlumno)==='true'); x.tiempoMin = (x.tiempoMin===''||x.tiempoMin==null) ? null : Number(x.tiempoMin); x.correccionNota = (x.correccionNota===''||x.correccionNota==null) ? null : Number(x.correccionNota); });
   data.planificador.forEach(x=>{ x.semana = normFecha(x.semana); x.dia = x.dia===''||x.dia==null ? null : Number(x.dia); x.hecho = (x.hecho===true || String(x.hecho)==='true'); x.texto = String(x.texto==null?'':x.texto); });
   data.calendario.forEach(ev=>{ ev.fecha = normFecha(ev.fecha); ev.hora = normHora(ev.hora); });
@@ -1502,18 +1513,30 @@ function progLoad(){
   return o;
 }
 function progSave(o){ ls('pt_prog_'+alumnoId, JSON.stringify(o)); }
+function progApartadoPub(c){ return (data.progApartados||[]).find(a=>String(a.codigo)===String(c)) || null; }
+function progAncestros(i){
+  const anc = []; let nivel = PROG_IDX[i].n;
+  for(let k=i-1; k>=0 && nivel>1; k--){ if(PROG_IDX[k].n<nivel){ anc.unshift(PROG_IDX[k]); nivel = PROG_IDX[k].n; } }
+  return anc;
+}
 function renderProgramacion(){
   const o = progLoad();
-  const hechos = PROG_IDX.filter(x=>o.idx[x.c]===2).length;
-  const enProc = PROG_IDX.filter(x=>o.idx[x.c]===1).length;
-  const media = Math.round((hechos*2+enProc)/(PROG_IDX.length*2)*100);
+  // Solo los apartados que la preparadora ha activado; el avance se calcula sobre ellos
+  const vis = PROG_IDX.map((x,i)=>({x,i,pub:progApartadoPub(x.c)})).filter(r=>r.pub);
+  const hechos = vis.filter(r=>o.idx[r.x.c]===2).length;
+  const enProc = vis.filter(r=>o.idx[r.x.c]===1).length;
+  const media = vis.length ? Math.round((hechos*2+enProc)/(vis.length*2)*100) : 0;
   const cur = media===0 ? 0 : media<60 ? 1 : media<100 ? 2 : 3;
   const stepper = PROG_PASOS.map((p,i)=>`<div class="step ${i<cur?'done':''} ${i===cur?'cur':''}"><span class="step-c">${i<cur?'<i class="ti ti-check"></i>':(i+1)}</span><div class="step-t">${p[0]}<div class="step-s">${p[1]}</div></div></div>`).join('');
-  const filas = PROG_IDX.map(x=>{
+  const filas = vis.map(({x,i,pub})=>{
     const v = o.idx[x.c]||0;
-    return `<div class="idx-row n${x.n} e${v}">
-      <span class="idx-c">${escapeHtml(x.c)}</span><span class="idx-t">${escapeHtml(x.t)}</span>
-      <select class="idx-sel" data-idx="${escapeHtml(x.c)}" aria-label="Estado de ${escapeHtml(x.c+' '+x.t)}">${PROG_EST.map((e,k)=>`<option value="${k}"${k===v?' selected':''}>${e}</option>`).join('')}</select>
+    const anc = progAncestros(i);
+    return `<div class="prog-item n${x.n} e${v}">
+      ${anc.length?`<div class="prog-ctx"><i class="ti ti-corner-down-right"></i> Dentro de: ${anc.map(p=>escapeHtml(p.c+(p.t?' '+p.t:''))).join(' › ')}</div>`:''}
+      <div class="prog-h"><span class="idx-c">${escapeHtml(x.c)}</span><span class="prog-t">${escapeHtml(x.t)}</span>
+        <select class="idx-sel" data-idx="${escapeHtml(x.c)}" aria-label="Estado de ${escapeHtml(x.c+' '+x.t)}">${PROG_EST.map((e,k)=>`<option value="${k}"${k===v?' selected':''}>${e}</option>`).join('')}</select></div>
+      ${pub.instrucciones?`<div class="fb prog-inst">${escapeHtml(pub.instrucciones)}</div>`:''}
+      ${pub.wordUrl?`<div class="prog-word"><a class="btn btn-ghost" href="${escapeHtml(urlDescarga(pub.wordUrl))}" target="_blank" rel="noopener"><i class="ti ti-file-type-doc"></i> Descargar Word</a>${pub.wordNombre?` <span class="hint" style="margin:0;">${escapeHtml(pub.wordNombre)}</span>`:''}</div>`:''}
     </div>`;
   }).join('');
   const checks = PROG_CHECKS.map((c,i)=>`<label class="check"><input type="checkbox" data-chk="${i}" ${o.chk[i]?'checked':''}> ${c}</label>`).join('');
@@ -1522,8 +1545,8 @@ function renderProgramacion(){
     <div class="page-head"><div><h1>Programación y defensa</h1><p class="lead">Construye tu propuesta paso a paso.</p></div></div>
     <div class="stepper">${stepper}</div>
     <div class="split">
-      <div class="card"><div class="card-head"><h3>Mi programación</h3><span class="cg-count">${hechos} de ${PROG_IDX.length} apartados · ${media}%</span></div>
-        <div class="meter" style="margin-bottom:10px;"><div class="meter-bg"><div class="meter-fill" style="width:${media}%"></div></div></div>${filas}
+      <div class="card"><div class="card-head"><h3>Mi programación</h3><span class="cg-count">${vis.length?`${hechos} de ${vis.length} apartados · ${media}%`:'Sin apartados habilitados'}</span></div>
+        ${vis.length?`<div class="meter" style="margin-bottom:10px;"><div class="meter-bg"><div class="meter-fill" style="width:${media}%"></div></div></div>${filas}`:'<div class="empty">Tu preparadora irá habilitando aquí los apartados y materiales para elaborar tu programación</div>'}
         <p class="hint" style="margin:10px 0 0;"><i class="ti ti-device-floppy"></i> Tu avance en esta sección se guarda en este dispositivo.</p>
       </div>
       <div class="stack">

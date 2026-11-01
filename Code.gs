@@ -28,6 +28,8 @@ const HEADERS = {
   CGProgreso: ['alumnoId', 'temaId', 'estado', 'pct'],
   Estudio: ['id', 'alumnoId', 'fecha', 'horas', 'bloque', 'notas'],
   // Planificador personal del alumno (privado: solo se envía a su propia cuenta, nunca al panel del profesor). tipo: 'tarea' | 'nota'. dia: 0=lunes … 6=domingo, 7=cualquier día
+  // Apartados de la programación (el índice vive en la web; aquí solo visibilidad, instrucciones y Word). id = 'ap_' + código del apartado
+  ProgApartados: ['id', 'codigo', 'visible', 'instrucciones', 'wordUrl', 'wordNombre', 'fechaActualizacion'],
   Planificador: ['id', 'alumnoId', 'semana', 'dia', 'tipo', 'texto', 'hecho', 'categoria'],
   // Simulacros de tema entregados por los alumnos y su corrección. estado: 'pendiente' | 'en_correccion' | 'corregido'.
   // Las columnas borrador* son privadas de la preparadora: nunca se envían al alumno.
@@ -65,7 +67,7 @@ function getSheet_(name) {
 
 function ensureHeaders_() {
   const cache = CacheService.getScriptCache();
-  if (cache.get('headers_ok_v9')) return;
+  if (cache.get('headers_ok_v10')) return;
   Object.keys(HEADERS).forEach(name => {
     const sh = getSheet_(name);
     if (sh.getLastRow() === 0) {
@@ -77,10 +79,10 @@ function ensureHeaders_() {
       }
     }
   });
-  try { cache.put('headers_ok_v9', '1', 21600); } catch (err) { /* no pasa nada si falla */ }
+  try { cache.put('headers_ok_v10', '1', 21600); } catch (err) { /* no pasa nada si falla */ }
 }
 
-const DATE_FIELDS = { Calendario: ['fecha'], Practicos: ['fecha', 'fechaFeedback'], Supuestos: ['fechaLimite', 'fechaPublicacion'], Archivos: ['fecha'], Estudio: ['fecha'], Planificador: ['semana'], Simulacros: ['fechaRealizacion', 'fechaEntrega', 'fechaCorreccion'], Objetivos: ['semana'], Recursos: ['fecha'], Cuadernos: ['fecha'], Examenes: ['fecha'], Notas: ['fechaRegistro', 'fechaActualizacion'] };
+const DATE_FIELDS = { ProgApartados: ['fechaActualizacion'], Calendario: ['fecha'], Practicos: ['fecha', 'fechaFeedback'], Supuestos: ['fechaLimite', 'fechaPublicacion'], Archivos: ['fecha'], Estudio: ['fecha'], Planificador: ['semana'], Simulacros: ['fechaRealizacion', 'fechaEntrega', 'fechaCorreccion'], Objetivos: ['semana'], Recursos: ['fecha'], Cuadernos: ['fecha'], Examenes: ['fecha'], Notas: ['fechaRegistro', 'fechaActualizacion'] };
 const TIME_FIELDS = { Calendario: ['hora'] };
 
 function normalizeRow_(sheetName, obj) {
@@ -228,6 +230,9 @@ function hoyISO_() { return Utilities.formatDate(new Date(), Session.getScriptTi
 function fmtFecha_(v) { return v instanceof Date ? Utilities.formatDate(v, Session.getScriptTimeZone(), 'yyyy-MM-dd') : String(v || ''); }
 function porOrden_(a, b) { return (Number(a.orden) || 0) - (Number(b.orden) || 0); }
 function siguienteOrden_(items) { return items.reduce(function (m, x) { return Math.max(m, Number(x.orden) || 0); }, 0) + 1; }
+function esDocx_(base64) { return /^data:[^;,]*;base64,UEs/.test(String(base64 || '')); }   // un .docx es un zip: empieza por «PK»
+function progVisible_(a) { return a.visible === true || String(a.visible).toLowerCase() === 'true'; }
+
 function esPdf_(base64) { return /^data:application\/pdf;base64,/.test(String(base64 || '')); }
 
 function guardarPdf_(base64Data, nombre) {
@@ -545,7 +550,8 @@ function buildFullData_() {
     examenes: sheetToObjects_('Examenes').sort(porOrden_),
     notas: sheetToObjects_('Notas'),
     simulacros: sheetToObjects_('Simulacros'),
-    supuestos: sheetToObjects_('Supuestos')
+    supuestos: sheetToObjects_('Supuestos'),
+    progApartados: sheetToObjects_('ProgApartados')
   };
   try { cache.put('getAll_v2', JSON.stringify(result), 300); } catch (err) { /* si supera 100KB, seguimos sin caché */ }
   return result;
@@ -619,7 +625,9 @@ function buildAlumnoScoped_(id) {
     // Solo los simulacros de este alumno, sin los borradores de corrección (privados de la preparadora)
     simulacros: full.simulacros.filter(function(x){ return String(x.alumnoId) === String(id); }).map(simulacroParaAlumno_),
     // Los enunciados son visibles para todos los alumnos
-    supuestos: full.supuestos
+    supuestos: full.supuestos,
+    // Solo los apartados que la preparadora ha activado; los ocultos no se envían al alumno
+    progApartados: full.progApartados.filter(function(a){ return progVisible_(a); }).map(function(a){ return { codigo: String(a.id).replace(/^ap_/, ''), instrucciones: a.instrucciones, wordUrl: a.wordUrl, wordNombre: a.wordNombre }; })
   };
 }
 
@@ -820,6 +828,43 @@ function doPost(e) {
           if (ex) updateObjectById_('Planificador', 'id', ex.id, { texto: safeText_(txtN) });
           else appendObject_('Planificador', { id: p.id, alumnoId: p.alumnoId, semana: p.semana, dia: '', tipo: 'nota', texto: safeText_(txtN), hecho: false });
         } finally { lockN.releaseLock(); }
+        break;
+      }
+      case 'saveProgApartado': {
+        // Upsert por código de apartado. Ocultar solo cambia la visibilidad: instrucciones y Word se conservan.
+        var cod = String(p.codigo || '').trim();
+        if (!/^[A-Za-z0-9.]{1,12}$/.test(cod)) throw new Error('Apartado no válido.');
+        var inst = (p.instrucciones === undefined) ? undefined : String(p.instrucciones || '').trim();
+        if (inst !== undefined && inst.length > 3000) throw new Error('Las instrucciones son demasiado largas (máximo 3000 caracteres).');
+        var idAp = 'ap_' + cod;
+        var lockA = LockService.getScriptLock();
+        lockA.waitLock(20000);
+        try {
+          var apEx = sheetToObjects_('ProgApartados').find(function (x) { return String(x.id) === idAp; });
+          var cambA = { fechaActualizacion: hoyISO_() };
+          if (p.visible !== undefined) cambA.visible = (p.visible === true || p.visible === 'true');
+          if (inst !== undefined) cambA.instrucciones = safeText_(inst);
+          var urlVieja = '';
+          if (p.base64) {
+            if (!esDocx_(p.base64)) throw new Error('El archivo debe ser un documento Word (.docx).');
+            var nomW = String(p.nombre || 'apartado.docx');
+            if (!/\.docx$/i.test(nomW)) throw new Error('El archivo debe ser un documento Word (.docx).');
+            var b64 = 'data:application/vnd.openxmlformats-officedocument.wordprocessingml.document;base64,' + String(p.base64).split(',')[1];
+            cambA.wordUrl = guardarEnDrive_(b64, nomW, 'PT_Materiales');
+            cambA.wordNombre = safeText_(nomW);
+            urlVieja = apEx ? apEx.wordUrl : '';
+          } else if (p.quitarWord === true || p.quitarWord === 'true') {
+            urlVieja = apEx ? apEx.wordUrl : '';
+            cambA.wordUrl = ''; cambA.wordNombre = '';
+          }
+          if (apEx) updateObjectById_('ProgApartados', 'id', idAp, cambA);
+          else {
+            apEx = { id: idAp, codigo: cod, visible: false, instrucciones: '', wordUrl: '', wordNombre: '', fechaActualizacion: '' };
+            appendObject_('ProgApartados', Object.assign(apEx, cambA));
+          }
+          if (urlVieja) papeleraDrive_(urlVieja);
+          result = { ok: true, apartado: Object.assign({}, apEx, cambA, { codigo: cod }) };
+        } finally { lockA.releaseLock(); }
         break;
       }
       case 'addSimulacro': {
