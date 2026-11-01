@@ -1,0 +1,26 @@
+{
+ "name": "PT Madrid — Profesora",
+ "short_name": "PT Profesora",
+ "start_url": "./profesor.html",
+ "scope": "./",
+ "display": "standalone",
+ "background_color": "#1F4D3A",
+ "theme_color": "#1F4D3A",
+ "icons": [
+  {
+   "src": "icon-profesor-192.png",
+   "sizes": "192x192",
+   "type": "image/png"
+  },
+  {
+   "src": "icon-profesor-512.png",
+   "sizes": "512x512",
+   "type": "image/png"
+  },
+  {
+   "src": "apple-touch-icon-profesor.png",
+   "sizes": "180x180",
+   "type": "image/png"
+  }
+ ]
+}

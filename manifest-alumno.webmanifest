@@ -1,0 +1,26 @@
+{
+ "name": "PT Madrid — Mi preparación",
+ "short_name": "Mi preparación PT",
+ "start_url": "./alumno.html",
+ "scope": "./",
+ "display": "standalone",
+ "background_color": "#F6F5EF",
+ "theme_color": "#1F4D3A",
+ "icons": [
+  {
+   "src": "icon-alumno-192.png",
+   "sizes": "192x192",
+   "type": "image/png"
+  },
+  {
+   "src": "icon-alumno-512.png",
+   "sizes": "512x512",
+   "type": "image/png"
+  },
+  {
+   "src": "apple-touch-icon-alumno.png",
+   "sizes": "180x180",
+   "type": "image/png"
+  }
+ ]
+}
