@@ -1296,7 +1296,7 @@ function renderCatalogSide(key){
       (rep ? `<div style="font-family:var(--serif);font-weight:600;font-size:16px;">${escapeHtml(rep.tema||'Repaso')}</div><div class="hint" style="margin:2px 0 0;">${escapeHtml(diaTexto(rep.fecha))}${rep.hora?(' · '+escapeHtml(rep.hora)):''}</div>`
              : `<div class="hint" style="margin:0;">Sin repasos programados.</div>`);
   }
-  html += `</div>` + htmlArchivos(cfg.archivos, 'Materiales generales');
+  html += `</div>`; // «Materiales generales» retirado de la interfaz (los archivos siguen guardados)
   document.getElementById('side-'+key).innerHTML = html;
 }
 

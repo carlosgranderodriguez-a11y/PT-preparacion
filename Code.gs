@@ -29,6 +29,7 @@ const HEADERS = {
   Estudio: ['id', 'alumnoId', 'fecha', 'horas', 'bloque', 'notas'],
   // Planificador personal del alumno (privado: solo se envía a su propia cuenta, nunca al panel del profesor). tipo: 'tarea' | 'nota'. dia: 0=lunes … 6=domingo, 7=cualquier día
   // Apartados de la programación (el índice vive en la web; aquí solo visibilidad, instrucciones y Word). id = 'ap_' + código del apartado
+  PlanProfe: ['id', 'titulo', 'tipo', 'fecha', 'hora', 'descripcion', 'notaPrivada', 'hecho', 'mostrar', 'destinatarios', 'fechaActualizacion'],
   ProgApartados: ['id', 'codigo', 'visible', 'instrucciones', 'wordUrl', 'wordNombre', 'fechaActualizacion'],
   Planificador: ['id', 'alumnoId', 'semana', 'dia', 'tipo', 'texto', 'hecho', 'categoria'],
   // Simulacros de tema entregados por los alumnos y su corrección. estado: 'pendiente' | 'en_correccion' | 'corregido'.
@@ -67,7 +68,7 @@ function getSheet_(name) {
 
 function ensureHeaders_() {
   const cache = CacheService.getScriptCache();
-  if (cache.get('headers_ok_v10')) return;
+  if (cache.get('headers_ok_v11')) return;
   Object.keys(HEADERS).forEach(name => {
     const sh = getSheet_(name);
     if (sh.getLastRow() === 0) {
@@ -79,11 +80,11 @@ function ensureHeaders_() {
       }
     }
   });
-  try { cache.put('headers_ok_v10', '1', 21600); } catch (err) { /* no pasa nada si falla */ }
+  try { cache.put('headers_ok_v11', '1', 21600); } catch (err) { /* no pasa nada si falla */ }
 }
 
-const DATE_FIELDS = { ProgApartados: ['fechaActualizacion'], Calendario: ['fecha'], Practicos: ['fecha', 'fechaFeedback'], Supuestos: ['fechaLimite', 'fechaPublicacion'], Archivos: ['fecha'], Estudio: ['fecha'], Planificador: ['semana'], Simulacros: ['fechaRealizacion', 'fechaEntrega', 'fechaCorreccion'], Objetivos: ['semana'], Recursos: ['fecha'], Cuadernos: ['fecha'], Examenes: ['fecha'], Notas: ['fechaRegistro', 'fechaActualizacion'] };
-const TIME_FIELDS = { Calendario: ['hora'] };
+const DATE_FIELDS = { PlanProfe: ['fecha', 'fechaActualizacion'], ProgApartados: ['fechaActualizacion'], Calendario: ['fecha'], Practicos: ['fecha', 'fechaFeedback'], Supuestos: ['fechaLimite', 'fechaPublicacion'], Archivos: ['fecha'], Estudio: ['fecha'], Planificador: ['semana'], Simulacros: ['fechaRealizacion', 'fechaEntrega', 'fechaCorreccion'], Objetivos: ['semana'], Recursos: ['fecha'], Cuadernos: ['fecha'], Examenes: ['fecha'], Notas: ['fechaRegistro', 'fechaActualizacion'] };
+const TIME_FIELDS = { Calendario: ['hora'], PlanProfe: ['hora'] };
 
 function normalizeRow_(sheetName, obj) {
   const tz = Session.getScriptTimeZone();
@@ -601,12 +602,41 @@ function catPlan_(c) {
   return ['tema', 'practico', 'simulacro', 'programacion', 'cultura', 'otro'].indexOf(c) >= 0 ? c : 'otro';
 }
 
+
+// ---------- Planificador privado de la preparadora ----------
+// Hoja PlanProfe: NUNCA forma parte de getAll ni de los datos del alumno. Solo se lee con la clave de la preparadora
+// (acción getPlanProfe) y al alumno solo llega la parte publicada (título, fecha, hora y descripción), nunca la nota privada.
+function claveCoachOk_(k) {
+  k = String(k || '');
+  if (!k) return false;
+  var extra = '';
+  try { extra = PropertiesService.getScriptProperties().getProperty('COACH_KEY') || ''; } catch (err) { extra = ''; }
+  return k === 'cgr-pt-2026' || (extra !== '' && k === extra);
+}
+function planDestinos_(x) {
+  var d = String(x.destinatarios || '').trim();
+  if (d === 'ALL') return ['ALL'];
+  return d ? d.split(',').map(function (t) { return t.trim(); }).filter(Boolean) : [];
+}
+function planParaAlumno_(id) {
+  return sheetToObjects_('PlanProfe').filter(function (x) {
+    if (!(x.mostrar === true || String(x.mostrar).toLowerCase() === 'true')) return false;
+    var d = planDestinos_(x);
+    return d.indexOf('ALL') >= 0 || d.indexOf(String(id)) >= 0;
+  }).map(function (x) {
+    var t = String(x.tipo || '');
+    return { id: 'pp_' + x.id, fecha: x.fecha, hora: x.hora || '', alumnoId: id,
+      tipo: t === 'clase' ? 'Clase' : (t === 'evento' ? 'Evento' : 'Tarea'),
+      tema: x.titulo, notas: x.descripcion || '', origen: 'preparadora' };
+  });
+}
+
 function buildAlumnoScoped_(id) {
   const full = buildFullData_();
   const alumno = full.alumnos.find(function(a){ return a.id === id; }) || null;
   return {
     alumno: alumno,
-    calendario: full.calendario.filter(function(ev){ return ev.alumnoId === id || ev.alumnoId === 'ALL'; }),
+    calendario: full.calendario.filter(function(ev){ return ev.alumnoId === id || ev.alumnoId === 'ALL'; }).concat(planParaAlumno_(id)),
     practicos: full.practicos.filter(function(p){ return p.alumnoId === id; }).map(practicoParaAlumno_),
     temas: full.temas,
     temasProgreso: full.temasProgreso.filter(function(x){ return x.alumnoId === id; }),
@@ -828,6 +858,57 @@ function doPost(e) {
           if (ex) updateObjectById_('Planificador', 'id', ex.id, { texto: safeText_(txtN) });
           else appendObject_('Planificador', { id: p.id, alumnoId: p.alumnoId, semana: p.semana, dia: '', tipo: 'nota', texto: safeText_(txtN), hecho: false });
         } finally { lockN.releaseLock(); }
+        break;
+      }
+      case 'getPlanProfe': {
+        if (!claveCoachOk_(p.key)) throw new Error('No autorizado.');
+        result = { ok: true, items: sheetToObjects_('PlanProfe') };
+        break;
+      }
+      case 'savePlanProfe': {
+        if (!claveCoachOk_(p.key)) throw new Error('No autorizado.');
+        var pid = String(p.id || '').trim();
+        if (!/^[A-Za-z0-9_\-]{1,40}$/.test(pid)) throw new Error('Identificador no válido.');
+        var tit = String(p.titulo || '').trim();
+        if (!tit) throw new Error('Escribe un título.');
+        if (tit.length > 200) throw new Error('El título es demasiado largo.');
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(String(p.fecha || ''))) throw new Error('Indica la fecha.');
+        var hor = String(p.hora || '').trim();
+        if (hor && !/^([01]?\d|2[0-3]):[0-5]\d$/.test(hor)) throw new Error('La hora no es válida (HH:MM).');
+        var desc = String(p.descripcion || '').trim(), notaP = String(p.notaPrivada || '').trim();
+        if (desc.length > 3000 || notaP.length > 3000) throw new Error('El texto es demasiado largo (máximo 3000 caracteres).');
+        var tipoP = String(p.tipo || 'tarea');
+        if (['tarea', 'evento', 'clase', 'correccion', 'materiales', 'personal'].indexOf(tipoP) < 0) tipoP = 'tarea';
+        var mostrar = (p.mostrar === true || p.mostrar === 'true');
+        var dest = '';
+        if (mostrar) {
+          var lista = (p.destinatarios === 'ALL') ? ['ALL'] : (Array.isArray(p.destinatarios) ? p.destinatarios : String(p.destinatarios || '').split(','));
+          lista = lista.map(function (t) { return String(t).trim(); }).filter(Boolean);
+          if (!lista.length) throw new Error('Elige a qué alumnos se muestra.');
+          if (lista.indexOf('ALL') >= 0) dest = 'ALL';
+          else {
+            var idsOk = sheetToObjects_('Alumnos').map(function (a) { return String(a.id); });
+            lista.forEach(function (i) { if (idsOk.indexOf(i) < 0) throw new Error('Alumno no encontrado.'); });
+            dest = lista.join(',');
+          }
+        } else {
+          // Dejar de mostrar no borra la elección anterior: se conserva para volver a publicar
+          var previo = sheetToObjects_('PlanProfe').find(function (x) { return String(x.id) === pid; });
+          dest = previo ? String(previo.destinatarios || '') : '';
+        }
+        var lockP = LockService.getScriptLock();
+        lockP.waitLock(20000);
+        try {
+          var fila = { id: pid, titulo: safeText_(tit), tipo: tipoP, fecha: p.fecha, hora: hor, descripcion: safeText_(desc), notaPrivada: safeText_(notaP),
+            hecho: (p.hecho === true || p.hecho === 'true'), mostrar: mostrar, destinatarios: dest, fechaActualizacion: hoyISO_() };
+          if (!updateObjectById_('PlanProfe', 'id', pid, fila)) appendObject_('PlanProfe', fila);
+          result = { ok: true, item: fila };
+        } finally { lockP.releaseLock(); }
+        break;
+      }
+      case 'deletePlanProfe': {
+        if (!claveCoachOk_(p.key)) throw new Error('No autorizado.');
+        deleteObjectById_('PlanProfe', 'id', String(p.id || ''));
         break;
       }
       case 'saveProgApartado': {

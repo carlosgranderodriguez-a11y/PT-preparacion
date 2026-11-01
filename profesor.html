@@ -254,6 +254,101 @@
   .prog-sw{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;cursor:pointer;text-transform:none;letter-spacing:0;}
   .prog-sw input{width:18px;height:18px;accent-color:var(--forest);}
   @media (max-width:760px){ .prog-row{grid-template-columns:1fr 1fr;} .prog-main{grid-column:1/-1;} .prog-row.n2{margin-left:8px;} .prog-row.n3{margin-left:16px;} }
+  /* ---------- Desplegables ---------- */
+  details.card.acc{padding:0;}
+  details.acc>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:10px;padding:14px 20px;border-radius:var(--radius);font-family:var(--serif);font-weight:600;font-size:18px;color:var(--ink);user-select:none;min-height:50px;}
+  details.acc>summary::-webkit-details-marker{display:none;}
+  details.acc>summary:hover{background:var(--card-alt);}
+  details.acc>summary:focus-visible{outline:3px solid var(--sage);outline-offset:-3px;}
+  details.acc[open]>summary{border-bottom-left-radius:0;border-bottom-right-radius:0;}
+  .acc-chev{font-size:17px;color:var(--ink-soft);transition:transform .15s;flex-shrink:0;}
+  details[open]>summary>.acc-chev{transform:rotate(90deg);}
+  .acc-t{display:inline-flex;align-items:center;gap:9px;min-width:0;}
+  .acc-t i{font-size:20px;color:var(--ink-soft);}
+  .acc-n{font-family:'Inter',sans-serif;font-size:12px;font-weight:700;background:var(--accent-soft);color:var(--forest);border-radius:999px;padding:1px 9px;}
+  .acc-x{margin-left:auto;display:inline-flex;gap:8px;align-items:center;}
+  .acc-tag{font-family:'Inter',sans-serif;font-size:11px;padding:2px 9px;}
+  .acc-hint{margin-left:auto;font-family:'Inter',sans-serif;font-size:11.5px;font-weight:600;color:var(--gray);white-space:nowrap;}
+  .acc-x+.acc-hint,.acc-tag+.acc-hint{margin-left:12px;}
+  .acc-tag{margin-left:auto;} .acc-tag+.acc-hint{margin-left:12px;}
+  details>summary>.acc-hint::after{content:'Mostrar';}
+  details[open]>summary>.acc-hint::after{content:'Ocultar';}
+  .acc-b{padding:4px 20px 18px;border-top:1px solid var(--line);padding-top:16px;}
+  details.acc-sub{border:1px solid var(--line);border-radius:var(--radius-sm);background:var(--card-alt);}
+  details.acc-sub>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:8px;padding:9px 14px;font-size:13.5px;font-weight:600;font-family:'Inter',sans-serif;min-height:42px;border-radius:var(--radius-sm);}
+  details.acc-sub>summary::-webkit-details-marker{display:none;}
+  details.acc-sub>summary:focus-visible{outline:3px solid var(--sage);outline-offset:-3px;}
+  details.acc-sub[open]>summary{border-bottom:1px solid var(--line);border-radius:var(--radius-sm) var(--radius-sm) 0 0;}
+  details.acc-sub>.row,details.acc-sub>div{padding:0 14px 14px;}
+  details.acc-sub>summary .acc-t{font-size:13.5px;}
+  /* ---------- Resumen del Panel ---------- */
+  .kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-bottom:16px;}
+  .kpi{display:flex;flex-direction:column;align-items:flex-start;gap:1px;text-align:left;font-family:'Inter',sans-serif;background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:12px 16px;cursor:pointer;box-shadow:var(--shadow);transition:border-color .15s,transform .15s;color:var(--ink);}
+  .kpi:hover{border-color:var(--forest);transform:translateY(-1px);}
+  .kpi:focus-visible{outline:3px solid var(--sage);outline-offset:2px;}
+  .kpi-n{font-family:var(--serif);font-weight:600;font-size:32px;line-height:1.1;color:var(--forest);}
+  .kpi-l{font-size:13.5px;font-weight:600;}
+  .kpi-s{font-size:12px;color:var(--gray);}
+  .kpi[data-kpi="pendiente"] .kpi-n{color:var(--amber);} .kpi[data-kpi="en_correccion"] .kpi-n{color:var(--blue);}
+  /* ---------- Correcciones pendientes (lista compacta) ---------- */
+  .pd-head,.pd-row{display:grid;grid-template-columns:minmax(120px,1.1fr) minmax(0,2fr) 100px 150px 92px;gap:12px;align-items:center;}
+  .pd-head{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--gray);padding:0 12px 6px;}
+  .pd-row{padding:9px 12px;border:1px solid var(--line);border-radius:var(--radius-sm);background:var(--card);margin-bottom:6px;font-size:13.5px;}
+  .pd-al{font-weight:600;color:var(--forest);text-decoration:none;word-break:break-word;} .pd-al:hover{text-decoration:underline;}
+  .pd-t{display:flex;flex-direction:column;min-width:0;word-break:break-word;} .pd-t small{color:var(--gray);font-size:11.5px;}
+  .pd-f{color:var(--ink-soft);font-size:12.5px;}
+  @media (max-width:760px){
+    .kpis{grid-template-columns:1fr 1fr 1fr;gap:8px;} .kpi{padding:10px 10px;} .kpi-n{font-size:26px;} .kpi-l{font-size:12px;} .kpi-s{display:none;}
+    .pd-head{display:none;} .pd-row{grid-template-columns:1fr auto;gap:4px 10px;} .pd-t{grid-column:1/-1;order:2;} .pd-f::before{content:'Entrega: ';color:var(--gray);} .pd-e{grid-column:1;} .pd-row .btn{grid-column:2;grid-row:1/3;align-self:center;}
+    details.acc>summary{padding:12px 14px;font-size:16.5px;} .acc-b{padding:12px 14px 16px;}
+    .acc-tag{display:none;}
+  }
+  /* ---------- Mi planificador ---------- */
+  .pl-ag-acts{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;}
+  .pl-ag-h{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--gray);margin:12px 0 6px;}
+  .pl-row{display:flex;align-items:center;gap:10px;padding:7px 10px;border:1px solid var(--line);border-left:4px solid var(--sage);border-radius:var(--radius-sm);background:var(--card);margin-bottom:5px;font-size:13.5px;}
+  .pl-row.done .pl-ti{text-decoration:line-through;color:var(--gray);}
+  .pl-row input[type=checkbox]{width:18px;height:18px;accent-color:var(--forest);flex-shrink:0;cursor:pointer;}
+  .pl-main{flex:1;min-width:0;text-align:left;background:none;border:none;font:inherit;color:inherit;cursor:pointer;padding:2px 0;display:flex;gap:8px;align-items:baseline;flex-wrap:wrap;}
+  .pl-main:focus-visible{outline:2px solid var(--sage);border-radius:6px;}
+  .pl-h{font-weight:700;color:var(--forest);font-size:12.5px;} .pl-ti{word-break:break-word;}
+  .pl-vis{font-size:15px;color:var(--gray);flex-shrink:0;} .pl-vis.pub{color:var(--blue);}
+  .pl-tp{font-size:11px;font-weight:600;border-radius:999px;padding:1px 9px;background:var(--accent-soft);color:var(--forest);white-space:nowrap;}
+  .t-tarea{border-left-color:#7FA88A;} .t-clase{border-left-color:var(--blue);} .t-correccion{border-left-color:#D99A6C;} .t-materiales{border-left-color:#B58A3E;} .t-personal{border-left-color:#9AA39D;} .t-evento{border-left-color:#7C6FB0;}
+  .pl-tp.t-tarea{background:#E4EFE6;color:#2B6049;} .pl-tp.t-clase{background:var(--blue-soft);color:var(--blue);} .pl-tp.t-correccion{background:#F7E6D8;color:#A5622F;} .pl-tp.t-materiales{background:var(--amber-soft);color:var(--amber);} .pl-tp.t-personal{background:#ECEEEB;color:#5E6962;} .pl-tp.t-evento{background:#E9E6F4;color:#5B4F94;}
+  .pl-bar{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-bottom:12px;}
+  .pl-nav{display:flex;align-items:center;gap:10px;} .pl-nav strong{font-family:var(--serif);font-size:19px;min-width:150px;text-align:center;text-transform:capitalize;}
+  .pl-leyenda{display:flex;gap:6px 12px;flex-wrap:wrap;font-size:12px;color:var(--ink-soft);margin-bottom:12px;align-items:center;}
+  .pl-leyenda i{font-size:14px;}
+  .pl-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;}
+  .pl-dow{text-align:center;font-size:11.5px;font-weight:700;color:var(--gray);padding:2px 0;}
+  .pl-day{min-height:92px;min-width:0;overflow:hidden;border:1.5px solid var(--line);border-radius:var(--radius-sm);padding:5px 6px;cursor:pointer;background:var(--card);font-size:12px;text-align:left;font-family:inherit;color:inherit;display:block;}
+  .pl-day:hover{border-color:var(--forest);} .pl-day.empty{background:transparent;border:none;cursor:default;}
+  .pl-day.today{border-color:var(--blue);} .pl-day.today .num{color:var(--blue);} .pl-day.sel{border-width:2px;border-color:var(--forest);background:var(--accent-soft);}
+  .pl-day .num{font-weight:700;display:block;}
+  .pl-chip{display:block;width:100%;text-align:left;font-size:10.5px;line-height:1.35;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border:none;border-left:3px solid var(--sage);background:var(--card-alt);border-radius:4px;padding:1px 4px;cursor:pointer;font-family:inherit;color:inherit;}
+  .pl-chip.done{text-decoration:line-through;color:var(--gray);}
+  .pl-chip.t-clase{background:var(--blue-soft);} .pl-chip.t-correccion{background:#F7E6D8;} .pl-chip.t-materiales{background:var(--amber-soft);} .pl-chip.t-evento{background:#E9E6F4;} .pl-chip.t-tarea{background:#E4EFE6;} .pl-chip.t-personal{background:#ECEEEB;}
+  .pl-mas{font-size:10px;font-weight:700;color:var(--gray);margin-top:2px;}
+  .pl-week{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px;}
+  .pl-wd{border:1px solid var(--line);border-radius:var(--radius-sm);padding:8px;background:var(--card-alt);min-width:0;}
+  .pl-wd.today{border-color:var(--blue);background:#F2F8F9;}
+  .pl-wd h4{margin:0 0 6px;font-family:'Inter',sans-serif;font-size:12.5px;display:flex;justify-content:space-between;align-items:center;gap:4px;}
+  .pl-wd .pl-row{flex-wrap:wrap;padding:6px 7px;gap:6px;} .pl-wd .pl-tp{display:none;}
+  .pl-addd{background:none;border:1px dashed var(--line);border-radius:8px;width:100%;color:var(--gray);cursor:pointer;font-size:12px;padding:4px;font-family:inherit;}
+  .pl-addd:hover{border-color:var(--forest);color:var(--forest);}
+  .pl-dia{margin-top:16px;padding-top:14px;border-top:1px solid var(--line);}
+  .pl-dia h3{font-size:16px;margin:0 0 10px;text-transform:capitalize;}
+  .pl-aviso{background:var(--amber-soft);color:var(--amber);border-radius:var(--radius-sm);padding:10px 14px;font-size:13px;margin-bottom:12px;white-space:pre-wrap;}
+  dialog.dlg.dlg-plan{width:min(600px,94vw);max-height:92vh;overflow:auto;}
+  .pl-prev{border:1.5px dashed var(--blue);border-radius:var(--radius-sm);background:var(--blue-soft);padding:10px 14px;font-size:13px;margin:8px 0 12px;}
+  .pl-prev b{display:block;margin-bottom:4px;color:var(--blue);} .pl-prev .no{color:var(--ink-soft);font-size:12px;margin-top:6px;}
+  .pl-alu{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:4px 12px;margin:6px 0 4px;max-height:150px;overflow:auto;}
+  .pl-alu label{text-transform:none;letter-spacing:0;font-size:13px;font-weight:500;display:flex;gap:6px;align-items:center;}
+  @media (max-width:900px){
+    .pl-week{grid-template-columns:1fr;} .pl-wd .pl-tp{display:inline-block;}
+    .pl-day{min-height:58px;padding:3px 3px;} .pl-chip{font-size:9px;padding:0 3px;} .pl-nav strong{min-width:110px;font-size:16px;}
+  }
 </style>
 </head>
 <body>
@@ -271,7 +366,8 @@
   <aside class="sidebar" id="sidebar">
     <div class="brand"><span class="brand-logo"><img src="logo.png" alt="PT Madrid"></span><div><div class="brand-name">PT Madrid</div><div class="brand-sub">Panel de la preparadora</div></div></div>
     <nav class="tabs">
-          <div class="tab active" data-tab="panel" data-titulo="Panel" data-sub="Resumen de la semana, objetivos y análisis DAFO."><i class="ti ti-compass" aria-hidden="true"></i> Panel <span class="nav-badge hidden" id="navPendBadge"></span></div>
+          <div class="tab active" data-tab="panel" data-titulo="Panel" data-sub="Resumen de trabajo: correcciones, planificación y seguimiento."><i class="ti ti-compass" aria-hidden="true"></i> Panel <span class="nav-badge hidden" id="navPendBadge"></span></div>
+      <div class="tab" data-tab="planificador" data-titulo="Mi planificador" data-sub="Tus tareas y eventos. Privado, salvo lo que decidas mostrar a los alumnos."><i class="ti ti-calendar-event" aria-hidden="true"></i> Mi planificador</div>
       <div class="tab" data-tab="alumnos" data-titulo="Alumnos" data-sub="Añade alumnos y consulta la ficha de cada uno."><i class="ti ti-users" aria-hidden="true"></i> Alumnos</div>
       <div class="tab" data-tab="calendario" data-titulo="Calendario" data-sub="Planifica sesiones y eventos."><i class="ti ti-calendar" aria-hidden="true"></i> Calendario</div>
       <div class="tab" data-tab="practicos" data-titulo="Supuestos prácticos" data-sub="Materiales, envíos de los alumnos y correcciones."><i class="ti ti-file-text" aria-hidden="true"></i> Supuestos prácticos</div>
@@ -296,59 +392,100 @@
     </div>
     <div class="content">
   <div id="errorBanner" style="display:none;background:#fdf6f5;border:1px solid var(--red-soft);color:var(--red);padding:12px 16px;border-radius:8px;margin-bottom:14px;font-size:13px;white-space:pre-wrap;"></div>
-  <div class="page-head"><h1 id="pageTitle">Panel</h1><p class="lead" id="pageLead">Resumen de la semana, objetivos y análisis DAFO.</p></div>
+  <div class="page-head"><h1 id="pageTitle">Panel</h1><p class="lead" id="pageLead">Resumen de trabajo: correcciones, planificación y seguimiento.</p></div>
 
   <!-- PANEL -->
   <div class="panel active" id="panel-panel">
-    <div class="card">
-      <h3><i class="ti ti-alert-circle" aria-hidden="true"></i> Correcciones pendientes</h3>
-      <div class="hint" style="margin-top:0;">Supuestos prácticos y simulacros de todos los alumnos que aún no has publicado como corregidos.</div>
-      <div class="row">
-        <div class="field"><label>Alumno</label><select id="pdAlumno"></select></div>
-        <div class="field"><label>Tipo de trabajo</label><select id="pdTipo"><option value="">Todos</option><option value="practico">Supuesto práctico</option><option value="simulacro">Simulacro de tema</option></select></div>
-        <div class="field"><label>Estado</label><select id="pdEstado"><option value="">Pendiente y en corrección</option><option value="pendiente">Pendiente de corrección</option><option value="en_correccion">En corrección</option></select></div>
+    <div class="kpis" id="kpis">
+      <button type="button" class="kpi" data-kpi="pendiente"><span class="kpi-n" id="kpiPend">–</span><span class="kpi-l">Correcciones pendientes</span><span class="kpi-s">sin empezar</span></button>
+      <button type="button" class="kpi" data-kpi="en_correccion"><span class="kpi-n" id="kpiEnc">–</span><span class="kpi-l">Trabajos en corrección</span><span class="kpi-s">con borrador sin publicar</span></button>
+      <button type="button" class="kpi" data-kpi="hoy"><span class="kpi-n" id="kpiHoy">–</span><span class="kpi-l">Tareas de hoy</span><span class="kpi-s" id="kpiHoyS">de Mi planificador</span></button>
+    </div>
+    <details class="card acc" data-acc="pd" open id="pdCard">
+      <summary><i class="ti ti-chevron-right acc-chev" aria-hidden="true"></i><span class="acc-t"><i class="ti ti-alert-circle" aria-hidden="true"></i> Correcciones pendientes</span><span class="acc-n" hidden></span><span class="acc-hint" aria-hidden="true"></span></summary>
+      <div class="acc-b">
+        <details class="acc-sub" data-acc="pd-f">
+          <summary><i class="ti ti-chevron-right acc-chev" aria-hidden="true"></i><span class="acc-t"><i class="ti ti-filter" aria-hidden="true"></i> Filtrar</span><span class="acc-n" id="pdFiltroN" hidden></span><span class="acc-hint" aria-hidden="true"></span></summary>
+          <div class="row" style="margin:10px 0 0;">
+            <div class="field"><label for="pdAlumno">Alumno</label><select id="pdAlumno"></select></div>
+            <div class="field"><label for="pdTipo">Tipo de trabajo</label><select id="pdTipo"><option value="">Todos</option><option value="practico">Supuesto práctico</option><option value="simulacro">Simulacro de tema</option></select></div>
+            <div class="field"><label for="pdEstado">Estado</label><select id="pdEstado"><option value="">Pendiente y en corrección</option><option value="pendiente">Pendiente de corrección</option><option value="en_correccion">En corrección</option></select></div>
+          </div>
+        </details>
+        <div id="pdResumen" style="display:flex;gap:8px;flex-wrap:wrap;margin:10px 0;"></div>
+        <div id="pdLista"></div>
+        <div id="pdMas" style="margin-top:10px;"></div>
       </div>
-      <div id="pdResumen" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;"></div>
-      <div id="pdLista"></div>
-    </div>
-    <div class="card" id="pdSinVerCard">
-      <h3><i class="ti ti-eye-off" aria-hidden="true"></i> Correcciones publicadas que el alumno aún no ha visto</h3>
-      <div class="hint" style="margin-top:0;">Seguimiento de lectura: no es trabajo pendiente para ti, solo indica que el alumno todavía no ha abierto la corrección. «Sin ver» pasa a «Vista» cuando la consulta.</div>
-      <div id="pdSinVer"></div>
-    </div>
-    <div class="card">
-      <h3>Esta semana</h3>
-      <div class="row">
-        <div class="field"><label>Tema de la semana</label><input type="text" id="panelTema" placeholder="Ej: Tema 14 - Adaptaciones curriculares"></div>
+    </details>
+    <details class="card acc" data-acc="pl" open id="plCard">
+      <summary><i class="ti ti-chevron-right acc-chev" aria-hidden="true"></i><span class="acc-t"><i class="ti ti-calendar-event" aria-hidden="true"></i> Mi planificación</span><span class="acc-n" hidden></span><span class="acc-tag pill neutral"><i class="ti ti-lock" aria-hidden="true"></i> Privado</span><span class="acc-hint" aria-hidden="true"></span></summary>
+      <div class="acc-b">
+        <div class="pl-ag-acts"><button type="button" class="btn btn-primary btn-sm" id="plNuevaRapida"><i class="ti ti-plus" aria-hidden="true"></i> Nueva tarea</button><button type="button" class="btn btn-secondary btn-sm" id="plAbrir"><i class="ti ti-calendar-month" aria-hidden="true"></i> Abrir Mi planificador</button></div>
+        <div id="plAgenda"></div>
       </div>
-      <div class="field" style="margin-bottom:12px;"><label>Supuesto práctico de la semana</label><textarea id="panelSupuesto" placeholder="Pega o describe aquí el supuesto que toca esta semana..."></textarea></div>
-      <button class="btn btn-primary" id="btnGuardarPanel">Guardar</button>
-      <span class="status" id="panelStatus"></span>
-    </div>
-    <div class="card">
-      <h3><i class="ti ti-target" aria-hidden="true"></i> Objetivos semanales</h3>
-      <div class="hint" style="margin-top:0;">Los objetivos de la semana en curso aparecen en la página del alumno, que los marca como cumplidos.</div>
-      <div class="row">
-        <div class="field"><label>Alumno</label><select id="objAlumno"></select></div>
-        <div class="field" style="max-width:170px;"><label>Semana (cualquier día)</label><input type="date" id="objSemana"></div>
+    </details>
+    <details class="card acc" data-acc="sv" id="pdSinVerCard">
+      <summary><i class="ti ti-chevron-right acc-chev" aria-hidden="true"></i><span class="acc-t"><i class="ti ti-eye-off" aria-hidden="true"></i> Correcciones publicadas que el alumno aún no ha visto</span><span class="acc-n" hidden></span><span class="acc-hint" aria-hidden="true"></span></summary>
+      <div class="acc-b">
+        <div class="hint" style="margin-top:0;">Seguimiento de lectura: no es trabajo pendiente para ti, solo indica que el alumno todavía no ha abierto la corrección. «Sin ver» pasa a «Vista» cuando la consulta.</div>
+        <div id="pdSinVer"></div>
       </div>
-      <div class="field" style="margin-bottom:12px;"><label>Objetivo</label><input type="text" id="objTexto" placeholder="Ej: Terminar primera vuelta de los temas 10-12"></div>
-      <button class="btn btn-primary btn-sm" id="btnAddObjetivo">Añadir objetivo</button>
-      <span class="status" id="objStatus"></span>
-      <div id="listaObjetivosPrep" style="margin-top:12px;"></div>
-    </div>
+    </details>
+    <details class="card acc" data-acc="sem">
+      <summary><i class="ti ti-chevron-right acc-chev" aria-hidden="true"></i><span class="acc-t"><i class="ti ti-calendar-week" aria-hidden="true"></i> Esta semana</span><span class="acc-n" hidden></span><span class="acc-tag pill info"><i class="ti ti-eye" aria-hidden="true"></i> Visible para alumnos</span><span class="acc-hint" aria-hidden="true"></span></summary>
+      <div class="acc-b">
+        <div class="hint" style="margin-top:0;">Lo que escribas aquí lo ven los alumnos en su página. No es tu planificación privada.</div>
+        <div class="row">
+          <div class="field"><label for="panelTema">Tema de la semana</label><input type="text" id="panelTema" placeholder="Ej: Tema 14 - Adaptaciones curriculares"></div>
+        </div>
+        <div class="field" style="margin-bottom:12px;"><label for="panelSupuesto">Supuesto práctico de la semana</label><textarea id="panelSupuesto" placeholder="Pega o describe aquí el supuesto que toca esta semana..."></textarea></div>
+        <button class="btn btn-primary" id="btnGuardarPanel">Guardar</button>
+        <span class="status" id="panelStatus"></span>
+      </div>
+    </details>
+    <details class="card acc" data-acc="obj">
+      <summary><i class="ti ti-chevron-right acc-chev" aria-hidden="true"></i><span class="acc-t"><i class="ti ti-target" aria-hidden="true"></i> Objetivos de alumnos</span><span class="acc-n" hidden></span><span class="acc-tag pill info"><i class="ti ti-eye" aria-hidden="true"></i> Visible para alumnos</span><span class="acc-hint" aria-hidden="true"></span></summary>
+      <div class="acc-b">
+        <div class="hint" style="margin-top:0;">Los objetivos de la semana en curso aparecen en la página del alumno, que los marca como cumplidos.</div>
+        <div class="row">
+          <div class="field"><label for="objAlumno">Alumno</label><select id="objAlumno"></select></div>
+          <div class="field" style="max-width:170px;"><label for="objSemana">Semana (cualquier día)</label><input type="date" id="objSemana"></div>
+        </div>
+        <div class="field" style="margin-bottom:12px;"><label for="objTexto">Objetivo</label><input type="text" id="objTexto" placeholder="Ej: Terminar primera vuelta de los temas 10-12"></div>
+        <button class="btn btn-primary btn-sm" id="btnAddObjetivo">Añadir objetivo</button>
+        <span class="status" id="objStatus"></span>
+        <div id="listaObjetivosPrep" style="margin-top:12px;"></div>
+      </div>
+    </details>
+    <details class="card acc" data-acc="dafo" id="dafoCard">
+      <summary><i class="ti ti-chevron-right acc-chev" aria-hidden="true"></i><span class="acc-t"><i class="ti ti-chart-radar" aria-hidden="true"></i> Análisis DAFO por alumno</span><span class="acc-n" hidden></span><span class="acc-hint" aria-hidden="true"></span></summary>
+      <div class="acc-b">
+        <div class="hint" style="margin-top:0;">Fortalezas y debilidades de cada alumno, para ajustar el enfoque de cada clase.</div>
+        <div id="listaDafo"></div>
+        <div class="empty" id="dafoEmpty" style="display:none;">Añade alumnos en la pestaña Alumnos para poder rellenar su DAFO.</div>
+      </div>
+    </details>
+  </div>
+
+  <!-- MI PLANIFICADOR (privado) -->
+  <div class="panel" id="panel-planificador">
     <div class="card">
-      <h3>Análisis DAFO por alumno</h3>
-      <div class="hint" style="margin-top:0;">Fortalezas y debilidades de cada alumno, para ajustar el enfoque de cada clase.</div>
-      <div id="listaDafo"></div>
-      <div class="empty" id="dafoEmpty" style="display:none;">Añade alumnos en la pestaña Alumnos para poder rellenar su DAFO.</div>
+      <div class="pl-bar">
+        <div class="subtabs" id="plVistas" style="margin:0;"><button type="button" class="subtab active" data-plv="mes" aria-pressed="true"><i class="ti ti-calendar-month" aria-hidden="true"></i> Mes</button><button type="button" class="subtab" data-plv="semana" aria-pressed="false"><i class="ti ti-calendar-week" aria-hidden="true"></i> Semana</button></div>
+        <div class="pl-nav"><button type="button" class="icon-btn" id="plPrev" aria-label="Anterior">‹</button><strong id="plTitulo"></strong><button type="button" class="icon-btn" id="plNext" aria-label="Siguiente">›</button><button type="button" class="btn btn-secondary btn-sm" id="plHoy">Hoy</button></div>
+        <button type="button" class="btn btn-primary btn-sm" id="plNueva"><i class="ti ti-plus" aria-hidden="true"></i> Nueva</button>
+      </div>
+      <div class="pl-leyenda" id="plLeyenda"></div>
+      <div id="plError"></div>
+      <div id="plCuerpo"></div>
+      <div id="plDia"></div>
     </div>
   </div>
 
   <!-- ALUMNOS -->
   <div class="panel" id="panel-alumnos">
   <div id="alumnosVistaLista">
-    <div class="card">
+    <div class="card" data-acc="al-add">
       <h3 id="alFormTitulo">Añadir alumno</h3>
       <div class="row">
         <div class="field"><label>Nombre y apellidos</label><input type="text" id="alNombre"></div>
@@ -360,7 +497,7 @@
       <button class="btn btn-secondary" id="btnCancelarEdicion" style="display:none;">Cancelar</button>
       <span class="status" id="alumnosStatus"></span>
     </div>
-    <div class="card">
+    <div class="card" data-acc="al-lista" data-open="1">
       <h3>Alumnos</h3>
       <div class="row">
         <div class="field"><label>Buscar por nombre</label><input type="search" id="alBuscar" placeholder="Escribe un nombre…"></div>
@@ -389,7 +526,7 @@
 
   <!-- PRACTICOS -->
   <div class="panel" id="panel-practicos">
-    <div class="card" id="supCard">
+    <div class="card" id="supCard" data-acc="su-pub" data-open="1">
       <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;">
         <h3 style="margin:0;"><i class="ti ti-file-text" aria-hidden="true"></i> Supuestos publicados</h3>
         <button class="btn btn-primary" id="btnNuevoSupuesto"><i class="ti ti-plus" aria-hidden="true"></i> Publicar nuevo supuesto</button>
@@ -398,7 +535,7 @@
       <div id="supLista"></div>
       <div id="supDetalle"></div>
     </div>
-    <div class="card">
+    <div class="card" data-acc="su-otros">
       <h3><i class="ti ti-paperclip" aria-hidden="true"></i> Otros materiales (archivos generales)</h3>
       <div class="hint" style="margin-top:0;">Sube aquí enunciados o materiales; los alumnos los verán en su pestaña de prácticos. Se guardan en tu Google Drive.</div>
       <div class="row">
@@ -409,7 +546,7 @@
       <span class="status" id="archPracticosStatus"></span>
       <div id="archPracticosLista" style="margin-top:10px;"></div>
     </div>
-    <div class="card">
+    <div class="card" data-acc="su-ent">
       <h3>Todas las entregas de supuestos</h3>
       <div class="row">
         <div class="field"><label>Filtrar por alumno</label><select id="filtroAlumnoPracticos"></select></div>
@@ -426,7 +563,7 @@
   <div class="panel" id="panel-temas"></div>
   <!-- SIMULACROS DE TEMA -->
   <div class="panel" id="panel-simulacros">
-    <div class="card">
+    <div class="card" data-acc="sim-f" data-open="1">
       <h3><i class="ti ti-filter" aria-hidden="true"></i> Simulacros recibidos</h3>
       <div class="row">
         <div class="field"><label>Alumno</label><select id="simFAlumno"></select></div>
@@ -440,7 +577,7 @@
 
   <!-- PROGRAMACIÓN Y DEFENSA -->
   <div class="panel" id="panel-programacion">
-    <div class="card">
+    <div class="card" data-acc="prog" data-open="1">
       <h3><i class="ti ti-presentation" aria-hidden="true"></i> Apartados de la programación</h3>
       <div class="hint" style="margin-top:0;">Aquí ves el índice completo. Los alumnos solo ven los apartados que actives con «Visible para alumnos», con sus instrucciones y su Word. Ocultar un apartado no borra nada: se conservan instrucciones y archivo. Si activas un subapartado, el alumno verá el título de su apartado principal como contexto, pero no los demás subapartados.</div>
       <div id="progResumen" style="display:flex;gap:8px;flex-wrap:wrap;margin:10px 0;"></div>
@@ -459,7 +596,7 @@
 
     <!-- CUADERNOS -->
     <div class="subpanel active" id="sub-cuadernos">
-      <div class="card">
+      <div class="card" data-acc="cu-add">
         <h3>Subir cuaderno de teoría</h3>
         <div class="row">
           <div class="field" style="max-width:200px;"><label>Bloque</label><select id="cuBloque"><option value="lengua">Lengua</option><option value="matematicas">Matemáticas</option></select></div>
@@ -472,13 +609,13 @@
         <button class="btn btn-primary" id="btnAddCuaderno">Subir cuaderno</button>
         <span class="status" id="cuStatus"></span>
       </div>
-      <div class="card"><h3><i class="ti ti-book-2" aria-hidden="true"></i> Lengua</h3><div id="cgListLengua"></div></div>
-      <div class="card"><h3><i class="ti ti-math-function" aria-hidden="true"></i> Matemáticas</h3><div id="cgListMate"></div></div>
+      <div class="card" data-acc="cu-len" data-open="1"><h3><i class="ti ti-book-2" aria-hidden="true"></i> Lengua</h3><div id="cgListLengua"></div></div>
+      <div class="card" data-acc="cu-mat" data-open="1"><h3><i class="ti ti-math-function" aria-hidden="true"></i> Matemáticas</h3><div id="cgListMate"></div></div>
     </div>
 
     <!-- EXÁMENES -->
     <div class="subpanel" id="sub-examenes">
-      <div class="card">
+      <div class="card" data-acc="ex-add">
         <h3>Publicar examen con solucionario</h3>
         <div class="row">
           <div class="field"><label>Título</label><input type="text" id="exTitulo" placeholder="Ej: Examen de Cultura General 1"></div>
@@ -498,12 +635,12 @@
         <button class="btn btn-primary" id="btnAddExamen">Publicar examen</button>
         <span class="status" id="exStatus"></span>
       </div>
-      <div class="card"><h3>Exámenes publicados</h3><div id="cgListExamenes"></div></div>
+      <div class="card" data-acc="ex-pub" data-open="1"><h3>Exámenes publicados</h3><div id="cgListExamenes"></div></div>
     </div>
 
     <!-- RESULTADOS -->
     <div class="subpanel" id="sub-resultados">
-      <div class="card">
+      <div class="card" data-acc="res-notas" data-open="1">
         <h3>Notas registradas por los alumnos</h3>
         <div class="row">
           <div class="field"><label>Alumno</label><select id="resAlumno"></select></div>
@@ -522,7 +659,7 @@
 
   <!-- RECURSOS -->
   <div class="panel" id="panel-recursos">
-    <div class="card">
+    <div class="card" data-acc="rec-add">
       <h3>Publicar noticia o recurso</h3>
       <div class="field" style="margin-bottom:12px;"><label>Título</label><input type="text" id="recTitulo" placeholder="Ej: Nueva convocatoria publicada en el BOCM"></div>
       <div class="field" style="margin-bottom:12px;"><label>Texto</label><textarea id="recTexto" placeholder="Cuenta la noticia, comparte el recurso o añade tu comentario..." style="min-height:100px;"></textarea></div>
@@ -533,7 +670,7 @@
       <button class="btn btn-primary" id="btnPublicarRecurso">Publicar</button>
       <span class="status" id="recStatus"></span>
     </div>
-    <div class="card">
+    <div class="card" data-acc="rec-pub" data-open="1">
       <h3>Publicados</h3>
       <div id="listaRecursos"></div>
       <div class="empty" id="recursosEmpty" style="display:none;">Todavía no has publicado nada.</div>
@@ -565,13 +702,13 @@
 
   <!-- AJUSTES -->
   <div class="panel" id="panel-ajustes">
-    <div class="card">
+    <div class="card" data-acc="aj-gen">
       <h3>General</h3>
       <div class="field" style="margin-bottom:12px;"><label>Nombre de la academia</label><input type="text" id="ajNombreAcademia"></div>
       <button class="btn btn-primary" id="btnGuardarAjustes">Guardar</button>
       <span class="status" id="ajustesStatus"></span>
     </div>
-    <div class="card">
+    <div class="card" data-acc="aj-url">
       <h3>Enlace base del alumno</h3>
       <div class="hint" style="margin-top:0;">URL donde está publicada tu página alumno.html (para generar los enlaces de la pestaña Alumnos).</div>
       <div class="field" style="margin-bottom:12px;"><input type="text" id="ajUrlAlumno" placeholder="https://tuusuario.github.io/tu-repo/alumno.html"></div>
@@ -585,9 +722,45 @@
 <dialog class="dlg" id="dlgSimCorr"></dialog>
 <dialog class="dlg" id="dlgSupuesto"></dialog>
 <dialog class="dlg" id="dlgProg"></dialog>
+<dialog class="dlg dlg-plan" id="dlgPlan"></dialog>
 <script>
 const API_URL = 'https://script.google.com/macros/s/AKfycbzrEozXfHf41s3QPZTZelrfIuxQ48xs4LAABID3Tmk4JqV0Ys0e_UCGOHlsV5aAAm-w/exec';
 const COACH_KEY = 'cgr-pt-2026'; // cámbiala si quieres
+
+/* ---------- Desplegables (details/summary nativos: teclado, estado abierto/cerrado y formularios que no se reinician) ---------- */
+const ACC_KEY = 'pt_prof_acc';
+let accState = {};
+try{ accState = JSON.parse(sessionStorage.getItem(ACC_KEY)||'{}') || {}; }catch(e){ accState = {}; }
+function accSave(){ try{ sessionStorage.setItem(ACC_KEY, JSON.stringify(accState)); }catch(e){} }
+function accSync(d){ const sm = d.querySelector(':scope > summary'); if(sm) sm.setAttribute('aria-expanded', d.open ? 'true' : 'false'); }
+function accRestore(root){
+  (root||document).querySelectorAll('details[data-acc]').forEach(d=>{ const k = d.dataset.acc; if(Object.prototype.hasOwnProperty.call(accState,k)) d.open = !!accState[k]; accSync(d); });
+}
+function accEnhance(root){
+  (root||document).querySelectorAll('.card[data-acc]').forEach(card=>{
+    const head = card.firstElementChild; if(!head) return;
+    const h3 = head.matches('h3') ? head : head.querySelector('h3'); if(!h3) return;
+    const extras = head===h3 ? [] : Array.from(head.children).filter(c=>c!==h3);
+    const d = document.createElement('details'); d.className = 'card acc'; d.dataset.acc = card.dataset.acc;
+    if(card.id) d.id = card.id; if(card.dataset.open) d.open = true;
+    const sm = document.createElement('summary');
+    sm.innerHTML = '<i class="ti ti-chevron-right acc-chev" aria-hidden="true"></i>';
+    const t = document.createElement('span'); t.className = 'acc-t'; if(h3.id) t.id = h3.id; t.innerHTML = h3.innerHTML; sm.appendChild(t);
+    const n = document.createElement('span'); n.className = 'acc-n'; n.hidden = true; sm.appendChild(n);
+    const x = document.createElement('span'); x.className = 'acc-x'; extras.forEach(e=>x.appendChild(e)); if(extras.length) sm.appendChild(x);
+    const hint = document.createElement('span'); hint.className = 'acc-hint'; hint.setAttribute('aria-hidden','true'); sm.appendChild(hint);
+    const body = document.createElement('div'); body.className = 'acc-b';
+    head.remove(); while(card.firstChild) body.appendChild(card.firstChild);
+    d.appendChild(sm); d.appendChild(body); card.replaceWith(d);
+  });
+  accRestore(root);
+}
+function accOpen(key){ const d = document.querySelector('details[data-acc="'+key+'"]'); if(!d) return; d.open = true; accState[key] = true; accSave(); accSync(d); }
+function accCont(key, n){ document.querySelectorAll('details[data-acc="'+key+'"] > summary .acc-n').forEach(el=>{ const ok = !(n===''||n==null); el.textContent = ok ? n : ''; el.hidden = !ok; }); }
+document.addEventListener('toggle', e=>{ const d = e.target; if(d && d.matches && d.matches('details[data-acc]')){ accState[d.dataset.acc] = d.open; accSave(); accSync(d); } }, true);
+// Un botón dentro de la cabecera no debe abrir/cerrar el bloque
+document.addEventListener('click', e=>{ if(e.target.closest('summary .acc-x')) e.preventDefault(); });
+accEnhance(document);
 
 let data = { alumnos:[], calendario:[], practicos:[], temas:[], temasProgreso:[], cg:[], cgProgreso:[], ajustes:[], dafo:[], archivos:[], estudio:[], objetivos:[], recursos:[], cuadernos:[], examenes:[], notas:[], simulacros:[], supuestos:[], progApartados:[] };
 function estadoNorm(e){ return e==='Repasado' ? 'Primera vuelta' : (e||'Pendiente'); }
@@ -719,6 +892,7 @@ async function loadAll(){
     return;
   }
   refreshUI();
+  cargarPlan();
 }
 
 /* Repinta toda la interfaz usando los datos locales, sin llamar al backend. */
@@ -739,6 +913,7 @@ function refreshUI(){
   renderStats();
   renderArchivosLista('practicos', 'archPracticosLista');
   renderRecursos();
+  renderPlanner(); renderAgenda(); renderContadores();
 }
 
 /* Guarda en el backend en segundo plano; si falla, avisa arriba sin bloquear la interfaz. */
@@ -795,6 +970,8 @@ document.getElementById('scrim').addEventListener('click', closeSidebar);
 
 /* PANEL */
 function renderPanel(){
+  document.getElementById('dafoCard').hidden = !(data.alumnos.length || (data.dafo||[]).length);
+  accCont('obj', (data.objetivos||[]).length||'');
   document.getElementById('panelTema').value = ajusteVal('temaSemana','');
   document.getElementById('panelSupuesto').value = ajusteVal('supuestoSemana','');
   renderObjetivosPrep();
@@ -1089,6 +1266,223 @@ document.getElementById('panel-programacion').addEventListener('click', e=>{
   const ed = e.target.closest('[data-prog-edit]'); if(ed) abrirProg(ed.dataset.progEdit);
 });
 
+
+/* =====================================================================
+   MI PLANIFICADOR (privado)
+   Los datos viven en la hoja PlanProfe, que NO viaja en getAll ni en los datos del alumno.
+   Solo lo que marques con «Mostrar a alumnos» llega a su calendario (título, fecha, hora y descripción).
+   La nota privada y el estado «completada» nunca se publican.
+   ===================================================================== */
+const PLAN_TIPOS = { tarea:'Tarea', clase:'Clase', correccion:'Corrección', materiales:'Preparar materiales', personal:'Personal', evento:'Evento' };
+const PLAN_TIPO_ALU = { clase:'Clase', evento:'Evento' }; // el resto se muestra al alumno como «Tarea»
+let plan = { items:[], cargado:false, error:'' };
+let plVista = 'mes', plAnchor = todayISO(), plSel = '';
+const DIAS_L = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
+function isoOf(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function parseISO(iso){ const p = String(iso).split('-').map(Number); return new Date(p[0],p[1]-1,p[2]); }
+function addDiasISO(iso,n){ const d = parseISO(iso); d.setDate(d.getDate()+n); return isoOf(d); }
+function lunesDe(iso){ const d = parseISO(iso); const w = d.getDay()===0?6:d.getDay()-1; d.setDate(d.getDate()-w); return isoOf(d); }
+function fechaLarga(iso){ const d = parseISO(iso); return DIAS_L[d.getDay()]+', '+d.getDate()+' de '+MESES[d.getMonth()]+' de '+d.getFullYear(); }
+function normPlan(x){
+  const hm = String(x.hora||'').match(/(\d{1,2}):(\d{2})/);
+  return { id:String(x.id), titulo:String(x.titulo||''), tipo: PLAN_TIPOS[x.tipo] ? x.tipo : 'tarea', fecha:normFecha(x.fecha),
+    hora: hm ? hm[1].padStart(2,'0')+':'+hm[2] : '', descripcion:String(x.descripcion||''), notaPrivada:String(x.notaPrivada||''),
+    hecho: x.hecho===true || String(x.hecho).toLowerCase()==='true', mostrar: x.mostrar===true || String(x.mostrar).toLowerCase()==='true',
+    destinatarios:String(x.destinatarios||'') };
+}
+async function cargarPlan(){
+  try{
+    const r = await apiPost('getPlanProfe', { key:COACH_KEY });
+    plan.items = (r.items||[]).map(normPlan); plan.cargado = true; plan.error = '';
+  }catch(e){
+    plan.error = /desconocida|actualizado/i.test(e.message) ? 'El servidor (Apps Script) todavía no tiene el planificador: pega el Code.gs nuevo y publica una «Nueva versión».' : 'No se ha podido cargar tu planificador. '+e.message;
+  }
+  renderPlanner(); renderAgenda(); renderKpis(); renderContadores();
+}
+function planItemsDe(iso){ return plan.items.filter(x=>x.fecha===iso).sort((a,b)=>(a.hora||'99:99').localeCompare(b.hora||'99:99') || a.titulo.localeCompare(b.titulo)); }
+function planPayload(it){
+  return { key:COACH_KEY, id:it.id, titulo:it.titulo, tipo:it.tipo, fecha:it.fecha, hora:it.hora, descripcion:it.descripcion, notaPrivada:it.notaPrivada, hecho:it.hecho, mostrar:it.mostrar,
+    destinatarios: it.destinatarios==='ALL' ? 'ALL' : String(it.destinatarios||'').split(',').filter(Boolean) };
+}
+function visIco(it){ return it.mostrar ? '<i class="ti ti-eye pl-vis pub" title="Visible para alumnos" aria-label="Visible para alumnos"></i>' : '<i class="ti ti-lock pl-vis" title="Privado" aria-label="Privado"></i>'; }
+function planFila(it, conFecha){
+  return `<div class="pl-row t-${it.tipo}${it.hecho?' done':''}">
+    <input type="checkbox" data-pl-chk="${escapeHtml(it.id)}" ${it.hecho?'checked':''} aria-label="Marcar «${escapeHtml(it.titulo)}» como completada">
+    <button type="button" class="pl-main" data-pl-edit="${escapeHtml(it.id)}">${it.hora?`<span class="pl-h">${escapeHtml(it.hora)}</span>`:''}<span class="pl-ti">${conFecha?escapeHtml(fechaCorta(it.fecha))+' · ':''}${escapeHtml(it.titulo)}</span></button>
+    <span class="pl-tp t-${it.tipo}">${escapeHtml(PLAN_TIPOS[it.tipo])}</span>${visIco(it)}
+  </div>`;
+}
+function renderAgenda(){
+  const cont = document.getElementById('plAgenda'); if(!cont) return;
+  if(plan.error){ cont.innerHTML = '<div class="pl-aviso">'+escapeHtml(plan.error)+'</div>'; return; }
+  if(!plan.cargado){ cont.innerHTML = '<div class="empty" style="padding:10px 0;">Cargando tu planificación…</div>'; return; }
+  const hoy = todayISO(); const hs = planItemsDe(hoy);
+  let h = '<div class="pl-ag-h">Hoy · '+escapeHtml(fechaLarga(hoy))+'</div>' + (hs.length ? hs.map(x=>planFila(x)).join('') : '<div class="hint" style="margin:0 0 6px;">Nada planificado para hoy.</div>');
+  const dom = addDiasISO(lunesDe(hoy),6); const resto = [];
+  for(let d = addDiasISO(hoy,1); d<=dom; d = addDiasISO(d,1)) planItemsDe(d).forEach(x=>resto.push(x));
+  h += '<div class="pl-ag-h">Resto de esta semana</div>' + (resto.length ? resto.map(x=>planFila(x,true)).join('') : '<div class="hint" style="margin:0;">Nada más planificado esta semana.</div>');
+  cont.innerHTML = h;
+  accCont('pl', hs.length ? hs.length : '');
+}
+function renderContadores(){
+  accCont('al-lista', data.alumnos.length);
+  accCont('su-pub', data.supuestos.length);
+  accCont('su-ent', entregas().filter(e=>e.tipo==='practico').length);
+  accCont('su-otros', (data.archivos||[]).filter(x=>x.categoria==='practicos').length);
+  accCont('te-lista', data.temas.length);
+  accCont('cu-len', (data.cuadernos||[]).filter(c=>c.bloque==='lengua').length);
+  accCont('cu-mat', (data.cuadernos||[]).filter(c=>c.bloque==='matematicas').length);
+  accCont('ex-pub', (data.examenes||[]).length);
+  accCont('rec-pub', (data.recursos||[]).length);
+  accCont('prog', PROG_IDX.filter(x=>progPublicado(x.c)).length+' publicados');
+}
+function renderPlanner(){
+  const cuerpo = document.getElementById('plCuerpo'); if(!cuerpo) return;
+  document.getElementById('plVistas').querySelectorAll('[data-plv]').forEach(b=>{ const on = b.dataset.plv===plVista; b.classList.toggle('active', on); b.setAttribute('aria-pressed', on); });
+  document.getElementById('plLeyenda').innerHTML = Object.keys(PLAN_TIPOS).map(k=>`<span class="pl-tp t-${k}">${PLAN_TIPOS[k]}</span>`).join('') + '<span><i class="ti ti-lock"></i> Privado</span><span><i class="ti ti-eye" style="color:var(--blue)"></i> Visible para alumnos</span>';
+  document.getElementById('plError').innerHTML = plan.error ? '<div class="pl-aviso">'+escapeHtml(plan.error)+'</div>' : '';
+  const hoy = todayISO();
+  if(plVista==='mes'){
+    const d0 = parseISO(plAnchor), y = d0.getFullYear(), m = d0.getMonth();
+    document.getElementById('plTitulo').textContent = MESES[m]+' '+y;
+    let off = new Date(y,m,1).getDay(); off = off===0?6:off-1; const n = new Date(y,m+1,0).getDate();
+    let h = '<div class="pl-grid" style="margin-bottom:4px;">'+DOW.map(d=>'<div class="pl-dow">'+d+'</div>').join('')+'</div><div class="pl-grid">';
+    for(let i=0;i<off;i++) h += '<div class="pl-day empty"></div>';
+    for(let d=1; d<=n; d++){
+      const iso = y+'-'+String(m+1).padStart(2,'0')+'-'+String(d).padStart(2,'0'); const its = planItemsDe(iso);
+      h += `<div class="pl-day${iso===hoy?' today':''}${iso===plSel?' sel':''}" data-pl-dia="${iso}" role="button" tabindex="0" aria-label="${escapeHtml(fechaLarga(iso))}, ${its.length} elemento${its.length===1?'':'s'}"><span class="num">${d}</span>`
+        + its.slice(0,3).map(x=>`<button type="button" class="pl-chip t-${x.tipo}${x.hecho?' done':''}" data-pl-edit="${escapeHtml(x.id)}" title="${escapeHtml((x.hora?x.hora+' · ':'')+x.titulo)}">${x.mostrar?'👁 ':'🔒 '}${escapeHtml(x.titulo)}</button>`).join('')
+        + (its.length>3?`<div class="pl-mas">+${its.length-3} más</div>`:'') + '</div>';
+    }
+    cuerpo.innerHTML = h+'</div>';
+    const dia = document.getElementById('plDia');
+    if(plSel){
+      const its = planItemsDe(plSel);
+      dia.innerHTML = `<div class="pl-dia"><h3>${escapeHtml(fechaLarga(plSel))}</h3>${its.length?its.map(x=>planFila(x)).join(''):'<div class="hint" style="margin:0 0 8px;">Sin elementos este día.</div>'}<button type="button" class="btn btn-secondary btn-sm" data-pl-nueva="${plSel}"><i class="ti ti-plus"></i> Añadir en este día</button></div>`;
+    } else dia.innerHTML = '';
+  } else {
+    const lun = lunesDe(plAnchor), dom = addDiasISO(lun,6); const a = parseISO(lun), b = parseISO(dom);
+    document.getElementById('plTitulo').textContent = a.getDate()+(a.getMonth()!==b.getMonth()?' '+MESES_CORTOS[a.getMonth()]:'')+' – '+b.getDate()+' '+MESES_CORTOS[b.getMonth()]+' '+b.getFullYear();
+    let h = '<div class="pl-week">';
+    for(let i=0;i<7;i++){
+      const iso = addDiasISO(lun,i), its = planItemsDe(iso), d = parseISO(iso);
+      h += `<div class="pl-wd${iso===hoy?' today':''}"><h4><span>${DIAS_L[d.getDay()].slice(0,3)} ${d.getDate()}</span></h4>${its.map(x=>planFila(x)).join('')}<button type="button" class="pl-addd" data-pl-nueva="${iso}" aria-label="Añadir en ${escapeHtml(fechaLarga(iso))}">+</button></div>`;
+    }
+    cuerpo.innerHTML = h+'</div>'; document.getElementById('plDia').innerHTML = '';
+  }
+}
+function plMover(n){
+  if(plVista==='mes'){ const d = parseISO(plAnchor); d.setDate(1); d.setMonth(d.getMonth()+n); plAnchor = isoOf(d); plSel = ''; }
+  else plAnchor = addDiasISO(plAnchor, 7*n);
+  renderPlanner();
+}
+document.getElementById('plPrev').addEventListener('click', ()=>plMover(-1));
+document.getElementById('plNext').addEventListener('click', ()=>plMover(1));
+document.getElementById('plHoy').addEventListener('click', ()=>{ plAnchor = todayISO(); plSel = plVista==='mes' ? todayISO() : ''; renderPlanner(); });
+document.getElementById('plVistas').addEventListener('click', e=>{ const b = e.target.closest('[data-plv]'); if(b){ plVista = b.dataset.plv; renderPlanner(); } });
+document.getElementById('plNueva').addEventListener('click', ()=>abrirPlan(null, plSel || (plVista==='semana'||plAnchor.slice(0,7)===todayISO().slice(0,7) ? todayISO() : plAnchor.slice(0,8)+'01')));
+document.getElementById('plNuevaRapida').addEventListener('click', ()=>abrirPlan(null, todayISO()));
+document.getElementById('plAbrir').addEventListener('click', ()=>{ document.querySelector('.tab[data-tab="planificador"]').click(); });
+function planDelegado(e){
+  const ch = e.target.closest('[data-pl-chk]'); if(ch){ planToggle(ch.dataset.plChk, ch.checked); return true; }
+  const ed = e.target.closest('[data-pl-edit]'); if(ed){ e.preventDefault(); e.stopPropagation(); abrirPlan(ed.dataset.plEdit); return true; }
+  const nu = e.target.closest('[data-pl-nueva]'); if(nu){ abrirPlan(null, nu.dataset.plNueva); return true; }
+  return false;
+}
+['panel-planificador','plCard'].forEach(id=>{
+  const el = document.getElementById(id);
+  el.addEventListener('click', e=>{
+    if(e.target.matches('input[type=checkbox]')) return; // lo gestiona 'change'
+    if(planDelegado(e)) return;
+    const dia = e.target.closest('[data-pl-dia]'); if(dia){ plSel = dia.dataset.plDia; renderPlanner(); }
+  });
+  el.addEventListener('change', e=>{ const ch = e.target.closest('[data-pl-chk]'); if(ch) planToggle(ch.dataset.plChk, ch.checked); });
+  el.addEventListener('keydown', e=>{ const dia = e.target.closest('[data-pl-dia]'); if(dia && e.target===dia && (e.key==='Enter'||e.key===' ')){ e.preventDefault(); plSel = dia.dataset.plDia; renderPlanner(); } });
+});
+async function planToggle(id, hecho){
+  const it = plan.items.find(x=>x.id===id); if(!it) return; const antes = it.hecho; it.hecho = hecho;
+  renderPlanner(); renderAgenda(); renderKpis();
+  try{ await apiPost('savePlanProfe', planPayload(it)); }
+  catch(e){ it.hecho = antes; renderPlanner(); renderAgenda(); renderKpis(); mostrarError('No se ha podido guardar el cambio de la tarea.\n\n'+e.message); }
+}
+function planPrevHtml(it, alumnos){
+  const tipoA = PLAN_TIPO_ALU[it.tipo] || 'Tarea';
+  const quien = it.destinatarios==='ALL' ? 'Todos los alumnos' : (alumnos.length ? alumnos.join(', ') : '— ningún alumno elegido —');
+  return `<b><i class="ti ti-eye"></i> Esto es lo que verán los alumnos en su calendario</b>
+    <div><strong>${escapeHtml(tipoA)}</strong> · ${escapeHtml(it.titulo||'(sin título)')}</div>
+    <div>${escapeHtml(it.fecha?fechaLarga(it.fecha):'(sin fecha)')}${it.hora?' · '+escapeHtml(it.hora):''}</div>
+    ${it.descripcion?`<div style="white-space:pre-wrap;margin-top:4px;">${escapeHtml(it.descripcion)}</div>`:''}
+    <div class="no">Para: ${escapeHtml(quien)}. <b style="display:inline;color:var(--ink-soft);">No se publican:</b> la nota privada ni si la has completado.</div>`;
+}
+function abrirPlan(id, fechaDef){
+  const ex = id ? plan.items.find(x=>x.id===id) : null; if(id && !ex) return;
+  const it = ex ? Object.assign({}, ex) : { id:uid('pp').replace(/[^A-Za-z0-9_\-]/g,''), titulo:'', tipo:'tarea', fecha:fechaDef||todayISO(), hora:'', descripcion:'', notaPrivada:'', hecho:false, mostrar:false, destinatarios:'ALL' };
+  const sel = it.destinatarios==='ALL' ? [] : String(it.destinatarios||'').split(',').filter(Boolean);
+  const modo = (it.destinatarios==='ALL' || !it.destinatarios) ? 'ALL' : 'some';
+  const d = document.getElementById('dlgPlan');
+  d.innerHTML = `<h3>${ex?'Editar':'Nuevo'} elemento del planificador</h3>
+    <div class="pl-aviso" style="background:var(--accent-soft);color:var(--forest);"><i class="ti ti-lock"></i> Privado por defecto: solo lo ves tú, salvo que actives «Mostrar a alumnos».</div>
+    <div class="field" style="margin-bottom:12px;"><label for="plfTitulo">Título</label><input type="text" id="plfTitulo" maxlength="200" value="${escapeHtml(it.titulo)}" placeholder="Ej: Corregir supuestos de la semana"></div>
+    <div class="row">
+      <div class="field"><label for="plfTipo">Tipo</label><select id="plfTipo">${Object.keys(PLAN_TIPOS).map(k=>`<option value="${k}" ${it.tipo===k?'selected':''}>${PLAN_TIPOS[k]}</option>`).join('')}</select></div>
+      <div class="field"><label for="plfFecha">Fecha</label><input type="date" id="plfFecha" value="${escapeHtml(it.fecha)}"></div>
+      <div class="field" style="max-width:130px;min-width:110px;"><label for="plfHora">Hora (opcional)</label><input type="time" id="plfHora" value="${escapeHtml(it.hora)}"></div>
+    </div>
+    <div class="field" style="margin-bottom:12px;"><label for="plfDesc">Descripción <span id="plfDescNota" style="font-weight:500;text-transform:none;letter-spacing:0;"></span></label><textarea id="plfDesc" maxlength="3000" style="min-height:70px;">${escapeHtml(it.descripcion)}</textarea></div>
+    <div class="field" style="margin-bottom:12px;"><label for="plfNota"><i class="ti ti-lock"></i> Nota privada (nunca se muestra a los alumnos)</label><textarea id="plfNota" maxlength="3000" style="min-height:60px;">${escapeHtml(it.notaPrivada)}</textarea></div>
+    <label class="prog-sw" style="margin-bottom:10px;"><input type="checkbox" id="plfHecho" ${it.hecho?'checked':''}><span>Marcar como completada</span></label>
+    <label class="prog-sw" style="margin-bottom:6px;"><input type="checkbox" id="plfMostrar" ${it.mostrar?'checked':''}><span><b>Mostrar a alumnos</b></span></label>
+    <div id="plfPub" ${it.mostrar?'':'hidden'}>
+      <div style="display:flex;gap:16px;flex-wrap:wrap;margin:6px 0;">
+        <label class="prog-sw"><input type="radio" name="plfDest" value="ALL" ${modo==='ALL'?'checked':''}><span>Todos los alumnos</span></label>
+        <label class="prog-sw"><input type="radio" name="plfDest" value="some" ${modo==='some'?'checked':''}><span>Alumnos concretos</span></label>
+      </div>
+      <div class="pl-alu" id="plfAlumnos" ${modo==='ALL'?'hidden':''}>${data.alumnos.slice().sort((a,b)=>String(a.nombre).localeCompare(String(b.nombre))).map(a=>`<label><input type="checkbox" data-pl-al="${escapeHtml(a.id)}" ${sel.includes(a.id)?'checked':''}> ${escapeHtml(a.nombre)}</label>`).join('')||'<span class="hint">Aún no hay alumnos.</span>'}</div>
+      <div class="pl-prev" id="plfPrev"></div>
+    </div>
+    <span class="status" id="plfStatus" role="alert"></span>
+    <div style="display:flex;gap:8px;justify-content:space-between;flex-wrap:wrap;margin-top:12px;">
+      <div>${ex?'<button type="button" class="btn btn-danger" id="plfDel"><i class="ti ti-trash"></i> Eliminar</button>':''}</div>
+      <div style="display:flex;gap:8px;"><button type="button" class="btn btn-secondary" id="plfCerrar">Cancelar</button><button type="button" class="btn btn-primary" id="plfGuardar">Guardar</button></div>
+    </div>`;
+  const q = x=>document.getElementById(x);
+  function leer(){
+    const modoV = (d.querySelector('input[name="plfDest"]:checked')||{}).value || 'ALL';
+    const ids = Array.from(d.querySelectorAll('[data-pl-al]:checked')).map(c=>c.dataset.plAl);
+    return Object.assign({}, it, { titulo:q('plfTitulo').value.trim(), tipo:q('plfTipo').value, fecha:q('plfFecha').value, hora:q('plfHora').value, descripcion:q('plfDesc').value.trim(),
+      notaPrivada:q('plfNota').value.trim(), hecho:q('plfHecho').checked, mostrar:q('plfMostrar').checked, destinatarios: modoV==='ALL' ? 'ALL' : ids.join(',') });
+  }
+  function actualizar(){
+    const cur = leer(); q('plfPub').hidden = !cur.mostrar; q('plfAlumnos').hidden = (d.querySelector('input[name="plfDest"]:checked')||{}).value!=='some';
+    q('plfDescNota').textContent = cur.mostrar ? '(los alumnos la verán)' : '';
+    const nombres = cur.destinatarios==='ALL' ? [] : cur.destinatarios.split(',').filter(Boolean).map(i=>{ const a = data.alumnos.find(y=>y.id===i); return a?a.nombre:''; }).filter(Boolean);
+    q('plfPrev').innerHTML = planPrevHtml(cur, nombres);
+  }
+  d.addEventListener('input', actualizar); d.addEventListener('change', actualizar); actualizar();
+  q('plfCerrar').addEventListener('click', ()=>d.close());
+  q('plfGuardar').addEventListener('click', async ()=>{
+    const cur = leer(), st = q('plfStatus'); st.className = 'status err';
+    if(!cur.titulo){ st.textContent = 'Escribe un título.'; q('plfTitulo').focus(); return; }
+    if(!cur.fecha){ st.textContent = 'Indica la fecha.'; return; }
+    if(cur.mostrar && cur.destinatarios!=='ALL' && !cur.destinatarios){ st.textContent = 'Elige a qué alumnos se muestra, o marca «Todos los alumnos».'; return; }
+    const btn = q('plfGuardar'); btn.disabled = true; st.className = 'status'; st.innerHTML = '<span class="spinner"></span> Guardando…';
+    try{
+      const r = await apiPost('savePlanProfe', planPayload(cur));
+      const nuevo = normPlan(Object.assign({}, cur, r.item||{}, { id:cur.id }));
+      const i = plan.items.findIndex(x=>x.id===cur.id); if(i>=0) plan.items[i] = nuevo; else plan.items.push(nuevo);
+      plan.cargado = true; plan.error = '';
+      if(plVista==='mes' && plSel) plSel = nuevo.fecha; plAnchor = nuevo.fecha;
+      d.close(); renderPlanner(); renderAgenda(); renderKpis();
+    }catch(e){ btn.disabled = false; st.className = 'status err'; st.textContent = e.message+' (No se ha guardado nada.)'; }
+  });
+  if(ex) q('plfDel').addEventListener('click', async ()=>{
+    if(!confirm('¿Eliminar «'+ex.titulo+'»?'+(ex.mostrar?'\n\nDejará de mostrarse también a los alumnos.':'')+'\n\nNo se puede deshacer. (Si solo quieres que los alumnos dejen de verlo, desmarca «Mostrar a alumnos».)')) return;
+    try{ await apiPost('deletePlanProfe', { key:COACH_KEY, id:ex.id }); plan.items = plan.items.filter(x=>x.id!==ex.id); d.close(); renderPlanner(); renderAgenda(); renderKpis(); }
+    catch(e){ q('plfStatus').className = 'status err'; q('plfStatus').textContent = e.message; }
+  });
+  d.showModal(); q('plfTitulo').focus();
+}
+
 /* ---------- SUPUESTOS PUBLICADOS: crear, editar y recibir las entregas ---------- */
 let supAbierto = null; const supFiltro = { alumno:'', estado:'' };
 function entregasDe(supId){ return entregas().filter(e=>e.tipo==='practico' && e.raw.supuestoId===supId); }
@@ -1186,28 +1580,64 @@ async function eliminarSupuesto(id){
 
 /* Repinta todas las vistas que dependen de las entregas (tras corregir, borrar, etc.) */
 function refreshEntregasViews(){
-  renderSimulacros(); renderPracticos(); renderSupuestos(); renderPendientes(); renderAlumnos();
+  renderSimulacros(); renderPracticos(); renderSupuestos(); renderPendientes(); renderAlumnos(); renderContadores();
   if(fichaState.id) renderFicha();
 }
 
 /* ---------- PANEL: correcciones pendientes de todos los alumnos ---------- */
+let pdVerTodas = false;
+const PD_MAX = 5;
+function filaPend(e){
+  const t = TIPO_ENT[e.tipo];
+  return `<div class="pd-row">
+    <a href="#" class="pd-al" data-ficha="${escapeHtml(e.alumnoId)}">${escapeHtml(simAlumnoNombre(e.alumnoId))}</a>
+    <span class="pd-t"><span>${escapeHtml(e.titulo)}</span><small><i class="ti ${t.ico}" aria-hidden="true"></i> ${t.t}</small></span>
+    <span class="pd-f">${escapeHtml(fechaCorta(e.fechaEntrega)||'—')}</span>
+    <span class="pd-e">${simPill(e.estado)}</span>
+    <button type="button" class="btn btn-primary btn-sm" data-corr="${escapeHtml(e.key)}">Corregir</button>
+  </div>`;
+}
+function renderKpis(){
+  const todas = entregas();
+  document.getElementById('kpiPend').textContent = todas.filter(e=>e.estado==='pendiente').length;
+  document.getElementById('kpiEnc').textContent = todas.filter(e=>e.estado==='en_correccion').length;
+  const hoy = plan.cargado ? planItemsDe(todayISO()) : null;
+  document.getElementById('kpiHoy').textContent = hoy ? hoy.length : '–';
+  document.getElementById('kpiHoyS').textContent = hoy ? (hoy.filter(x=>!x.hecho).length+' sin completar') : (plan.error ? 'no se ha podido cargar' : 'cargando…');
+}
 function renderPendientes(){
   const sa = document.getElementById('pdAlumno'); const va = sa.value;
   sa.innerHTML = '<option value="">Todos los alumnos</option>' + data.alumnos.slice().sort((a,b)=>String(a.nombre).localeCompare(String(b.nombre))).map(a=>`<option value="${escapeHtml(a.id)}">${escapeHtml(a.nombre)}</option>`).join('');
   if([...sa.options].some(o=>o.value===va)) sa.value = va;
   const ft = document.getElementById('pdTipo').value, fe = document.getElementById('pdEstado').value;
   const todas = entregas().filter(e=>e.estado!=='corregido');
-  const badge = document.getElementById('navPendBadge'); badge.textContent = todas.length; badge.classList.toggle('hidden', !todas.length);
+  const badge = document.getElementById('navPendBadge'); if(badge){ badge.textContent = todas.length; badge.classList.toggle('hidden', !todas.length); }
   const lista = todas.filter(e=>(!sa.value||e.alumnoId===sa.value) && (!ft||e.tipo===ft) && (!fe||e.estado===fe)).sort(porFechaAsc);
-  document.getElementById('pdResumen').innerHTML = `<span class="pill wait">${todas.filter(e=>e.estado==='pendiente').length} pendientes de corrección</span><span class="pill info">${todas.filter(e=>e.estado==='en_correccion').length} en corrección</span>`;
-  const cont = document.getElementById('pdLista');
-  if(!todas.length) cont.innerHTML = '<div class="empty">No tienes ninguna corrección pendiente. 🎉</div>';
-  else if(!lista.length) cont.innerHTML = '<div class="empty">No hay correcciones pendientes con estos filtros.</div>';
-  else cont.innerHTML = '<div class="hint" style="margin:0 0 8px;">Ordenadas de la entrega más antigua a la más reciente.</div>' + lista.map(e=>filaEntrega(e,true)).join('');
+  const nf = (sa.value?1:0)+(ft?1:0)+(fe?1:0);
+  const fn = document.getElementById('pdFiltroN'); fn.textContent = nf; fn.hidden = !nf;
+  accCont('pd', todas.length);
+  document.getElementById('pdResumen').innerHTML = `<span class="pill wait">${todas.filter(e=>e.estado==='pendiente').length} pendientes de corrección</span><span class="pill info">${todas.filter(e=>e.estado==='en_correccion').length} en corrección</span>${nf?`<span class="pill neutral">${lista.length} con el filtro actual</span>`:''}`;
+  const cont = document.getElementById('pdLista'), mas = document.getElementById('pdMas');
+  if(!todas.length){ cont.innerHTML = '<div class="empty">No tienes ninguna corrección pendiente. 🎉</div>'; mas.innerHTML = ''; }
+  else if(!lista.length){ cont.innerHTML = '<div class="empty">No hay correcciones pendientes con estos filtros.</div>'; mas.innerHTML = ''; }
+  else {
+    const vis = pdVerTodas ? lista : lista.slice(0,PD_MAX);
+    cont.innerHTML = '<div class="pd-head"><span>Alumno</span><span>Trabajo</span><span>Entrega</span><span>Estado</span><span></span></div>' + vis.map(filaPend).join('');
+    mas.innerHTML = lista.length>PD_MAX ? `<button type="button" class="btn btn-secondary btn-sm" id="pdVerTodasBtn" aria-expanded="${pdVerTodas}">${pdVerTodas?'Ver menos':'Ver todas ('+lista.length+')'}</button><span class="hint" style="margin-left:10px;">Las más antiguas primero.</span>` : '<span class="hint">Las más antiguas primero.</span>';
+  }
   const sv = entregas().filter(e=>e.lectura && !e.lectura.vista).sort((a,b)=>String(b.fechaCorreccion).localeCompare(String(a.fechaCorreccion)));
+  accCont('sv', sv.length);
   document.getElementById('pdSinVer').innerHTML = sv.length ? sv.map(e=>filaEntrega(e,true)).join('') : '<div class="empty" style="padding:8px 0;">Todas las correcciones publicadas han sido vistas por los alumnos.</div>';
+  renderKpis();
 }
-['pdAlumno','pdTipo','pdEstado'].forEach(id=>document.getElementById(id).addEventListener('change', renderPendientes));
+['pdAlumno','pdTipo','pdEstado'].forEach(id=>document.getElementById(id).addEventListener('change', ()=>{ pdVerTodas = false; renderPendientes(); }));
+document.getElementById('pdMas').addEventListener('click', e=>{ if(e.target.closest('#pdVerTodasBtn')){ pdVerTodas = !pdVerTodas; renderPendientes(); } });
+document.getElementById('kpis').addEventListener('click', e=>{
+  const b = e.target.closest('[data-kpi]'); if(!b) return; const k = b.dataset.kpi;
+  if(k==='hoy'){ accOpen('pl'); document.getElementById('plCard').scrollIntoView({behavior:'smooth',block:'start'}); return; }
+  document.getElementById('pdEstado').value = k; document.getElementById('pdTipo').value = ''; document.getElementById('pdAlumno').value = '';
+  pdVerTodas = true; accOpen('pd'); renderPendientes(); document.getElementById('pdCard').scrollIntoView({behavior:'smooth',block:'start'});
+});
 
 /* Acciones delegadas: «Corregir» y «ver ficha» funcionan igual desde cualquier vista */
 document.addEventListener('click', e=>{
@@ -1253,7 +1683,7 @@ document.getElementById('alSoloPend').addEventListener('change', renderAlumnos);
 
 function startEditAlumno(id){
   const a = data.alumnos.find(x=>x.id===id); if(!a) return;
-  editandoAlumnoId = id;
+  editandoAlumnoId = id; accOpen('al-add');
   document.getElementById('alFormTitulo').textContent = 'Modificar alumno';
   document.getElementById('alNombre').value = a.nombre;
   document.getElementById('alEmail').value = a.email || '';
@@ -1529,7 +1959,7 @@ function renderDayPanel(){
       <button class="icon-btn" data-del="${ev.id}">Eliminar</button></div>
       <div style="color:var(--gray);font-size:12px;margin-top:2px;">${escapeHtml(ev.tema||'')}${ev.notas?(' — '+escapeHtml(ev.notas)):''}</div></div>`;
   });
-  html += `<div style="margin-top:14px;">
+  html += `<details class="acc-sub" data-acc="cal-add" style="margin-top:14px;"><summary><i class="ti ti-chevron-right acc-chev" aria-hidden="true"></i><span class="acc-t"><i class="ti ti-plus" aria-hidden="true"></i> Programar clase</span><span class="acc-hint" aria-hidden="true"></span></summary><div style="margin-top:12px;">
     <div class="row">
       <div class="field"><label>Alumno</label><select id="evAlumno"></select></div>
       <div class="field"><label>Tipo</label><select id="evTipo">${TIPOS_SESION.map(t=>'<option value="'+t.nombre+'">'+t.nombre+'</option>').join('')}</select></div>
@@ -1541,8 +1971,8 @@ function renderDayPanel(){
     </div>
     <button class="btn btn-primary btn-sm" id="btnAddEvento">Programar clase</button>
     <span class="status" id="evStatus"></span>
-  </div>`;
-  panel.innerHTML = html;
+  </div></details>`;
+  panel.innerHTML = html; accRestore(panel);
   const selA = document.getElementById('evAlumno');
   const optTodos = document.createElement('option'); optTodos.value='ALL'; optTodos.textContent='— Todos los alumnos —';
   selA.appendChild(optTodos);
@@ -1607,8 +2037,8 @@ function renderPracticos(){
 /* TEMAS / CULTURA GENERAL */
 function renderCatalogTab(prefix, titulo, catalogo, progreso, tipo){
   const panel = document.getElementById('panel-'+prefix);
-  panel.innerHTML = `<div class="card">
-    <h3>Añadir tema</h3>
+  panel.innerHTML = `<div class="card" data-acc="te-add">
+    <h3><i class="ti ti-plus" aria-hidden="true"></i> Añadir tema</h3>
     <div class="row">
       <div class="field" style="max-width:90px;"><label>Nº</label><input type="text" id="${prefix}Num"></div>
       <div class="field"><label>Título</label><input type="text" id="${prefix}Titulo"></div>
@@ -1617,22 +2047,12 @@ function renderCatalogTab(prefix, titulo, catalogo, progreso, tipo){
     <button class="btn btn-primary btn-sm" id="${prefix}BtnAdd">Añadir</button>
     <span class="status" id="${prefix}Status"></span>
   </div>
-  <div class="card">
+  <div class="card" data-acc="te-lista" data-open="1">
     <h3>${titulo} — progreso por alumno</h3>
     <table><thead><tr><th>Nº</th><th>Título</th><th>Archivo</th><th>Progreso</th><th></th></tr></thead><tbody id="${prefix}Tbody"></tbody></table>
     <div class="empty" id="${prefix}Empty" style="display:none;">Todavía no hay temas cargados.</div>
-  </div>
-  <div class="card">
-    <h3><i class="ti ti-paperclip" aria-hidden="true"></i> Materiales generales</h3>
-    <div class="hint" style="margin-top:0;">Documentos generales de esta sección que no pertenecen a un tema concreto (por ejemplo, el temario completo). Para adjuntar un archivo a un tema en particular, usa el campo de arriba o el botón "Adjuntar" de su fila.</div>
-    <div class="row">
-      <div class="field"><label>Título (opcional, para encontrarlo fácil)</label><input type="text" id="arch${prefix}Titulo" placeholder="Ej: Resumen de la unidad 3"></div>
-      <div class="field"><label>Archivo</label><input type="file" id="arch${prefix}Input"></div>
-      <button class="btn btn-primary" id="arch${prefix}Btn">Subir archivo</button>
-    </div>
-    <span class="status" id="arch${prefix}Status"></span>
-    <div id="arch${prefix}Lista" style="margin-top:10px;"></div>
   </div>`;
+  accEnhance(panel);
   const tbody = document.getElementById(prefix+'Tbody');
   document.getElementById(prefix+'Empty').style.display = catalogo.length?'none':'block';
   catalogo.slice().sort((a,b)=>String(a.numero||'').localeCompare(String(b.numero||''), undefined,{numeric:true})).forEach(t=>{
@@ -1708,8 +2128,8 @@ function renderCatalogTab(prefix, titulo, catalogo, progreso, tipo){
       document.getElementById(prefix+'Status').className = 'status err';
     }
   });
-  initSubidaArchivos(tipo, 'arch'+prefix+'Input', 'arch'+prefix+'Btn', 'arch'+prefix+'Status', 'arch'+prefix+'Lista', 'arch'+prefix+'Titulo');
-  renderArchivosLista(tipo, 'arch'+prefix+'Lista');
+  /* «Materiales generales» se ha retirado de la interfaz: los archivos ya subidos siguen en Drive y en la hoja Archivos */
+  accCont('te-lista', catalogo.length);
 }
 
 /* ARCHIVOS (materiales en Drive) */
@@ -2371,6 +2791,7 @@ async function refrescarEntregas(manual){
     ['alumnos','practicos','simulacros','notas','supuestos'].forEach(k=>{ if(Array.isArray(nuevo[k])) data[k] = nuevo[k]; });
     normalizarDatos();
     refreshEntregasViews(); renderCultura();
+    if(!document.getElementById('dlgPlan').open) await cargarPlan();
     if(manual){ btn.innerHTML = '<i class="ti ti-circle-check"></i> Actualizado'; }
   }catch(e){
     if(manual) mostrarError('No se han podido traer los datos nuevos.\n\n' + e.message);
