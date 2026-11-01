@@ -19,7 +19,7 @@ const DRIVE_FOLDER_NAME = 'PT_Practicos_Fotos';
 const HEADERS = {
   Alumnos: ['id', 'nombre', 'email', 'clave', 'etapa', 'discapacidad', 'notas'],
   Calendario: ['id', 'fecha', 'hora', 'alumnoId', 'tipo', 'tema', 'notas'],
-  Practicos: ['id', 'alumnoId', 'fecha', 'texto', 'fotoUrl', 'estado', 'feedback', 'fechaFeedback', 'borradorComentario', 'borradorNota', 'borradorArchivoUrl', 'borradorArchivoNombre', 'correccionNota', 'correccionArchivoUrl', 'correccionArchivoNombre', 'supuestoId', 'fotoNombre'],
+  Practicos: ['id', 'alumnoId', 'fecha', 'texto', 'fotoUrl', 'estado', 'feedback', 'fechaFeedback', 'borradorComentario', 'borradorNota', 'borradorArchivoUrl', 'borradorArchivoNombre', 'correccionNota', 'correccionArchivoUrl', 'correccionArchivoNombre', 'supuestoId', 'fotoNombre', 'correccionVersion', 'vistaVersion', 'fechaVista'],
   // Supuestos prácticos publicados por la preparadora (enunciado en PDF). Las entregas de los alumnos están en Practicos (supuestoId)
   Supuestos: ['id', 'titulo', 'descripcion', 'enunciadoUrl', 'enunciadoNombre', 'fechaLimite', 'fechaPublicacion'],
   Temas: ['id', 'numero', 'titulo', 'archivoUrl'],
@@ -33,7 +33,8 @@ const HEADERS = {
   // Las columnas borrador* son privadas de la preparadora: nunca se envían al alumno.
   Simulacros: ['id', 'alumnoId', 'temaId', 'fechaRealizacion', 'tiempoMin', 'comentario', 'archivoUrl', 'archivoNombre', 'fechaEntrega', 'estado',
     'borradorComentario', 'borradorNota', 'borradorArchivoUrl', 'borradorArchivoNombre',
-    'correccionComentario', 'correccionNota', 'correccionArchivoUrl', 'correccionArchivoNombre', 'fechaCorreccion', 'vistoAlumno'],
+    'correccionComentario', 'correccionNota', 'correccionArchivoUrl', 'correccionArchivoNombre', 'fechaCorreccion', 'vistoAlumno',
+    'correccionVersion', 'vistaVersion', 'fechaVista'],
   Objetivos: ['id', 'alumnoId', 'semana', 'texto', 'cumplido'],
   Dafo: ['alumnoId', 'fortalezas', 'debilidades', 'oportunidades', 'amenazas'],
   Archivos: ['id', 'categoria', 'nombre', 'titulo', 'url', 'fecha'],
@@ -64,7 +65,7 @@ function getSheet_(name) {
 
 function ensureHeaders_() {
   const cache = CacheService.getScriptCache();
-  if (cache.get('headers_ok_v8')) return;
+  if (cache.get('headers_ok_v9')) return;
   Object.keys(HEADERS).forEach(name => {
     const sh = getSheet_(name);
     if (sh.getLastRow() === 0) {
@@ -76,7 +77,7 @@ function ensureHeaders_() {
       }
     }
   });
-  try { cache.put('headers_ok_v8', '1', 21600); } catch (err) { /* no pasa nada si falla */ }
+  try { cache.put('headers_ok_v9', '1', 21600); } catch (err) { /* no pasa nada si falla */ }
 }
 
 const DATE_FIELDS = { Calendario: ['fecha'], Practicos: ['fecha', 'fechaFeedback'], Supuestos: ['fechaLimite', 'fechaPublicacion'], Archivos: ['fecha'], Estudio: ['fecha'], Planificador: ['semana'], Simulacros: ['fechaRealizacion', 'fechaEntrega', 'fechaCorreccion'], Objetivos: ['semana'], Recursos: ['fecha'], Cuadernos: ['fecha'], Examenes: ['fecha'], Notas: ['fechaRegistro', 'fechaActualizacion'] };
@@ -570,6 +571,24 @@ function practicoParaAlumno_(s) {
   return o;
 }
 
+// ---- Lectura de las correcciones por el alumno ----
+// correccionVersion: nº de veces que se ha publicado la corrección (1 la primera vez, +1 cada vez que se actualiza).
+// vistaVersion: última versión que el alumno ha visualizado; fechaVista: fecha y hora de esa visualización.
+// Las correcciones anteriores a este registro no se dan por vistas, salvo que existiera ya la marca vistoAlumno (simulacros).
+function corrVer_(x) { return String(x.estado) === 'corregido' ? (Number(x.correccionVersion) || 1) : 0; }
+function corrVista_(x) {
+  if (String(x.estado) !== 'corregido') return false;
+  if ((Number(x.vistaVersion) || 0) >= corrVer_(x)) return true;
+  if (x.correccionVersion === '' || x.correccionVersion == null) return x.vistoAlumno === true || String(x.vistoAlumno) === 'true';
+  return false;
+}
+// Campos de lectura al publicar: primera vez -> versión 1 sin ver; al actualizar -> versión +1 sin ver (se conserva lo ya visto)
+function cambiosLecturaAlPublicar_(prev) {
+  if (String(prev.estado) !== 'corregido') return { correccionVersion: 1, vistaVersion: 0, fechaVista: '' };
+  var ver = corrVer_(prev);
+  return { correccionVersion: ver + 1, vistaVersion: corrVista_(prev) ? ver : (Number(prev.vistaVersion) || 0), fechaVista: prev.fechaVista || '' };
+}
+
 // Categorías del planificador (colores en la web): cualquier otro valor se guarda como 'otro'
 function catPlan_(c) {
   c = String(c || '');
@@ -867,6 +886,7 @@ function doPost(e) {
             correccionArchivoNombre: safeText_(nomC || ''), fechaCorreccion: hoyISO_(), vistoAlumno: false,
             borradorComentario: '', borradorNota: '', borradorArchivoUrl: '', borradorArchivoNombre: ''
           };
+          Object.assign(cambiosC, cambiosLecturaAlPublicar_(sim));
         } else {
           cambiosC = {
             estado: 'en_correccion', borradorComentario: safeText_(comC), borradorNota: notaC, borradorArchivoUrl: urlC,
@@ -911,12 +931,26 @@ function doPost(e) {
             correccionArchivoUrl: urlP, correccionArchivoNombre: safeText_(nomP || ''),
             borradorComentario: '', borradorNota: '', borradorArchivoUrl: '', borradorArchivoNombre: ''
           };
+          Object.assign(cambiosP, cambiosLecturaAlPublicar_(pr));
         } else {
           cambiosP = { estado: 'en_correccion', borradorComentario: safeText_(comP), borradorNota: notaP, borradorArchivoUrl: urlP, borradorArchivoNombre: safeText_(nomP || '') };
         }
         updateObjectById_('Practicos', 'id', p.id, cambiosP);
         if (urlAntP) papeleraDrive_(urlAntP);
         result = { ok: true, practico: Object.assign({}, pr, cambiosP) };
+        break;
+      }
+      case 'marcarCorreccionVista': {
+        // Solo el propio alumno; solo la primera vez que ve la versión vigente. No cambia estado, nota ni corrección.
+        var hojaV = (p.tipo === 'simulacro') ? 'Simulacros' : 'Practicos';
+        var filaV = sheetToObjects_(hojaV).find(function (x) { return String(x.id) === String(p.id); });
+        if (!filaV || String(filaV.alumnoId) !== String(p.alumnoId)) throw new Error('No se encuentra la corrección.');
+        if (String(filaV.estado) !== 'corregido') { result = { ok: true, vista: false }; break; }
+        if (corrVista_(filaV)) { result = { ok: true, vista: true, fechaVista: filaV.fechaVista || '', vistaVersion: corrVer_(filaV) }; break; }
+        var camV = { vistaVersion: corrVer_(filaV), fechaVista: new Date().toISOString() };
+        if (hojaV === 'Simulacros') camV.vistoAlumno = true;
+        updateObjectById_(hojaV, 'id', p.id, camV);
+        result = { ok: true, vista: true, fechaVista: camV.fechaVista, vistaVersion: camV.vistaVersion };
         break;
       }
       case 'marcarSimulacroVisto': {

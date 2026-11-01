@@ -229,7 +229,7 @@
   .al-hl{font-weight:800;box-shadow:0 0 0 2px var(--amber-soft);}
   .chk-pend{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;padding-bottom:10px;white-space:nowrap;text-transform:none;letter-spacing:0;}
   .f-nombre{font-family:var(--serif);margin:10px 0 12px;}
-  .f-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:16px;}
+  .f-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:16px;}
   .f-stat{background:var(--sage-soft);border-radius:var(--radius-sm);padding:12px 10px;text-align:center;}
   .f-stat b{display:block;font-family:var(--serif);font-size:28px;line-height:1.1;color:var(--forest);}
   .f-stat span{font-size:11.5px;font-weight:700;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.03em;}
@@ -297,6 +297,11 @@
       </div>
       <div id="pdResumen" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;"></div>
       <div id="pdLista"></div>
+    </div>
+    <div class="card" id="pdSinVerCard">
+      <h3><i class="ti ti-eye-off" aria-hidden="true"></i> Correcciones publicadas que el alumno aún no ha visto</h3>
+      <div class="hint" style="margin-top:0;">Seguimiento de lectura: no es trabajo pendiente para ti, solo indica que el alumno todavía no ha abierto la corrección. «Sin ver» pasa a «Vista» cuando la consulta.</div>
+      <div id="pdSinVer"></div>
     </div>
     <div class="card">
       <h3>Esta semana</h3>
@@ -865,6 +870,7 @@ let editandoAlumnoId = null;
    Cualquier vista (sección, ficha del alumno, pendientes del Panel) trabaja sobre estos mismos registros. */
 const TIPO_ENT = { practico:{t:'Supuesto práctico', ico:'ti-file-text'}, simulacro:{t:'Simulacro de tema', ico:'ti-writing'} };
 function estadoEnt(v){ return v==='corregido' ? 'corregido' : (v==='en_correccion' ? 'en_correccion' : 'pendiente'); }
+function lecturaDe(x){ const v = corrVista(x); return { vista:v, fecha: v ? (x.fechaVista||'') : '', actualizada: corrVer(x)>1 }; }
 function entregas(){
   const out = [];
   (data.practicos||[]).forEach(p=>{
@@ -873,24 +879,46 @@ function entregas(){
     out.push({ key:'p:'+p.id, tipo:'practico', id:p.id, alumnoId:p.alumnoId,
       titulo: p.supuestoId ? supTitulo(p.supuestoId) : (txt ? (txt.length>60 ? txt.slice(0,60)+'…' : txt) : 'Supuesto práctico del '+fechaCorta(p.fecha)),
       fechaEntrega:p.fecha||'', estado:est, fechaCorreccion: est==='corregido' ? (p.fechaFeedback||'') : '',
-      nota: (est==='corregido' && p.correccionNota!==''&& p.correccionNota!=null) ? Number(p.correccionNota) : null, raw:p });
+      nota: (est==='corregido' && p.correccionNota!==''&& p.correccionNota!=null) ? Number(p.correccionNota) : null, raw:p,
+      lectura: est==='corregido' ? lecturaDe(p) : null });
   });
   (data.simulacros||[]).forEach(x=>{
     const est = estadoEnt(x.estado);
     out.push({ key:'s:'+x.id, tipo:'simulacro', id:x.id, alumnoId:x.alumnoId, titulo: simTemaNombre(x.temaId),
       fechaEntrega:x.fechaEntrega||'', estado:est, fechaCorreccion: est==='corregido' ? (x.fechaCorreccion||'') : '',
-      nota: (est==='corregido' && x.correccionNota!==''&& x.correccionNota!=null) ? Number(x.correccionNota) : null, raw:x });
+      nota: (est==='corregido' && x.correccionNota!==''&& x.correccionNota!=null) ? Number(x.correccionNota) : null, raw:x,
+      lectura: est==='corregido' ? lecturaDe(x) : null });
   });
   return out;
 }
 function supTitulo(id){ const x = (data.supuestos||[]).find(y=>y.id===id); return x ? x.titulo : 'Supuesto (eliminado)'; }
+/* Estado de LECTURA de la corrección por el alumno (distinto del estado del trabajo) */
+function corrVer(x){ return x.estado==='corregido' ? (Number(x.correccionVersion)||1) : 0; }
+function corrVista(x){
+  if(x.estado!=='corregido') return false;
+  if((Number(x.vistaVersion)||0) >= corrVer(x)) return true;
+  if(x.correccionVersion==='' || x.correccionVersion==null) return x.vistoAlumno===true || String(x.vistoAlumno)==='true';
+  return false;
+}
+function fechaHoraCorta(v){
+  if(!v) return '';
+  const d = new Date(v); if(isNaN(d)) return String(v);
+  return d.getDate()+' '+MESES_CORTOS[d.getMonth()]+' '+d.getFullYear()+', '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+}
+const MESES_CORTOS = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+function lecturaPill(e){
+  if(!e.lectura) return '';
+  if(e.lectura.vista) return `<span class="pill ok"><i class="ti ti-eye"></i> Vista${e.lectura.fecha?' · '+escapeHtml(fechaHoraCorta(e.lectura.fecha)):' · fecha no registrada'}</span>`;
+  return `<span class="pill wait"><i class="ti ti-eye-off"></i> ${e.lectura.actualizada?'Corrección actualizada · Sin ver':'Sin ver'}</span>`;
+}
 function entregaPorKey(k){ return entregas().find(e=>e.key===k); }
 function porFechaAsc(a,b){ return String(a.fechaEntrega).localeCompare(String(b.fechaEntrega)) || String(a.key).localeCompare(String(b.key)); }
 function statsAlumno(id){
   const es = entregas().filter(e=>e.alumnoId===id);
   const pend = es.filter(e=>e.estado==='pendiente').length, enc = es.filter(e=>e.estado==='en_correccion').length, cor = es.filter(e=>e.estado==='corregido').length;
   const ultima = es.reduce((m,e)=> String(e.fechaEntrega)>m ? String(e.fechaEntrega) : m, '');
-  return { total:es.length, pend, enc, cor, sinCorregir:pend+enc, ultima, es };
+  const sinVer = es.filter(e=>e.lectura && !e.lectura.vista).length;
+  return { total:es.length, pend, enc, cor, sinCorregir:pend+enc, sinVer, ultima, es };
 }
 function filaEntrega(e, conAlumno){
   const t = TIPO_ENT[e.tipo];
@@ -898,7 +926,7 @@ function filaEntrega(e, conAlumno){
   return `<div class="ent-row">
     <div class="ent-main">
       <div class="ent-t">${conAlumno?`<a href="#" class="ent-al" data-ficha="${escapeHtml(e.alumnoId)}">${escapeHtml(simAlumnoNombre(e.alumnoId))}</a> · `:''}${escapeHtml(e.titulo)}</div>
-      <div class="sim-m"><span><i class="ti ${t.ico}"></i> ${t.t}</span><span>Entregado el ${escapeHtml(fechaCorta(e.fechaEntrega)||'—')}</span>${e.fechaCorreccion?`<span>Corregido el ${escapeHtml(fechaCorta(e.fechaCorreccion))}</span>`:''}${e.nota!=null?`<span>Nota: <b>${fmtNum(e.nota)}</b> / 10</span>`:''}${e.estado==='en_correccion'?'<span>Borrador guardado (privado)</span>':''}</div>
+      <div class="sim-m"><span><i class="ti ${t.ico}"></i> ${t.t}</span><span>Entregado el ${escapeHtml(fechaCorta(e.fechaEntrega)||'—')}</span>${e.fechaCorreccion?`<span>Corregido el ${escapeHtml(fechaCorta(e.fechaCorreccion))}</span>`:''}${e.nota!=null?`<span>Nota: <b>${fmtNum(e.nota)}</b> / 10</span>`:''}${e.estado==='en_correccion'?'<span>Borrador guardado (privado)</span>':''}${e.lectura?`<span>Lectura del alumno: ${lecturaPill(e)}</span>`:''}</div>
     </div>
     <div class="ent-act">${simPill(e.estado)}<button class="btn ${e.estado==='corregido'?'btn-secondary':'btn-primary'} btn-sm" data-corr="${escapeHtml(e.key)}">${lbl}</button></div>
   </div>`;
@@ -941,7 +969,7 @@ function renderSupDetalle(){
       <div class="field"><label>Estado</label><select id="supFEstado">${opt('','Todos',supFiltro.estado)}${opt('sin','Sin entregar',supFiltro.estado)}${opt('pendiente','Pendiente de corrección',supFiltro.estado)}${opt('en_correccion','En corrección',supFiltro.estado)}${opt('corregido','Corregido',supFiltro.estado)}</select></div></div>
     ${!data.alumnos.length ? '<div class="empty">Todavía no tienes alumnos.</div>' : vis.length ? vis.map(({a,e,est})=>`<div class="ent-row">
       <div class="ent-main"><div class="ent-t"><a href="#" class="ent-al" data-ficha="${escapeHtml(a.id)}">${escapeHtml(a.nombre)}</a></div>
-        <div class="sim-m">${e?`<span>Entregado el ${escapeHtml(fechaCorta(e.fechaEntrega))}</span><span><i class="ti ti-file-type-pdf"></i> ${escapeHtml(e.raw.fotoNombre||'Resolución')} · <a href="${escapeHtml(e.raw.fotoUrl)}" target="_blank" rel="noopener">Ver</a> <a href="${escapeHtml(urlDescarga(e.raw.fotoUrl))}" target="_blank" rel="noopener">Descargar</a></span>${e.fechaCorreccion?`<span>Corregido el ${escapeHtml(fechaCorta(e.fechaCorreccion))}</span>`:''}${e.nota!=null?`<span>Nota: <b>${fmtNum(e.nota)}</b> / 10</span>`:''}`:'<span>Todavía no ha entregado</span>'}</div></div>
+        <div class="sim-m">${e?`<span>Entregado el ${escapeHtml(fechaCorta(e.fechaEntrega))}</span><span><i class="ti ti-file-type-pdf"></i> ${escapeHtml(e.raw.fotoNombre||'Resolución')} · <a href="${escapeHtml(e.raw.fotoUrl)}" target="_blank" rel="noopener">Ver</a> <a href="${escapeHtml(urlDescarga(e.raw.fotoUrl))}" target="_blank" rel="noopener">Descargar</a></span>${e.fechaCorreccion?`<span>Corregido el ${escapeHtml(fechaCorta(e.fechaCorreccion))}</span>`:''}${e.nota!=null?`<span>Nota: <b>${fmtNum(e.nota)}</b> / 10</span>`:''}${e.lectura?`<span>Lectura del alumno: ${lecturaPill(e)}</span>`:''}`:'<span>Todavía no ha entregado</span>'}</div></div>
       <div class="ent-act">${pillEntrega(est)}${e?`<button class="btn ${est==='corregido'?'btn-secondary':'btn-primary'} btn-sm" data-corr="${escapeHtml(e.key)}">${est==='corregido'?'Ver / actualizar':'Corregir'}</button>`:''}</div></div>`).join('') : '<div class="empty">No hay alumnos con esos filtros.</div>'}`;
   document.getElementById('supVolver').addEventListener('click', ()=>{ supAbierto = null; renderSupuestos(); });
   document.getElementById('supFAlumno').addEventListener('change', ev=>{ supFiltro.alumno = ev.target.value; renderSupDetalle(); });
@@ -1019,6 +1047,8 @@ function renderPendientes(){
   if(!todas.length) cont.innerHTML = '<div class="empty">No tienes ninguna corrección pendiente. 🎉</div>';
   else if(!lista.length) cont.innerHTML = '<div class="empty">No hay correcciones pendientes con estos filtros.</div>';
   else cont.innerHTML = '<div class="hint" style="margin:0 0 8px;">Ordenadas de la entrega más antigua a la más reciente.</div>' + lista.map(e=>filaEntrega(e,true)).join('');
+  const sv = entregas().filter(e=>e.lectura && !e.lectura.vista).sort((a,b)=>String(b.fechaCorreccion).localeCompare(String(a.fechaCorreccion)));
+  document.getElementById('pdSinVer').innerHTML = sv.length ? sv.map(e=>filaEntrega(e,true)).join('') : '<div class="empty" style="padding:8px 0;">Todas las correcciones publicadas han sido vistas por los alumnos.</div>';
 }
 ['pdAlumno','pdTipo','pdEstado'].forEach(id=>document.getElementById(id).addEventListener('change', renderPendientes));
 
@@ -1143,7 +1173,7 @@ function resumenCorreccionHtml(e){
   if(e.estado==='corregido'){
     const com = e.tipo==='simulacro' ? r.correccionComentario : r.feedback;
     const pdf = r.correccionArchivoUrl;
-    return `<div class="sim-box"><h4>Mi corrección <span class="pill ok">Publicada${e.fechaCorreccion?' el '+escapeHtml(fechaCorta(e.fechaCorreccion)):''}</span></h4>
+    return `<div class="sim-box"><h4>Mi corrección <span class="pill ok">Publicada${e.fechaCorreccion?' el '+escapeHtml(fechaCorta(e.fechaCorreccion)):''}</span> ${lecturaPill(e)}</h4>
       ${e.nota!=null?`<div style="margin-bottom:6px;">Nota: <b>${fmtNum(e.nota)} / 10</b></div>`:''}
       ${com?`<div class="sim-pre">${escapeHtml(com)}</div>`:''}
       ${pdf?`<div style="margin-top:8px;"><a href="${escapeHtml(pdf)}" target="_blank" rel="noopener">${escapeHtml(r.correccionArchivoNombre||'PDF corregido')}</a></div>`:''}</div>`;
@@ -1224,6 +1254,7 @@ function renderFicha(){
       <div class="f-stat ${s.pend?'hl':''}"><b>${s.pend}</b><span>Pendientes de corrección</span></div>
       <div class="f-stat"><b>${s.enc}</b><span>En corrección</span></div>
       <div class="f-stat"><b>${s.cor}</b><span>Correcciones publicadas</span></div>
+      <div class="f-stat ${s.sinVer?'hl':''}"><b>${s.sinVer}</b><span>Sin ver por el alumno</span></div>
     </div>
     <div class="subtabs">${FICHA_TABS.map(t=>`<button class="subtab ${tab===t[0]?'active':''}" data-ftab="${t[0]}"><i class="ti ${t[2]}"></i> ${t[1]}</button>`).join('')}</div>
     <div>${body}</div>`;
@@ -2107,7 +2138,7 @@ function abrirCorreccion(key){
   d.dataset.key = key;
   d.innerHTML = `<h3>${escapeHtml(simAlumnoNombre(x.alumnoId))}</h3>
     <div class="hint" style="margin:-6px 0 8px;">${TIPO_ENT[e.tipo].t} · ${escapeHtml(e.titulo)}</div>
-    <div>${simPill(e.estado)}</div>
+    <div>${simPill(e.estado)} ${lecturaPill(e)}</div>
     <div class="sim-box"><h4>Entrega del alumno</h4>${entregaHtml}
       ${adj?`<div class="sim-act" style="justify-content:flex-start;"><a class="btn btn-secondary btn-sm" href="${escapeHtml(adj)}" target="_blank" rel="noopener">Ver archivo entregado</a><a class="btn btn-secondary btn-sm" href="${escapeHtml(urlDescarga(adj))}" target="_blank" rel="noopener">Descargar</a></div>`:'<div class="hint" style="margin:0;">Sin archivo adjunto.</div>'}</div>
     <span class="sim-priv"><i class="ti ti-lock"></i> ${pub?'Esta corrección ya la ve el alumno. Si la actualizas, se le volverá a avisar.':'El borrador solo lo ves tú hasta que lo publiques.'}</span>
