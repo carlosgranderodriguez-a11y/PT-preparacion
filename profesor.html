@@ -1959,14 +1959,13 @@ function renderDayPanel(){
     const alumno = data.alumnos.find(a=>a.id===ev.alumnoId);
     const nombreMostrado = ev.alumnoId==='ALL' ? 'Todos los alumnos' : (alumno?alumno.nombre:'(alumno eliminado)');
     html += `<div class="evento"><div style="display:flex;justify-content:space-between;">
-      <div>${tipoEmoji(ev.tipo)} ${ev.hora?('<strong>'+escapeHtml(ev.hora)+'</strong> · '):''}${escapeHtml(tipoNombre(ev.tipo))} — ${escapeHtml(nombreMostrado)}</div>
+      <div>${tipoEmoji(ev.tipo)} ${ev.hora?('<strong>'+escapeHtml(ev.hora)+'</strong> · '):''}${escapeHtml(ev.tema || tipoNombre(ev.tipo))} — ${escapeHtml(nombreMostrado)}</div>
       <button class="icon-btn" data-del="${ev.id}">Eliminar</button></div>
-      <div style="color:var(--gray);font-size:12px;margin-top:2px;">${escapeHtml(ev.tema||'')}${ev.notas?(' — '+escapeHtml(ev.notas)):''}</div></div>`;
+      ${ev.notas?('<div style="color:var(--gray);font-size:12px;margin-top:2px;">'+escapeHtml(ev.notas)+'</div>'):''}</div>`;
   });
   html += `<details class="acc-sub" data-acc="cal-add" style="margin-top:14px;"><summary><i class="ti ti-chevron-right acc-chev" aria-hidden="true"></i><span class="acc-t"><i class="ti ti-plus" aria-hidden="true"></i> Programar clase</span><span class="acc-hint" aria-hidden="true"></span></summary><div style="margin-top:12px;">
     <div class="row">
       <div class="field"><label>Alumno</label><select id="evAlumno"></select></div>
-      <div class="field"><label>Tipo</label><select id="evTipo">${TIPOS_SESION.map(t=>'<option value="'+t.nombre+'">'+t.nombre+'</option>').join('')}</select></div>
       <div class="field" style="max-width:110px;"><label>Hora</label><input type="time" id="evHora"></div>
     </div>
     <div class="row">
@@ -1984,7 +1983,7 @@ function renderDayPanel(){
   document.getElementById('btnAddEvento').addEventListener('click', async ()=>{
     const st = document.getElementById('evStatus');
     if(!selA.value){ alert('Añade primero un alumno.'); return; }
-    const ev = { id: uid('ev'), fecha:selectedDate, alumnoId:selA.value, tipo:document.getElementById('evTipo').value,
+    const ev = { id: uid('ev'), fecha:selectedDate, alumnoId:selA.value, tipo:'Tema',
       hora:document.getElementById('evHora').value, tema:document.getElementById('evTema').value.trim(), notas:document.getElementById('evNotas').value.trim() };
     data.calendario.push(ev);
     renderCalendar();
